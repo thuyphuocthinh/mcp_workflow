@@ -1,0 +1,40 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Build / dist
+dist/
+build/
+**/dist/
+**/build/
+
+# Environment variables
+.env
+**/.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mac / OS files
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+
+# React / frontend
+frontend/.pnp.*
+frontend/.yarn/*
+frontend/.next
+frontend/out
+
+# VSCode
+.vscode/
+.idea/
+
+# Others
+*.swp
+*.swo

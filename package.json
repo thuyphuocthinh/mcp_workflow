@@ -1,0 +1,30 @@
+{
+  "name": "mcp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "workspaces": [
+    "frontend",
+    "mcp-client",
+    "mcp-server"
+  ],
+  "scripts": {
+    "start:frontend": "npm --workspace frontend start",
+    "start:client": "npm --workspace mcp-client dev",
+    "start:server": "npm --workspace mcp-server dev",
+    "start:all": "concurrently \"npm run start:frontend\" \"npm run start:server\"",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@types/node": "^20.5.0",
+    "concurrently": "^8.0.0",
+    "husky": "^9.1.7",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
