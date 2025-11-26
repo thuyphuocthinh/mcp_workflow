@@ -99,7 +99,10 @@ Output phải là JSON có key "tool_call":
 }
 
 // --- 10️⃣ Chạy workflow ---
-const userPrompt =
-  "Gửi email thông báo chương trình khuyến mãi cho Khách B (nguyenvanb@gmail.com), nội dung là khuyến mãi sale lớn đợt cuối năm 2025";
+const userPrompt = `
+Đổi tên docs
+- oldname: TPT
+- newname: TPT_new
+`;
 
 runWorkflow(userPrompt).catch(console.error);

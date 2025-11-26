@@ -18,9 +18,9 @@ Dưới đây là một bản **Markdown đầy đủ** về lý thuyết MCP, M
 ### 2.1. Khái niệm chính
 - **Tool**: Một module chức năng (ví dụ: `sheets.appendRows`, `docs.generate`, `mail.send`).  
 - **Tool metadata**: Thông tin về tool, bao gồm:
-  - Tên tool (`name`)  
-  - Mô tả (`description`)  
-  - Input schema (dạng dữ liệu mà tool nhận)  
+  - Tên tool (`name`) 
+  - Mô tả (`description`) 
+  - Input schema (dạng dữ liệu mà tool nhận) 
   - Output schema (dạng dữ liệu mà tool trả về)
   - MCP = application protocol, xây dựng trên transport layer (WebSocket, TCP, HTTP). Nó giống cách HTTP là protocol application layer chạy trên TCP. MCP cũng vậy, nhưng dành cho AI + tool orchestration.
 
@@ -225,3 +225,255 @@ Nếu bạn muốn, tôi có thể tạo **bản diagram kèm flow AI → MCP Cl
 
 Bạn có muốn tôi thêm diagram này luôn không?
 ```
+
+-------------------
+Dưới đây là **tóm tắt toàn bộ specification của MCP** theo đúng bản chất kỹ thuật, ngắn – dễ hiểu – đủ ý.
+Đây là bản tóm tắt chuẩn để bạn nắm hết MCP trong 5 phút.
+
+---
+
+# 🧠 **1. Transport Layer (Cách gửi/nhận dữ liệu)**
+
+MCP không bắt buộc dùng WebSocket hay HTTP.
+Only yêu cầu:
+
+* Giao tiếp theo kiểu **JSON-RPC inspired**, message-based
+* Gửi/nhận thông qua **stdin/stdout**, WebSocket hoặc custom stream
+* Mỗi message là **JSON object**
+
+---
+
+# 🧩 **2. Message Format (Định dạng message)**
+
+Có 4 nhóm message chính:
+
+## ✔ 2.1 Client → Server
+
+* `initialize` (handshake, version)
+* `tools/list`
+* `tools/call`
+* `resources/list`
+* `resources/read`
+* `prompts/list`
+* `prompts/call`
+
+## ✔ 2.2 Server → Client
+
+* `result`
+* `error`
+* `resource-chunk` (stream)
+* `tool-output`
+* `event`
+* `progress`
+
+Mỗi message đều có:
+
+* `type`
+* `id`
+* body tùy loại
+
+---
+
+# 🛠 **3. Tools (API được expose bởi server)**
+
+Tool = hành động mà mô hình có thể gọi.
+
+Mỗi tool có:
+
+* `name`
+* `description`
+* `inputSchema` (JSON Schema)
+* `outputSchema` (tùy chọn)
+
+Client gọi tool bằng message:
+
+```
+{ "type": "tools/call", "tool": "search", "args": {...} }
+```
+
+Server trả về:
+
+```
+{ "type": "tool-output", "content": ... }
+```
+
+---
+
+# 📦 **4. Resources (Dữ liệu dưới dạng "file ảo"")**
+
+MCP định nghĩa cách client đọc tài nguyên mà server expose:
+
+Resource có:
+
+* `uri`
+* `name`
+* `mimeType`
+* permissions
+
+Client yêu cầu:
+
+```
+{ "type": "resources/read", "uri": "notes/123" }
+```
+
+Server stream từng chunk:
+
+```
+{ "type": "resource-chunk", "chunk": "...", "done": false }
+```
+
+---
+
+# 🧠 **5. Prompts (Prompt templates server cung cấp)**
+
+Server có thể gửi preset prompts, ví dụ:
+
+* "createSQLQuery"
+* "summarizeNote"
+* "analyzeLog"
+
+Client gọi:
+
+```
+{ "type": "prompts/call", "name": "summarize", "args": {...} }
+```
+
+---
+
+# 🌐 **6. Server Capabilities**
+
+MCP server công bố mình hỗ trợ gì:
+
+* tools
+* resources
+* prompts
+* events
+* streaming
+* version
+
+Thông qua message `initialize`.
+
+---
+
+# 🔄 **7. Versioning Specification**
+
+Server và client negotiate version theo:
+
+* `protocolVersion`
+* `capabilities`
+
+Nếu không khớp → từ chối connect.
+
+---
+
+# 🔒 **8. Security / Permissions**
+
+Spec xác định:
+
+* tool phải mô tả rõ permissions
+* resource phải có read/write rules
+* client chỉ được gọi tool đã advertise
+* tránh việc AI chạy lệnh không kiểm soát
+
+⚠ MCP **không** định nghĩa sandbox implementation, chỉ mô tả metadata.
+
+---
+
+# 🔀 **9. Events (Server → Client)**
+
+Server có thể chủ động gửi:
+
+* update events
+* file change
+* workflow status
+* notifications
+
+Ví dụ:
+
+```
+{ "type": "event", "event": "workflowFinished" }
+```
+
+---
+
+# 📡 **10. Streaming Specification**
+
+Hỗ trợ stream:
+
+* tool output
+* resource content
+* logs/progress
+
+Các frame:
+
+* `progress`
+* `resource-chunk`
+* `tool-output`
+
+---
+
+# 🏗 **11. Multi-Server / Multiple Provider**
+
+Client có thể connect nhiều MCP server.
+Spec định nghĩa:
+
+* server identity
+* namespace
+* tránh tool name conflict
+
+---
+
+# 🔍 **12. Tool Discovery**
+
+Khách hàng hỏi server:
+
+```
+{ "type": "tools/list" }
+```
+
+Server trả lại schema đầy đủ.
+
+AI có thể “hiểu” tools mà không lập trình trước.
+
+---
+
+# 🧭 **13. Error Format**
+
+Errors có dạng:
+
+```
+{
+  "type": "error",
+  "id": "...",
+  "error": {
+     "code": 400,
+     "message": "Invalid input",
+     "data": {...}
+  }
+}
+```
+
+---
+
+# 📝 **14. Lifecycle / Initialization**
+
+1. Client → `initialize`
+2. Server → capabilities
+3. Client → list tools, resources
+4. AI bắt đầu dùng MCP
+
+---
+
+# ⭐ **Tóm tắt siêu ngắn 1 câu**
+
+> **MCP định nghĩa cách AI và backend giao tiếp qua JSON message: listing tools/resources, calling tools, streaming output, versioning và events — tất cả đều là specification, không phải implement.**
+
+---
+
+Nếu bạn muốn, mình có thể:
+
+* Vẽ lại **MCP architecture diagram**
+* So sánh MCP vs plugin vs Actions
+* Viết bản tóm tắt theo kiểu **để bạn note vào tài liệu dự án**
+
+Muốn kiểu nào?

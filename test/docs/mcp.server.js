@@ -17,11 +17,24 @@ const tools = {
   "docs.generate": {
     description: "Generate a doc",
     implementation: async ({ data }) => {
-      // ✅ Fix: tolerant với input thiếu customer
       const customer = data?.customer?.name || "Unknown";
       const title = data?.title || "Untitled";
       const content =
         data?.content || `Report for ${customer} - ${title} (auto-generated)`;
+
+      return {
+        docId: "DOC_" + Math.random().toString(36).slice(2, 8),
+        url: "http://localhost:3001/docs/fake.pdf",
+        content,
+      };
+    },
+  },
+  "docs.rename": {
+    description: "Rename a doc",
+    implementation: async ({ data }) => {
+      const oldName = data?.oldName || "Unknown";
+      const newName = data?.newName || "Unknown";
+      const content = oldName + newName;
 
       return {
         docId: "DOC_" + Math.random().toString(36).slice(2, 8),
