@@ -18,15 +18,28 @@ import {
   type OnNodeDrag,
   type DefaultEdgeOptions,
 } from "@xyflow/react";
+import { CustomEdge } from "./CusomEdge";
 
 const initialNodes: Node[] = [
-  { id: "1", data: { label: "Node 1" }, position: { x: 5, y: 5 } },
-  { id: "2", data: { label: "Node 2" }, position: { x: 5, y: 100 } },
-  { id: "3", data: { label: "Node 3" }, position: { x: 5, y: 100 } },
-  { id: "4", data: { label: "Node 4" }, position: { x: 5, y: 100 } },
+  {
+    id: "1",
+    data: { label: "Node 1" },
+    position: { x: 5, y: 5 },
+    type: "input",
+  },
+  { id: "2", data: { label: "Node 2" }, position: { x: 5, y: 125 } },
+  { id: "3", data: { label: "Node 3" }, position: { x: 25, y: 150 } },
+  {
+    id: "4",
+    data: { label: "Node 4" },
+    position: { x: 5, y: 175 },
+    type: "output",
+  },
 ];
 
-const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
+const initialEdges: Edge[] = [
+  { id: "e1-2", source: "1", target: "2", type: "custom-edge" },
+];
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
@@ -44,6 +57,10 @@ function Flow() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
+  const edgeTypes = {
+    "custom-edge": CustomEdge,
+  };
+
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     [setNodes]
@@ -53,7 +70,10 @@ function Flow() {
     [setEdges]
   );
   const onConnect: OnConnect = useCallback(
-    (connection) => setEdges((eds) => addEdge(connection, eds)),
+    (connection) => {
+      const edge = { ...connection, type: "custom-edge" };
+      setEdges((eds) => addEdge(edge, eds));
+    },
     [setEdges]
   );
 
@@ -62,6 +82,7 @@ function Flow() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}

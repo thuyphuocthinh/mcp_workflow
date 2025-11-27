@@ -7,30 +7,30 @@ Mục tiêu
 ## Tuần 1
 - Tạo được giao diện kéo thả các edges, nodes
 - Note lý thuyết, kiến trúc MCP
-- Chỉ cần có edges, multi tool nodes, ko cần webhook...
+- Research react-flow, edge, nodes
 ## Tuần 2
-- Clone node, copy node...
-- Code BE xác thực login, lưu graph workflow
-- FE xử lý graph, gửi data lưu graph, nhận data về render ra được, mention các node được, nhập input được
+- Sidebar (drag, drop...)
+- Custom node, label, ...
 ## Tuần 3
-- Code FE màn hình debug, chat, output từ AI về
-- Research LangChain, node AI đơn giản để thấy realtime stream & integration.
-- Code BE lưu graph workflow
+- Custom edge
+- Handle connect nodes, delete node
 ## Tuần 4
-- Code MCP clients (sheets, docs, mails, search)
-- BE trả về danh sách tools
-- FE render danh sách tools
+- Handle Copy, clone node (Assign Dat)
+- Init Backend (Database, Structure, Auth...)
 ## Tuần 5
-- Xác thực oauth
-- Research chạy workflow ở backend và hiển thị streameable từ BE về FE
+- Handle Panel config (Assign Dat), thêm tool (Fake JSON)
+- Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
+- Tối ưu performance
 ## Tuần 6
-- Code chạy workflow ở backend và hiển thị streameable từ BE về FE
-- Test
+- Giao diện debug, chat response (Dat)
+- BE lưu graph, tối ưu graph
 ## Tuần 7
-- Code chạy workflow ở backend và hiển thị streameable từ BE về FE
-- Test
+- Ghép MCP client, servers (DOCS, SHEETS)
+- Viết api trả ra tool
+- Tạo trang tool
 ## Tuần 8
-- Code chạy workflow ở backend và hiển thị streameable từ BE về FE
-- Test
+- Oauth2 google (Assign Dat)
+- Tích hợp AI model vào và test workflow
 ## Tuần 9
-- Code, Test, demo
+- Thêm MCP Mail, Search (Assign Dat)
+- Test, tối ưu performance
