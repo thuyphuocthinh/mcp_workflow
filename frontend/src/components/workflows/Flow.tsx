@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react";
+import { Box, IconButton } from "@chakra-ui/react";
 import "@xyflow/react/dist/style.css";
 import { useState, useCallback } from "react";
 import {
@@ -19,6 +19,8 @@ import {
   type DefaultEdgeOptions,
 } from "@xyflow/react";
 import { CustomEdge } from "./CusomEdge";
+import { NodesSidebar } from "./sidebar";
+import { LuArrowRight, LuArrowLeft } from "react-icons/lu";
 
 const initialNodes: Node[] = [
   {
@@ -57,6 +59,10 @@ function Flow() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
 
+  const [collapsed, setCollapsed] = useState(false);
+
+  const toggleSidebar = () => setCollapsed((v) => !v);
+
   const edgeTypes = {
     "custom-edge": CustomEdge,
   };
@@ -78,23 +84,61 @@ function Flow() {
   );
 
   return (
-    <Box w="full" h="100vh">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        edgeTypes={edgeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodeDrag={onNodeDrag}
-        fitView
-        fitViewOptions={fitViewOptions}
-        defaultEdgeOptions={defaultEdgeOptions}
+    <Box w="full" h="100%" display="flex">
+      <Box
+        w={collapsed ? "0px" : "250px"}
+        overflow="hidden"
+        transition="all 0.3s ease"
+        bg="white"
+        borderRight="1px solid"
+        borderColor="gray.200"
+        boxShadow="md"
+        position="relative"
+        zIndex={10}
       >
-        <Controls />
-        <MiniMap />
-        <Background variant="dots" gap={12} size={1} />
-      </ReactFlow>
+        <NodesSidebar />
+      </Box>
+
+      <IconButton
+        aria-label="Toggle sidebar"
+        position="absolute"
+        left={collapsed ? "20px" : "250px"}
+        top="100px"
+        transform="translateX(-50%)"
+        transition="all 0.3s ease"
+        size="sm"
+        zIndex={20}
+        color="gray.700"
+        onClick={toggleSidebar}
+        bg="white"
+        boxShadow="md"
+        border="1px solid"
+        borderColor="gray.200"
+        _hover={{ bg: "gray.100" }}
+      >
+        {collapsed ? <LuArrowRight /> : <LuArrowLeft />}
+      </IconButton>
+
+      <Box flex="1">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          edgeTypes={edgeTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeDrag={onNodeDrag}
+          fitView
+          snapToGrid
+          fitViewOptions={fitViewOptions}
+          defaultEdgeOptions={defaultEdgeOptions}
+          style={{ width: "100%", height: "100%" }}
+        >
+          <Controls />
+          <MiniMap />
+          <Background variant="dots" gap={12} size={1} />
+        </ReactFlow>
+      </Box>
     </Box>
   );
 }
