@@ -9,20 +9,28 @@ Mục tiêu
 - Note lý thuyết, kiến trúc MCP
 - Research react-flow, edge, nodes
 ## Tuần 2
-- Sidebar (drag, drop...)
+- Sidebar
 - Custom node, label, ...
++ Drag - drop vào react flow được
++ Cơ chế truyền config của node được drag vào react flow
++ Custom để type node đồng bộ giữa sidebar và trong react flow
++ Custom style node...
 ## Tuần 3
 - Custom edge
 - Handle connect nodes, delete node
++ Style edge
++ Bấm vào edge thì hiện dấu + thêm node tại đó
++ Connect nodes theo chieu ngang
++ Remove node o giua thi connect node keu truoc -> node ke sau cua node bi xoa
 ## Tuần 4
-- Handle Copy, clone node (Assign Dat)
+- Handle Copy, cut node (Assign Dat)
 - Init Backend (Database, Structure, Auth...)
 ## Tuần 5
 - Handle Panel config (Assign Dat), thêm tool (Fake JSON)
 - Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
 - Tối ưu performance
 ## Tuần 6
-- Giao diện debug, chat response (Dat)
+- Giao diện debug, chat response, undo redo (Dat)
 - BE lưu graph, tối ưu graph
 ## Tuần 7
 - Ghép MCP client, servers (DOCS, SHEETS)
