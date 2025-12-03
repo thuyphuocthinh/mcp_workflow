@@ -1,6 +1,6 @@
 import { Tooltip } from "@/components/ui/tooltip";
 import { VStack, Box, HStack, Text } from "@chakra-ui/react";
-import { nodeConfig } from "../nodes/nodeConfig";
+import { nodeConfig } from "../nodes/baseConfig/nodeConfig";
 
 const onDragStart = (
   event: React.DragEvent<HTMLDivElement>,

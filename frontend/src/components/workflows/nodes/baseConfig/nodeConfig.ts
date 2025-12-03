@@ -69,4 +69,4 @@ export const nodeConfig: Record<string, NodeConfigItem> = {
   },
 };
 
-export type NodeType = keyof typeof nodeConfig; // "start" | "end" | "llm" | "agent"
+export type INodeConfig = keyof typeof nodeConfig; // "start" | "end" | "llm" | "agent"

@@ -1,6 +1,6 @@
 import { Box, IconButton } from "@chakra-ui/react";
 import "@xyflow/react/dist/style.css";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   ReactFlow,
   addEdge,
@@ -17,55 +17,73 @@ import {
   type OnEdgesChange,
   type OnNodeDrag,
   type DefaultEdgeOptions,
+  useReactFlow,
 } from "@xyflow/react";
 import { CustomEdge } from "./CusomEdge";
-import { NodesSidebar } from "./sidebar";
+import { NodesSidebar } from "./Sidebar";
 import { LuArrowRight, LuArrowLeft } from "react-icons/lu";
+import { CustomNodeTypes, type CustomNode } from "../nodes/baseConfig/nodeType";
 
-const initialNodes: Node[] = [
+const initialNodes: CustomNode[] = [
   {
     id: "1",
-    data: { label: "Node 1" },
+    data: { label: "Start" },
     position: { x: 0, y: 50 },
-    type: "input",
+    type: "start",
+    width: 200,
   },
-  { id: "2", data: { label: "Node 2" }, position: { x: 200, y: 50 } },
-  { id: "3", data: { label: "Node 3" }, position: { x: 400, y: 50 } },
   {
-    id: "4",
-    data: { label: "Node 4" },
-    position: { x: 600, y: 50 },
-    type: "output",
+    id: "2",
+    data: { label: "End" },
+    position: { x: 400, y: 50 },
+    type: "end",
+    width: 200,
   },
 ];
 
-const initialEdges: Edge[] = [
-  { id: "e1-2", source: "1", target: "2", type: "custom-edge" },
-];
+const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
 };
 
 const defaultEdgeOptions: DefaultEdgeOptions = {
-  animated: true,
-};
-
-const onNodeDrag: OnNodeDrag = (_, node) => {
-  console.log("drag event", node.data);
+  animated: false,
 };
 
 function Flow() {
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const reactFlowInstance = useReactFlow();
 
   const [collapsed, setCollapsed] = useState(false);
-
   const toggleSidebar = () => setCollapsed((v) => !v);
 
   const edgeTypes = {
     "custom-edge": CustomEdge,
   };
+
+  const edgesWithStyles = useMemo(() => {
+    return edges?.map((edge) => {
+      return {
+        ...edge,
+        style: {
+          ...edge.style,
+          strokeWidth: 2,
+          strokeDasharray: edge.type === "smoothstep" ? "5,5" : undefined,
+          stroke: "#517359",
+          markerEnd: `url(#arrow-${edge.id})`,
+        },
+      };
+    });
+  }, [edges, nodes]);
+
+  const onNodeDrag: OnNodeDrag = useCallback(
+    (_, node) => {
+      console.log("drag event", node.data);
+    },
+    [reactFlowInstance]
+  );
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -85,10 +103,13 @@ function Flow() {
     [setEdges]
   );
 
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
-  };
+  const handleDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+    },
+    []
+  );
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -144,8 +165,9 @@ function Flow() {
       <Box flex="1">
         <ReactFlow
           nodes={nodes}
-          edges={edges}
+          edges={edgesWithStyles}
           edgeTypes={edgeTypes}
+          nodeTypes={CustomNodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
@@ -159,6 +181,23 @@ function Flow() {
           style={{ width: "100%", height: "100%" }}
           attributionPosition="bottom-left"
         >
+          <svg style={{ display: "inline-block" }}>
+            {edgesWithStyles.map((edge) => (
+              <marker
+                id={`arrow-${edge.id}`}
+                key={edge.id}
+                markerWidth="10"
+                markerHeight="10"
+                refX="8"
+                refY="5"
+                orient="auto"
+                markerUnits="strokeWidth"
+              >
+                <path d="M0,0 L0,10 L10,5 z" fill={"#517359"} />
+              </marker>
+            ))}
+          </svg>
+
           <Controls />
           <MiniMap />
           <Background variant="dots" gap={12} size={1} />
