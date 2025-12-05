@@ -14,7 +14,8 @@ Mục tiêu
 + Drag - drop vào react flow được
 + Cơ chế truyền config của node được drag vào react flow
 + Custom để type node đồng bộ giữa sidebar và trong react flow
-+ Custom style node...
++ Hook flow state, style nodes
++ Delete Node, Context Menu
 ## Tuần 3
 - Custom edge
 - Handle connect nodes, delete node
@@ -28,7 +29,7 @@ Mục tiêu
 ## Tuần 5
 - Handle Panel config (Assign Dat), thêm tool (Fake JSON)
 - Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
-- Tối ưu performance
+- Auto Layout
 ## Tuần 6
 - Giao diện debug, chat response, undo redo (Dat)
 - BE lưu graph, tối ưu graph

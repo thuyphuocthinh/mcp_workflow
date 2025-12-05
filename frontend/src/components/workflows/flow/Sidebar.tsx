@@ -4,10 +4,10 @@ import { nodeConfig } from "../nodes/baseConfig/nodeConfig";
 
 const onDragStart = (
   event: React.DragEvent<HTMLDivElement>,
-  nodeId: string
+  nodeType: string
 ) => {
   // Truyền dữ liệu khi drop
-  event.dataTransfer.setData("application/reactflow", nodeId);
+  event.dataTransfer.setData("application/reactflow", nodeType);
   event.dataTransfer.effectAllowed = "copyMove"; // copy, không move
 
   // Tạo clone để drag (custom drag image)

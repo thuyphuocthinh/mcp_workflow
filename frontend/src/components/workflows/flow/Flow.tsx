@@ -1,11 +1,11 @@
 import { Box, IconButton } from "@chakra-ui/react";
+import { Tooltip } from "@/components/ui/tooltip";
 import "@xyflow/react/dist/style.css";
 import { useState, useCallback, useMemo } from "react";
 import {
   ReactFlow,
   addEdge,
   applyNodeChanges,
-  Controls,
   MiniMap,
   Background,
   applyEdgeChanges,
@@ -18,22 +18,29 @@ import {
   type OnNodeDrag,
   type DefaultEdgeOptions,
   useReactFlow,
+  BackgroundVariant,
+  Panel,
 } from "@xyflow/react";
 import { CustomEdge } from "./CusomEdge";
 import { NodesSidebar } from "./Sidebar";
 import { LuArrowRight, LuArrowLeft } from "react-icons/lu";
 import { CustomNodeTypes, type CustomNode } from "../nodes/baseConfig/nodeType";
+import { useFlowState } from "./UseFlowState";
+import { useFlowCommon } from "./UseFlowCommon";
+import { v4 } from "uuid";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+import CustomControls from "./CustomControls";
 
 const initialNodes: CustomNode[] = [
   {
-    id: "1",
+    id: `start-${v4()}`,
     data: { label: "Start" },
     position: { x: 0, y: 50 },
     type: "start",
     width: 200,
   },
   {
-    id: "2",
+    id: `end-${v4()}`,
     data: { label: "End" },
     position: { x: 400, y: 50 },
     type: "end",
@@ -52,13 +59,20 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
 };
 
 function Flow() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const { nodes, edges, setNodes, setEdges } = useFlowState({
+    initNodes: initialNodes,
+    initEdges: initialEdges,
+  });
   const reactFlowInstance = useReactFlow();
-
+  const { generateUniqueName } = useFlowCommon();
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>("");
   const [collapsed, setCollapsed] = useState(false);
   const toggleSidebar = () => setCollapsed((v) => !v);
-
+  const [locked, setLocked] = useState(false);
+  const selectedNode = useMemo(() => {
+    return nodes.find((node) => node.id === selectedNodeId);
+  }, [selectedNodeId]);
+  const [showMiniMap, setShowMiniMap] = useState(false);
   const edgeTypes = {
     "custom-edge": CustomEdge,
   };
@@ -77,6 +91,42 @@ function Flow() {
       };
     });
   }, [edges, nodes]);
+
+  const nodesWithSelection = useMemo(() => {
+    if (!nodes) return [];
+
+    return nodes.map((node) => {
+      let isActive = node.id === selectedNodeId;
+
+      return {
+        ...node,
+        style: {
+          ...node.style,
+          border:
+            node.id === selectedNodeId
+              ? "3px solid #2970ff"
+              : isActive
+              ? "4px solid #38a169"
+              : "none",
+          borderRadius: "12px",
+          backgroundColor: isActive ? "#e6fffa" : "white",
+          boxShadow: isActive ? "0 0 10px rgba(56, 161, 105, 0.5)" : "none",
+          transition: "all 0.1s ease",
+        },
+      };
+    });
+  }, [nodes, selectedNodeId]);
+
+  const onNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      setSelectedNodeId(node.id);
+    },
+    [setSelectedNodeId]
+  );
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+  }, [setSelectedNodeId]);
 
   const onNodeDrag: OnNodeDrag = useCallback(
     (_, node) => {
@@ -113,15 +163,19 @@ function Flow() {
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    const nodeId = event.dataTransfer.getData("application/reactflow");
-    console.log("Dropped:", nodeId);
+    const nodeType = event.dataTransfer.getData("application/reactflow");
+    const position = reactFlowInstance.screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
     setNodes([
       ...nodes,
       {
-        id: (nodes.length + 1).toString(),
-        data: { label: "Node 1" },
-        position: { x: Math.random() * 100, y: Math.random() * 100 },
-        type: "input",
+        id: `${nodeType}-${v4()}`,
+        data: { label: generateUniqueName(nodeType, nodes) },
+        position,
+        type: nodeType,
+        width: 200,
       },
     ]);
   };
@@ -164,7 +218,8 @@ function Flow() {
 
       <Box flex="1">
         <ReactFlow
-          nodes={nodes}
+          onNodeClick={onNodeClick}
+          nodes={nodesWithSelection}
           edges={edgesWithStyles}
           edgeTypes={edgeTypes}
           nodeTypes={CustomNodeTypes}
@@ -174,10 +229,18 @@ function Flow() {
           onNodeDrag={onNodeDrag}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
+          onPaneClick={onPaneClick}
           fitView
           snapToGrid
           fitViewOptions={fitViewOptions}
           defaultEdgeOptions={defaultEdgeOptions}
+          proOptions={{ hideAttribution: true }}
+          nodesDraggable={!locked}
+          elementsSelectable={!locked}
+          zoomOnScroll={!locked}
+          zoomOnDoubleClick={!locked}
+          zoomOnPinch={!locked}
+          deleteKeyCode={["Backspace", "Delete"]}
           style={{ width: "100%", height: "100%" }}
           attributionPosition="bottom-left"
         >
@@ -198,9 +261,45 @@ function Flow() {
             ))}
           </svg>
 
-          <Controls />
-          <MiniMap />
-          <Background variant="dots" gap={12} size={1} />
+          {/* <Controls /> */}
+          <CustomControls locked={locked} setLocked={setLocked} />
+          {showMiniMap && <MiniMap />}
+          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+
+          <Panel
+            position="bottom-left"
+            style={{
+              background: "white",
+              borderRadius: "12px",
+              padding: "2px",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              marginLeft: "4rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <Tooltip
+              content={showMiniMap ? "Hide" : "Show"}
+              showArrow={true}
+              positioning={{ placement: "right" }}
+            >
+              <Box
+                padding={2}
+                transition="all 0.2s"
+                borderRadius={"md"}
+                cursor={"pointer"}
+                _hover={{
+                  bg: "gray.100",
+                  transform: "scale(1.1)",
+                }}
+                _active={{
+                  transform: "scale(0.95)",
+                }}
+                onClick={() => setShowMiniMap(!showMiniMap)}
+              >
+                {showMiniMap ? <FiEyeOff /> : <FiEye />}
+              </Box>
+            </Tooltip>
+          </Panel>
         </ReactFlow>
       </Box>
     </Box>

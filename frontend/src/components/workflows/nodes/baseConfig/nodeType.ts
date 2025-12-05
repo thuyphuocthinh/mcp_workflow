@@ -1,6 +1,8 @@
 import type { Node, NodeTypes } from "@xyflow/react";
 import StartNode from "../startNode/StartNode";
 import EndNode from "../endNode/EndNode";
+import LLMNode from "../llmNode/LLMNode";
+import AgentNode from "../agentNode/AgentNode";
 
 interface SavedTool {
   id: number;
@@ -54,5 +56,7 @@ export interface CustomNode extends Node {
 
 export const CustomNodeTypes: NodeTypes = {
   start: StartNode,
-  end: EndNode
+  end: EndNode,
+  llm: LLMNode,
+  agent: AgentNode
 }
