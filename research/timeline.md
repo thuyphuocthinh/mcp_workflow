@@ -18,14 +18,14 @@ Mục tiêu
 + Delete Node, Context Menu
 ## Tuần 3
 - Custom edge
-- Handle connect nodes, delete node
+- Handle connect nodes, insert nodes in the middle
 + Style edge
 + Bấm vào edge thì hiện dấu + thêm node tại đó
 + Connect nodes theo chieu ngang
 + Remove node o giua thi connect node keu truoc -> node ke sau cua node bi xoa
 ## Tuần 4
 - Handle Copy, cut node (Assign Dat)
-- Init Backend (Database, Structure, Auth...)
+- Init Backend (Database, Structure, Auth Email, password, google)
 ## Tuần 5
 - Handle Panel config (Assign Dat), thêm tool (Fake JSON)
 - Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)

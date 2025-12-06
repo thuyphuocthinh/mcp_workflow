@@ -20,6 +20,8 @@ import {
   useReactFlow,
   BackgroundVariant,
   Panel,
+  ConnectionLineType,
+  MarkerType,
 } from "@xyflow/react";
 import { CustomEdge } from "./CusomEdge";
 import { NodesSidebar } from "./Sidebar";
@@ -79,9 +81,11 @@ function Flow() {
   }, [selectedNodeId]);
 
   const [showMiniMap, setShowMiniMap] = useState(false);
-  const edgeTypes = {
-    "custom-edge": CustomEdge,
-  };
+
+  const memoizedDefaultEdgeOptions = useMemo(
+    () => defaultEdgeOptions,
+    [defaultEdgeOptions]
+  );
 
   const edgesWithStyles = useMemo(() => {
     return edges?.map((edge) => {
@@ -280,7 +284,6 @@ function Flow() {
           onNodeClick={onNodeClick}
           nodes={nodesWithSelection}
           edges={edgesWithStyles}
-          edgeTypes={edgeTypes}
           nodeTypes={CustomNodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
@@ -293,7 +296,6 @@ function Flow() {
           fitView
           snapToGrid
           fitViewOptions={fitViewOptions}
-          defaultEdgeOptions={defaultEdgeOptions}
           proOptions={{ hideAttribution: true }}
           deleteKeyCode={[]}
           nodesDraggable={!locked}
@@ -303,6 +305,20 @@ function Flow() {
           zoomOnPinch={!locked}
           onNodesDelete={onNodesDelete}
           style={{ width: "100%", height: "100%" }}
+          connectionLineType={ConnectionLineType.SmoothStep}
+          defaultEdgeOptions={{
+            ...memoizedDefaultEdgeOptions,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 20,
+              height: 20,
+              color: "ui.main",
+            },
+            style: {
+              strokeWidth: 2,
+              transition: "all 0.2s",
+            },
+          }}
           attributionPosition="bottom-left"
         >
           <svg style={{ display: "inline-block" }}>
