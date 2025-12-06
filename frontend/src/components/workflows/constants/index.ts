@@ -1,0 +1,1 @@
+export const NO_ACTION_NODES = ["start", "end"];

@@ -1,7 +1,7 @@
-import { Box, IconButton } from "@chakra-ui/react";
+import { Box, IconButton, Menu, Portal } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
 import "@xyflow/react/dist/style.css";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   ReactFlow,
   addEdge,
@@ -25,11 +25,14 @@ import { CustomEdge } from "./CusomEdge";
 import { NodesSidebar } from "./Sidebar";
 import { LuArrowRight, LuArrowLeft } from "react-icons/lu";
 import { CustomNodeTypes, type CustomNode } from "../nodes/baseConfig/nodeType";
-import { useFlowState } from "./UseFlowState";
-import { useFlowCommon } from "./UseFlowCommon";
+import { useFlowState } from "./hooks/UseFlowState";
+import { useFlowCommon } from "./hooks/UseFlowCommon";
 import { v4 } from "uuid";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import CustomControls from "./CustomControls";
+import { useContextMenu } from "./hooks/UseContextMenu";
+import useCustomToast from "@/hooks/useCustomToast";
+import { NO_ACTION_NODES } from "../constants";
 
 const initialNodes: CustomNode[] = [
   {
@@ -64,14 +67,17 @@ function Flow() {
     initEdges: initialEdges,
   });
   const reactFlowInstance = useReactFlow();
-  const { generateUniqueName } = useFlowCommon();
+  const { generateUniqueName, reorderNodeNames } = useFlowCommon();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("");
   const [collapsed, setCollapsed] = useState(false);
   const toggleSidebar = () => setCollapsed((v) => !v);
   const [locked, setLocked] = useState(false);
+  const { onNodeContextMenu, contextMenu, closeContextMenu } = useContextMenu();
+  const { showToast } = useCustomToast();
   const selectedNode = useMemo(() => {
     return nodes.find((node) => node.id === selectedNodeId);
   }, [selectedNodeId]);
+
   const [showMiniMap, setShowMiniMap] = useState(false);
   const edgeTypes = {
     "custom-edge": CustomEdge,
@@ -117,6 +123,58 @@ function Flow() {
     });
   }, [nodes, selectedNodeId]);
 
+  const deleteNode = useCallback(
+    (nodeId: string) => {
+      const deletedNode = nodes.find((node) => node.id === nodeId);
+      if (!deletedNode) return;
+      if (NO_ACTION_NODES.includes(deletedNode.type as string)) {
+        showToast("Error", "Cannot delete this node", "error");
+        return;
+      }
+      let filterNodes = nodes.filter((node) => node.id !== nodeId);
+      filterNodes = reorderNodeNames(deletedNode.type as string, filterNodes);
+      setNodes([...filterNodes]);
+    },
+    [nodes]
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Delete" || event.key === "Backspace") {
+        if (selectedNodeId) {
+          deleteNode(selectedNodeId);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedNodeId, deleteNode]);
+
+  const onNodesDelete = useCallback(
+    (deletedNodes: Node[]) => {
+      const nodesToKeep = deletedNodes.filter(
+        (node: Node) => node.type === "start" || node.type === "end"
+      );
+
+      const nodesActuallyDeleted = deletedNodes.filter(
+        (node: Node) => !nodesToKeep.includes(node)
+      );
+
+      if (nodesToKeep.length > 0) {
+        showToast("Error", "Cannot delete Start or End node", "error");
+        return;
+      }
+
+      setNodes((nds) =>
+        nds.filter(
+          (node) => !nodesActuallyDeleted.some((n) => n.id === node.id)
+        )
+      );
+    },
+    [nodes]
+  );
+
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedNodeId(node.id);
@@ -126,6 +184,7 @@ function Flow() {
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
+    closeContextMenu();
   }, [setSelectedNodeId]);
 
   const onNodeDrag: OnNodeDrag = useCallback(
@@ -230,17 +289,19 @@ function Flow() {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onPaneClick={onPaneClick}
+          onNodeContextMenu={onNodeContextMenu}
           fitView
           snapToGrid
           fitViewOptions={fitViewOptions}
           defaultEdgeOptions={defaultEdgeOptions}
           proOptions={{ hideAttribution: true }}
+          deleteKeyCode={[]}
           nodesDraggable={!locked}
           elementsSelectable={!locked}
           zoomOnScroll={!locked}
           zoomOnDoubleClick={!locked}
           zoomOnPinch={!locked}
-          deleteKeyCode={["Backspace", "Delete"]}
+          onNodesDelete={onNodesDelete}
           style={{ width: "100%", height: "100%" }}
           attributionPosition="bottom-left"
         >
@@ -300,6 +361,52 @@ function Flow() {
               </Box>
             </Tooltip>
           </Panel>
+
+          {contextMenu.nodeId && (
+            <Menu.Root
+              positioning={{ placement: "right-start" }}
+              closeOnSelect={true}
+              onEscapeKeyDown={closeContextMenu}
+              onSelect={closeContextMenu}
+              open={!!contextMenu.nodeId}
+              onOpenChange={(open) => {
+                if (!open) closeContextMenu();
+              }}
+            >
+              <Menu.Trigger asChild></Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content
+                    position="absolute"
+                    style={{
+                      left: `${contextMenu.x}px`,
+                      top: `${contextMenu.y}px`,
+                    }}
+                    bg="white"
+                    borderRadius="xl"
+                    boxShadow="lg"
+                    border="1px solid"
+                    borderColor="gray.100"
+                    p={2}
+                  >
+                    <Menu.Item
+                      cursor={"pointer"}
+                      value="Delete node"
+                      onClick={() => deleteNode(contextMenu.nodeId as string)}
+                      borderRadius="lg"
+                      transition="all 0.2s"
+                      _hover={{
+                        bg: "red.50",
+                        color: "red.500",
+                      }}
+                    >
+                      Delete Node
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
+          )}
         </ReactFlow>
       </Box>
     </Box>
