@@ -19,9 +19,9 @@ Mục tiêu
 ## Tuần 3
 - Custom edge
 - Handle connect nodes, insert nodes in the middle
-+ Style edge
++ Style edge (ConnectionLineType, MakerType, edge styles) (Done)
++ Connect nodes theo chieu ngang (Done)
 + Bấm vào edge thì hiện dấu + thêm node tại đó
-+ Connect nodes theo chieu ngang
 + Remove node o giua thi connect node keu truoc -> node ke sau cua node bi xoa
 ## Tuần 4
 - Handle Copy, cut node (Assign Dat)

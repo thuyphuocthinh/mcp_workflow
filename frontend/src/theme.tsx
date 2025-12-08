@@ -8,6 +8,7 @@ const config = defineConfig({
 
         ui: {
           wfhandlecolor: { value: "#3182ce" },
+          main: { value: "#fff" },
         },
       },
     },

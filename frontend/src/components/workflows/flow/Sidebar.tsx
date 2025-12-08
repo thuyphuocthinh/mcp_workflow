@@ -1,6 +1,7 @@
 import { Tooltip } from "@/components/ui/tooltip";
 import { VStack, Box, HStack, Text } from "@chakra-ui/react";
 import { nodeConfig } from "../nodes/baseConfig/nodeConfig";
+import { NO_ACTION_NODES } from "../constants";
 
 const onDragStart = (
   event: React.DragEvent<HTMLDivElement>,
@@ -73,44 +74,45 @@ export const NodesSidebar = () => {
         {Object.entries(nodeConfig).map(
           ([nodeType, { label, icon: Icon, colorScheme }]) => {
             return (
-              <Tooltip
-                content={label}
-                showArrow={true}
-                positioning={{ placement: "right" }}
-              >
-                <HStack
-                  key={nodeType}
-                  p={4}
-                  draggable
-                  onDragStart={(e: React.DragEvent<HTMLDivElement>) =>
-                    onDragStart(e, nodeType)
-                  }
-                  cursor="all-scroll"
-                  _active={{ cursor: "grabbing" }}
-                  border="1px solid"
-                  borderColor="gray.200"
-                  borderRadius="md"
-                  bg="white"
-                  spacing={6}
-                  transition="all 0.2s ease"
-                  _hover={{
-                    bg: "gray.50",
-                    boxShadow: "xl",
-                  }}
-                  title={label}
+              !NO_ACTION_NODES.includes(nodeType) && (
+                <Tooltip
+                  content={label}
+                  showArrow={true}
+                  positioning={{ placement: "right" }}
                 >
-                  <Box
-                    background={`${colorScheme}.200`}
-                    p={2}
-                    borderRadius={"sm"}
+                  <HStack
+                    key={nodeType}
+                    p={4}
+                    draggable
+                    onDragStart={(e: React.DragEvent<HTMLDivElement>) =>
+                      onDragStart(e, nodeType)
+                    }
+                    cursor="all-scroll"
+                    _active={{ cursor: "grabbing" }}
+                    border="1px solid"
+                    borderColor="gray.200"
+                    borderRadius="md"
+                    bg="white"
+                    transition="all 0.2s ease"
+                    _hover={{
+                      bg: "gray.50",
+                      boxShadow: "xl",
+                    }}
+                    title={label}
                   >
-                    <Icon />
-                  </Box>
-                  <Text fontSize="xs" fontWeight="medium">
-                    {label}
-                  </Text>
-                </HStack>
-              </Tooltip>
+                    <Box
+                      background={`${colorScheme}.200`}
+                      p={2}
+                      borderRadius={"sm"}
+                    >
+                      <Icon />
+                    </Box>
+                    <Text fontSize="xs" fontWeight="medium">
+                      {label}
+                    </Text>
+                  </HStack>
+                </Tooltip>
+              )
             );
           }
         )}

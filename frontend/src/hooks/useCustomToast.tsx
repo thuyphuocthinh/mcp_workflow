@@ -4,7 +4,7 @@ import { useCallback } from "react";
 const useCustomToast = () => {
   const showToast = useCallback(
     (title: string, description: string, type: "success" | "error") => {
-      toaster.pause();
+      toaster.remove();
       toaster.create({
         title,
         description,

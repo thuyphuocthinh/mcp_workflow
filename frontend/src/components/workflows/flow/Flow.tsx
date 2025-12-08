@@ -16,14 +16,12 @@ import {
   type OnNodesChange,
   type OnEdgesChange,
   type OnNodeDrag,
-  type DefaultEdgeOptions,
   useReactFlow,
   BackgroundVariant,
   Panel,
   ConnectionLineType,
   MarkerType,
 } from "@xyflow/react";
-import { CustomEdge } from "./CusomEdge";
 import { NodesSidebar } from "./Sidebar";
 import { LuArrowRight, LuArrowLeft } from "react-icons/lu";
 import { CustomNodeTypes, type CustomNode } from "../nodes/baseConfig/nodeType";
@@ -35,17 +33,21 @@ import CustomControls from "./CustomControls";
 import { useContextMenu } from "./hooks/UseContextMenu";
 import useCustomToast from "@/hooks/useCustomToast";
 import { NO_ACTION_NODES } from "../constants";
+import MiniMapNode from "./MiniMapNode";
+import CustomEdge from "../edges/CustomEdge";
 
+const defaultStartNodeId = `start-${v4()}`;
+const defaultEndNodeId = `end-${v4()}`;
 const initialNodes: CustomNode[] = [
   {
-    id: `start-${v4()}`,
+    id: defaultStartNodeId,
     data: { label: "Start" },
     position: { x: 0, y: 50 },
     type: "start",
     width: 200,
   },
   {
-    id: `end-${v4()}`,
+    id: defaultEndNodeId,
     data: { label: "End" },
     position: { x: 400, y: 50 },
     type: "end",
@@ -53,14 +55,29 @@ const initialNodes: CustomNode[] = [
   },
 ];
 
-const initialEdges: Edge[] = [{ id: "e1-2", source: "1", target: "2" }];
+const initialEdges: Edge[] = [
+  {
+    id: "e1-2",
+    source: defaultStartNodeId,
+    target: defaultEndNodeId,
+    type: "custom-edge",
+    style: { stroke: "#000", strokeWidth: 2 },
+    markerEnd: {
+      type: MarkerType.ArrowClosed,
+      width: 20,
+      height: 20,
+      color: "#000",
+    },
+    data: { label: "Start → End" },
+  },
+];
 
 const fitViewOptions: FitViewOptions = {
   padding: 0.2,
 };
 
-const defaultEdgeOptions: DefaultEdgeOptions = {
-  animated: false,
+const edgeTypes = {
+  "custom-edge": CustomEdge,
 };
 
 function Flow() {
@@ -76,16 +93,11 @@ function Flow() {
   const [locked, setLocked] = useState(false);
   const { onNodeContextMenu, contextMenu, closeContextMenu } = useContextMenu();
   const { showToast } = useCustomToast();
-  const selectedNode = useMemo(() => {
-    return nodes.find((node) => node.id === selectedNodeId);
-  }, [selectedNodeId]);
+  // const selectedNode = useMemo(() => {
+  //   return nodes.find((node) => node.id === selectedNodeId);
+  // }, [selectedNodeId]);
 
   const [showMiniMap, setShowMiniMap] = useState(false);
-
-  const memoizedDefaultEdgeOptions = useMemo(
-    () => defaultEdgeOptions,
-    [defaultEdgeOptions]
-  );
 
   const edgesWithStyles = useMemo(() => {
     return edges?.map((edge) => {
@@ -93,9 +105,9 @@ function Flow() {
         ...edge,
         style: {
           ...edge.style,
-          strokeWidth: 2,
+          strokeWidth: 3,
           strokeDasharray: edge.type === "smoothstep" ? "5,5" : undefined,
-          stroke: "#517359",
+          stroke: "#000",
           markerEnd: `url(#arrow-${edge.id})`,
         },
       };
@@ -118,7 +130,7 @@ function Flow() {
               : isActive
               ? "4px solid #38a169"
               : "none",
-          borderRadius: "12px",
+          borderRadius: "14px",
           backgroundColor: isActive ? "#e6fffa" : "white",
           boxShadow: isActive ? "0 0 10px rgba(56, 161, 105, 0.5)" : "none",
           transition: "all 0.1s ease",
@@ -186,6 +198,28 @@ function Flow() {
     [setSelectedNodeId]
   );
 
+  const onConnect: OnConnect = useCallback(
+    (connection) => {
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...connection,
+            type: "custom-edge",
+            style: { stroke: "#000", strokeWidth: 4 },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 20,
+              height: 20,
+              color: "#000",
+            },
+          },
+          eds
+        )
+      );
+    },
+    [setEdges]
+  );
+
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
     closeContextMenu();
@@ -205,14 +239,6 @@ function Flow() {
 
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    [setEdges]
-  );
-
-  const onConnect: OnConnect = useCallback(
-    (connection) => {
-      const edge = { ...connection, type: "custom-edge" };
-      setEdges((eds) => addEdge(edge, eds));
-    },
     [setEdges]
   );
 
@@ -306,19 +332,7 @@ function Flow() {
           onNodesDelete={onNodesDelete}
           style={{ width: "100%", height: "100%" }}
           connectionLineType={ConnectionLineType.SmoothStep}
-          defaultEdgeOptions={{
-            ...memoizedDefaultEdgeOptions,
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              width: 20,
-              height: 20,
-              color: "ui.main",
-            },
-            style: {
-              strokeWidth: 2,
-              transition: "all 0.2s",
-            },
-          }}
+          edgeTypes={edgeTypes}
           attributionPosition="bottom-left"
         >
           <svg style={{ display: "inline-block" }}>
@@ -333,16 +347,32 @@ function Flow() {
                 orient="auto"
                 markerUnits="strokeWidth"
               >
-                <path d="M0,0 L0,10 L10,5 z" fill={"#517359"} />
+                <path d="M0,0 L0,10 L10,5 z" fill={"#000"} />
               </marker>
             ))}
           </svg>
 
           {/* <Controls /> */}
           <CustomControls locked={locked} setLocked={setLocked} />
-          {showMiniMap && <MiniMap />}
+          {showMiniMap && (
+            <MiniMap
+              nodeComponent={MiniMapNode}
+              pannable={true}
+              zoomable={true}
+              bgColor="gray"
+              nodeStrokeWidth={3}
+              style={{
+                backgroundColor: "white",
+                borderRadius: "12px",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              }}
+            />
+          )}
+
+          {/* Dots Background */}
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
 
+          {/* Show minimap */}
           <Panel
             position="bottom-left"
             style={{
@@ -378,6 +408,7 @@ function Flow() {
             </Tooltip>
           </Panel>
 
+          {/* Node Context Menu */}
           {contextMenu.nodeId && (
             <Menu.Root
               positioning={{ placement: "right-start" }}

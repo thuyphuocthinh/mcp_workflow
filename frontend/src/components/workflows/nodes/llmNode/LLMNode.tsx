@@ -10,7 +10,7 @@ const LLMNode: React.FC<NodeProps> = (props) => {
   return (
     <BaseNode {...props} icon={<Icon />} colorScheme={colorScheme}>
       <Handle
-        type="source"
+        type="target"
         position={Position.Left}
         id="left"
         style={{
