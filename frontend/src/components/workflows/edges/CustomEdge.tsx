@@ -10,7 +10,12 @@ import {
 import { IconButton } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa";
 
-const CustomEdge: FC<EdgeProps<Edge<{ label?: string }>>> = ({
+type CustomEdgeData = {
+  label?: string;
+  onAddNode: (payload: { id: string; x: number; y: number }) => void;
+};
+
+const CustomEdge: FC<EdgeProps<Edge<CustomEdgeData>>> = ({
   id,
   sourceX,
   sourceY,
@@ -87,7 +92,11 @@ const CustomEdge: FC<EdgeProps<Edge<{ label?: string }>>> = ({
               _active={{ transform: "scale(0.95)" }}
               onClick={(e) => {
                 e.stopPropagation();
-                console.log("Add node clicked", id);
+                data?.onAddNode({
+                  id,
+                  x: labelX,
+                  y: labelY,
+                });
               }}
             >
               <FaPlus />

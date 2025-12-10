@@ -21,6 +21,7 @@ import {
   Panel,
   ConnectionLineType,
   MarkerType,
+  type EdgeProps,
 } from "@xyflow/react";
 import { NodesSidebar } from "./Sidebar";
 import { LuArrowRight, LuArrowLeft } from "react-icons/lu";
@@ -35,6 +36,7 @@ import useCustomToast from "@/hooks/useCustomToast";
 import { NO_ACTION_NODES } from "../constants";
 import MiniMapNode from "./MiniMapNode";
 import CustomEdge from "../edges/CustomEdge";
+import { NodesMenu } from "./NodesMenu";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -57,7 +59,7 @@ const initialNodes: CustomNode[] = [
 
 const initialEdges: Edge[] = [
   {
-    id: "e1-2",
+    id: `edge-${defaultStartNodeId}-${defaultEndNodeId}`,
     source: defaultStartNodeId,
     target: defaultEndNodeId,
     type: "custom-edge",
@@ -76,10 +78,6 @@ const fitViewOptions: FitViewOptions = {
   padding: 0.2,
 };
 
-const edgeTypes = {
-  "custom-edge": CustomEdge,
-};
-
 function Flow() {
   const { nodes, edges, setNodes, setEdges } = useFlowState({
     initNodes: initialNodes,
@@ -96,7 +94,12 @@ function Flow() {
   // const selectedNode = useMemo(() => {
   //   return nodes.find((node) => node.id === selectedNodeId);
   // }, [selectedNodeId]);
-
+  const [showNodesMenu, setShowNodesMenu] = useState(false);
+  const [selectedEdgeId, setSelectedEdgeId] = useState("");
+  const [nodeMenuPosition, setNodeMenuPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [showMiniMap, setShowMiniMap] = useState(false);
 
   const edgesWithStyles = useMemo(() => {
@@ -194,6 +197,9 @@ function Flow() {
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedNodeId(node.id);
+      setShowNodesMenu(false);
+      setNodeMenuPosition(null);
+      setSelectedEdgeId("");
     },
     [setSelectedNodeId]
   );
@@ -204,6 +210,7 @@ function Flow() {
         addEdge(
           {
             ...connection,
+            id: `edge-${connection.source}-${connection.target}`,
             type: "custom-edge",
             style: { stroke: "#000", strokeWidth: 4 },
             markerEnd: {
@@ -223,6 +230,9 @@ function Flow() {
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
     closeContextMenu();
+    setShowNodesMenu(false);
+    setNodeMenuPosition(null);
+    setSelectedEdgeId("");
   }, [setSelectedNodeId]);
 
   const onNodeDrag: OnNodeDrag = useCallback(
@@ -268,6 +278,94 @@ function Flow() {
       },
     ]);
   };
+
+  const handleAddNodeFromEdge = useCallback(
+    ({ id, x, y }: { id: string; x: number; y: number }) => {
+      console.log("edge id: ", id);
+      setSelectedEdgeId(id);
+      setShowNodesMenu(true);
+      setNodeMenuPosition({ x, y });
+    },
+    []
+  );
+
+  const edgeTypesWithCallback = useMemo(() => {
+    return {
+      "custom-edge": (props: EdgeProps) => (
+        <CustomEdge
+          {...props}
+          data={{ ...props.data, onAddNode: handleAddNodeFromEdge }}
+        />
+      ),
+    };
+  }, []);
+
+  const addNodeToEdge = useCallback(
+    (nodeType: string) => {
+      if (!selectedEdgeId || !nodeMenuPosition) return;
+
+      const edge = edges.find((e) => e.id === selectedEdgeId);
+      if (!edge) return;
+
+      const newNodeId = `${nodeType}-${v4()}`;
+
+      // 1) Tạo node mới
+      const newNode: Node = {
+        id: newNodeId,
+        type: nodeType,
+        position: reactFlowInstance.screenToFlowPosition({
+          x: nodeMenuPosition.x,
+          y: nodeMenuPosition.y,
+        }),
+        data: { label: generateUniqueName(nodeType, nodes) },
+        width: 200,
+      };
+
+      // 2) Xóa edge cũ
+      const newEdges = edges.filter((e) => e.id !== selectedEdgeId);
+
+      // 3) Tạo 2 edge mới
+      const firstEdge: Edge = {
+        id: `edge-${edge.source}-${newNodeId}`,
+        source: edge.source,
+        target: newNodeId,
+        type: "custom-edge",
+        style: { stroke: "#000", strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 20,
+          height: 20,
+          color: "#000",
+        },
+        data: {},
+      };
+
+      const secondEdge: Edge = {
+        id: `edge-${newNodeId}-${edge.target}`,
+        source: newNodeId,
+        target: edge.target,
+        type: "custom-edge",
+        style: { stroke: "#000", strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 20,
+          height: 20,
+          color: "#000",
+        },
+        data: {},
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+      setEdges([...newEdges, firstEdge, secondEdge]);
+
+      setShowNodesMenu(false);
+      setNodeMenuPosition(null);
+      setSelectedEdgeId("");
+
+      console.log("Node added:", newNodeId);
+    },
+    [edges, nodes, selectedEdgeId, nodeMenuPosition]
+  );
 
   return (
     <Box w="full" h="100%" display="flex">
@@ -332,7 +430,7 @@ function Flow() {
           onNodesDelete={onNodesDelete}
           style={{ width: "100%", height: "100%" }}
           connectionLineType={ConnectionLineType.SmoothStep}
-          edgeTypes={edgeTypes}
+          edgeTypes={edgeTypesWithCallback}
           attributionPosition="bottom-left"
         >
           <svg style={{ display: "inline-block" }}>
@@ -408,7 +506,7 @@ function Flow() {
             </Tooltip>
           </Panel>
 
-          {/* Node Context Menu */}
+          {/* Node Context Menu (Delete, Copy, Paste...) */}
           {contextMenu.nodeId && (
             <Menu.Root
               positioning={{ placement: "right-start" }}
@@ -453,6 +551,25 @@ function Flow() {
                 </Menu.Positioner>
               </Portal>
             </Menu.Root>
+          )}
+
+          {/* Nodes Menu - List of Nodes */}
+          {showNodesMenu && nodeMenuPosition && (
+            <Box
+              width={"250px"}
+              maxHeight={"500px"}
+              zIndex={5}
+              shadow={"lg"}
+              borderRadius={"md"}
+              overflow={"auto"}
+              position="absolute"
+              style={{
+                left: `${nodeMenuPosition.x}px`,
+                top: `${nodeMenuPosition.y + 200}px`,
+              }}
+            >
+              <NodesMenu onSelectNode={addNodeToEdge} />
+            </Box>
           )}
         </ReactFlow>
       </Box>
