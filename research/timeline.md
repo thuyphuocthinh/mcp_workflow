@@ -24,14 +24,14 @@ Mục tiêu
 + Bấm vào edge thì hiện dấu + thêm node tại đó
 + Remove node o giua thi connect node keu truoc -> node ke sau cua node bi xoa
 ## Tuần 4
-- Handle Copy, cut node (Assign Dat)
+- Handle Copy, cut node
 - Init Backend (Database, Structure, Auth Email, password, google)
 ## Tuần 5
-- Handle Panel config (Assign Dat), thêm tool (Fake JSON)
+- Handle Panel config, thêm tool (Fake JSON)
 - Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
 - Auto Layout
 ## Tuần 6
-- Giao diện debug, chat response, undo redo (Dat)
+- Giao diện debug, chat response, undo redo
 - BE lưu graph, tối ưu graph
 ## Tuần 7
 - Ghép MCP client, servers (DOCS, SHEETS)

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { Node } from '@xyflow/react';
+import { MarkerType, type Edge, type Node } from '@xyflow/react';
 
 export const useFlowCommon = () => {
     const generateUniqueName = useCallback(
@@ -63,9 +63,27 @@ export const useFlowCommon = () => {
       };
     }, []);
 
+    const generateEdgeData = useCallback((source: string, target: string): Edge => {
+      return {
+        id: `edge-${source}-${target}`,
+        source: source,
+        target: target,
+        type: "custom-edge",
+        style: { stroke: "#000", strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 20,
+          height: 20,
+          color: "#000",
+        },
+        data: {},
+      }
+    }, []);
+
     return {
         generateUniqueName,
         reorderNodeNames,
-        calculateEdgeCenter
+        calculateEdgeCenter,
+        generateEdgeData
     }
 }

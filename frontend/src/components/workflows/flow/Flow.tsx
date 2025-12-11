@@ -84,7 +84,8 @@ function Flow() {
     initEdges: initialEdges,
   });
   const reactFlowInstance = useReactFlow();
-  const { generateUniqueName, reorderNodeNames } = useFlowCommon();
+  const { generateUniqueName, reorderNodeNames, generateEdgeData } =
+    useFlowCommon();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("");
   const [collapsed, setCollapsed] = useState(false);
   const toggleSidebar = () => setCollapsed((v) => !v);
@@ -150,9 +151,37 @@ function Flow() {
         showToast("Error", "Cannot delete this node", "error");
         return;
       }
-      let filterNodes = nodes.filter((node) => node.id !== nodeId);
-      filterNodes = reorderNodeNames(deletedNode.type as string, filterNodes);
-      setNodes([...filterNodes]);
+      const filterNodes = reorderNodeNames(
+        deletedNode.type as string,
+        nodes.filter((node) => node.id !== nodeId)
+      );
+      setNodes(filterNodes);
+
+      const leftEdge = edges.find((edge) => edge.target === nodeId);
+      const rightEdge = edges.find((edge) => edge.source === nodeId);
+      if (!leftEdge || !rightEdge) return;
+
+      const leftNodeId = nodes.find((node) => node.id === leftEdge.source)?.id;
+      const rightNodeId = nodes.find(
+        (node) => node.id === rightEdge.target
+      )?.id;
+      if (!leftNodeId || !rightNodeId) return;
+
+      const newEdge = generateEdgeData(leftNodeId, rightNodeId);
+
+      if (
+        edges.find(
+          (edge) =>
+            edge.source === newEdge.source && edge.target === newEdge.target
+        )
+      )
+        return;
+
+      const filterEdges = edges.filter(
+        (edge) => edge.id !== leftEdge.id && edge.id !== rightEdge.id
+      );
+
+      setEdges([...filterEdges, newEdge]);
     },
     [nodes]
   );
@@ -325,35 +354,9 @@ function Flow() {
       const newEdges = edges.filter((e) => e.id !== selectedEdgeId);
 
       // 3) Tạo 2 edge mới
-      const firstEdge: Edge = {
-        id: `edge-${edge.source}-${newNodeId}`,
-        source: edge.source,
-        target: newNodeId,
-        type: "custom-edge",
-        style: { stroke: "#000", strokeWidth: 2 },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 20,
-          height: 20,
-          color: "#000",
-        },
-        data: {},
-      };
+      const firstEdge: Edge = generateEdgeData(edge.source, newNodeId);
 
-      const secondEdge: Edge = {
-        id: `edge-${newNodeId}-${edge.target}`,
-        source: newNodeId,
-        target: edge.target,
-        type: "custom-edge",
-        style: { stroke: "#000", strokeWidth: 2 },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 20,
-          height: 20,
-          color: "#000",
-        },
-        data: {},
-      };
+      const secondEdge: Edge = generateEdgeData(newNodeId, edge.target);
 
       setNodes((nds) => [...nds, newNode]);
       setEdges([...newEdges, firstEdge, secondEdge]);
@@ -361,8 +364,6 @@ function Flow() {
       setShowNodesMenu(false);
       setNodeMenuPosition(null);
       setSelectedEdgeId("");
-
-      console.log("Node added:", newNodeId);
     },
     [edges, nodes, selectedEdgeId, nodeMenuPosition]
   );
