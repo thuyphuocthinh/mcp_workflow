@@ -1,5 +1,14 @@
 import { useCallback } from 'react';
 import { MarkerType, type Edge, type Node } from '@xyflow/react';
+import dagre from "dagre";
+
+interface LayoutOptions {
+  nodeWidth?: number;
+  nodeHeight?: number;
+  rankSpacing?: number;
+  nodeSpacing?: number;
+}
+
 
 export const useFlowCommon = () => {
     const generateUniqueName = useCallback(
@@ -80,10 +89,123 @@ export const useFlowCommon = () => {
       }
     }, []);
 
+    const getLayoutedElements = (nodes: Node[], edges: Edge[], options: LayoutOptions = {}) => {
+      const { nodeWidth = 200, nodeHeight = 100, rankSpacing = 80, nodeSpacing = 80 } = options;
+
+      const dagreGraph = new dagre.graphlib.Graph();
+      dagreGraph.setDefaultEdgeLabel(() => ({}));
+
+      dagreGraph.setGraph({
+        rankdir: "LR",
+        nodesep: nodeSpacing,
+        ranksep: rankSpacing,
+        align: "UL",
+        marginx: 50,
+        marginy: 50,
+      });
+
+      const llmNodes = nodes.filter(node => node.type === "llm");
+      const connectedToolNodes = new Set<string>();
+      const connectedAnswerNodes = new Map<string, string>();
+
+      edges.forEach(edge => {
+        const sourceLLM = llmNodes.find(n => n.id === edge.source);
+        const targetLLM = llmNodes.find(n => n.id === edge.target);
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        const targetNode = nodes.find(n => n.id === edge.target);
+
+        if (sourceLLM && (targetNode?.type === "tool" || targetNode?.type === "toolretrieval")) {
+          connectedToolNodes.add(targetNode.id);
+        }
+        if (targetLLM && (sourceNode?.type === "tool" || sourceNode?.type === "toolretrieval")) {
+          connectedToolNodes.add(sourceNode.id);
+        }
+
+        if (sourceLLM && targetNode?.type === "answer") {
+          connectedAnswerNodes.set(targetNode.id, sourceLLM.id);
+        }
+        if (targetLLM && sourceNode?.type === "answer") {
+          connectedAnswerNodes.set(sourceNode.id, targetLLM.id);
+        }
+      });
+
+      const llmRanks = new Map<string, number>();
+      llmNodes.forEach((node, index) => {
+        llmRanks.set(node.id, index);
+      });
+
+      nodes.forEach(node => {
+        const connectedLLMId = connectedAnswerNodes.get(node.id);
+        const rankValue =
+          node.type === "llm"
+            ? llmRanks.get(node.id)
+            : node.type === "answer" && connectedLLMId
+              ? llmRanks.get(connectedLLMId)
+              : undefined;
+
+        dagreGraph.setNode(node.id, {
+          width: node.width ?? nodeWidth,
+          height: node.height ?? nodeHeight,
+          rank: rankValue,
+        });
+      });
+
+      edges.forEach(edge => {
+        const weight = edge.source === edge.target ? 0 : 1;
+        dagreGraph.setEdge(edge.source, edge.target, { weight });
+      });
+
+      dagre.layout(dagreGraph);
+
+      // Pass 1: lấy position từ dagre
+      const rawPositions = new Map<string, { x: number; y: number }>();
+
+      nodes.forEach(node => {
+        const dagreNode = dagreGraph.node(node.id);
+        if (!dagreNode) return;
+
+        rawPositions.set(node.id, {
+          x: dagreNode.x - (dagreNode.width ?? nodeWidth) / 2,
+          y: dagreNode.y - (dagreNode.height ?? nodeHeight) / 2,
+        });
+      });
+
+      // Pass 2: apply custom offset
+      const layoutedNodes = nodes.map(node => {
+        const pos = rawPositions.get(node.id);
+        if (!pos) return node;
+
+        const position = { ...pos };
+
+        // Tool node — thêm spacing theo height
+        if (connectedToolNodes.has(node.id)) {
+          position.y += (node.height ?? nodeHeight) + 20;
+        }
+
+        // Answer node — cần so sánh với LLM
+        const connectedLLMId = connectedAnswerNodes.get(node.id);
+        if (node.type === "answer" && connectedLLMId) {
+          const llmPos = rawPositions.get(connectedLLMId);
+          if (llmPos) {
+            position.y = Math.max(position.y, llmPos.y + 10);
+          }
+        }
+
+        return {
+          ...node,
+          position,
+          className: "react-flow__node-animated",
+        };
+      });
+
+      return layoutedNodes;
+    };
+
     return {
         generateUniqueName,
         reorderNodeNames,
         calculateEdgeCenter,
-        generateEdgeData
+        generateEdgeData,
+        getLayoutedElements
     }
 }

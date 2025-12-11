@@ -37,6 +37,7 @@ import { NO_ACTION_NODES } from "../constants";
 import MiniMapNode from "./MiniMapNode";
 import CustomEdge from "../edges/CustomEdge";
 import { NodesMenu } from "./NodesMenu";
+import { FaGripHorizontal } from "react-icons/fa";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -84,8 +85,12 @@ function Flow() {
     initEdges: initialEdges,
   });
   const reactFlowInstance = useReactFlow();
-  const { generateUniqueName, reorderNodeNames, generateEdgeData } =
-    useFlowCommon();
+  const {
+    generateUniqueName,
+    reorderNodeNames,
+    generateEdgeData,
+    getLayoutedElements,
+  } = useFlowCommon();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("");
   const [collapsed, setCollapsed] = useState(false);
   const toggleSidebar = () => setCollapsed((v) => !v);
@@ -368,6 +373,36 @@ function Flow() {
     [edges, nodes, selectedEdgeId, nodeMenuPosition]
   );
 
+  const handleAutoLayout = useCallback(() => {
+    const layoutedNodes = getLayoutedElements(nodes, edges, {
+      nodeWidth: 200,
+      nodeHeight: 100,
+      rankSpacing: 80,
+      nodeSpacing: 20,
+    });
+
+    const style = document.createElement("style");
+    style.textContent = `
+      .react-flow__node-animated {
+        transition: all 0.5s ease-in-out;
+      }
+    `;
+    document.head.appendChild(style);
+
+    setNodes(layoutedNodes);
+
+    setTimeout(() => {
+      reactFlowInstance.fitView({ padding: 0.2 });
+      document.head.removeChild(style);
+      setNodes((nodes) =>
+        nodes.map((node) => ({
+          ...node,
+          className: node.className?.replace("react-flow__node-animated", ""),
+        }))
+      );
+    }, 500);
+  }, [nodes, edges, reactFlowInstance, setNodes]);
+
   return (
     <Box w="full" h="100%" display="flex">
       <Box
@@ -468,6 +503,43 @@ function Flow() {
             />
           )}
 
+          {/* Auto Layout */}
+          <Panel
+            position="bottom-left"
+            style={{
+              background: "white",
+              borderRadius: "12px",
+              padding: "2px",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              marginLeft: "4rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <Tooltip
+              content="Auto Layout"
+              positioning={{ placement: "right" }}
+              showArrow={true}
+            >
+              <IconButton
+                aria-label="Auto layout"
+                size="sm"
+                variant="ghost"
+                colorScheme="gray"
+                onClick={handleAutoLayout}
+                transition="all 0.2s"
+                _hover={{
+                  bg: "gray.100",
+                  transform: "scale(1.1)",
+                }}
+                _active={{
+                  transform: "scale(0.95)",
+                }}
+              >
+                <FaGripHorizontal />
+              </IconButton>
+            </Tooltip>
+          </Panel>
+
           {/* Dots Background */}
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
 
@@ -479,7 +551,7 @@ function Flow() {
               borderRadius: "12px",
               padding: "2px",
               boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-              marginLeft: "4rem",
+              marginLeft: "7.5rem",
               marginBottom: "1rem",
             }}
           >
