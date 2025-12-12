@@ -1,4 +1,4 @@
-import { Box, IconButton, Menu, Portal } from "@chakra-ui/react";
+import { Box, HStack, IconButton, Menu, Portal } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
 import "@xyflow/react/dist/style.css";
 import { useState, useCallback, useMemo, useEffect } from "react";
@@ -37,7 +37,7 @@ import { NO_ACTION_NODES } from "../constants";
 import MiniMapNode from "./MiniMapNode";
 import CustomEdge from "../edges/CustomEdge";
 import { NodesMenu } from "./NodesMenu";
-import { FaGripHorizontal } from "react-icons/fa";
+import { FaCopy, FaCut, FaGripHorizontal, FaPaste } from "react-icons/fa";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -80,7 +80,16 @@ const fitViewOptions: FitViewOptions = {
 };
 
 function Flow() {
-  const { nodes, edges, setNodes, setEdges } = useFlowState({
+  const {
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    copyNode,
+    cutNode,
+    pasteNode,
+    clipboard,
+  } = useFlowState({
     initNodes: initialNodes,
     initEdges: initialEdges,
   });
@@ -97,9 +106,9 @@ function Flow() {
   const [locked, setLocked] = useState(false);
   const { onNodeContextMenu, contextMenu, closeContextMenu } = useContextMenu();
   const { showToast } = useCustomToast();
-  // const selectedNode = useMemo(() => {
-  //   return nodes.find((node) => node.id === selectedNodeId);
-  // }, [selectedNodeId]);
+  const selectedNode = useMemo(() => {
+    return nodes.find((node) => node.id === selectedNodeId);
+  }, [selectedNodeId]);
   const [showNodesMenu, setShowNodesMenu] = useState(false);
   const [selectedEdgeId, setSelectedEdgeId] = useState("");
   const [nodeMenuPosition, setNodeMenuPosition] = useState<{
@@ -107,6 +116,27 @@ function Flow() {
     y: number;
   } | null>(null);
   const [showMiniMap, setShowMiniMap] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (evt: React.MouseEvent<HTMLDivElement>) => {
+    if (!reactFlowInstance) return;
+
+    const bounds = evt.currentTarget.getBoundingClientRect(); // canvas rect
+
+    // Vị trí chuột relative to canvas
+    const x = evt.clientX - bounds.left;
+    const y = evt.clientY - bounds.top;
+
+    // Convert sang flow coordinate (tính pan & zoom)
+    const flowX =
+      (x - reactFlowInstance.getViewport().x) /
+      reactFlowInstance.getViewport().zoom;
+    const flowY =
+      (y - reactFlowInstance.getViewport().y) /
+      reactFlowInstance.getViewport().zoom;
+
+    setMousePos({ x: flowX, y: flowY });
+  };
 
   const edgesWithStyles = useMemo(() => {
     return edges?.map((edge) => {
@@ -191,6 +221,85 @@ function Flow() {
     [nodes]
   );
 
+  const handleCopyNode = useCallback(() => {
+    if (selectedNodeId) {
+      if (NO_ACTION_NODES.includes(selectedNode?.type as string)) return;
+      copyNode(selectedNodeId);
+    }
+  }, [selectedNodeId]);
+
+  const handleCutNode = useCallback(() => {
+    if (selectedNodeId) {
+      if (NO_ACTION_NODES.includes(selectedNode?.type as string)) return;
+      cutNode(selectedNodeId);
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id === selectedNodeId) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                isCut: true,
+              },
+            };
+          }
+          return n;
+        })
+      );
+    }
+  }, [selectedNodeId]);
+
+  const handlePasteNode = useCallback(() => {
+    pasteNode((raw) => {
+      const oldNode = JSON.parse(raw as string) as CustomNode;
+      if (clipboard?.type === "copy") {
+        const baseLabel = oldNode.data.label.replace(/\(copy.*\)/, "").trim();
+        const existingCopyCount = nodes.filter((n: Node) => {
+          const nBaseLabel = (n as CustomNode).data.label
+            .replace(/\(copy.*\)/, "")
+            .trim();
+          return (
+            nBaseLabel === baseLabel &&
+            (n as CustomNode).data.label.toLowerCase().includes("copy")
+          );
+        }).length;
+
+        const newLabel =
+          existingCopyCount === 0
+            ? `${baseLabel}(copy)`
+            : `${baseLabel}(copy ${existingCopyCount + 1})`;
+
+        const newNode: Node = {
+          ...oldNode,
+          id: `${oldNode.type}-${v4()}`,
+          position: mousePos ?? oldNode.position,
+          data: {
+            ...oldNode.data,
+            label: newLabel,
+          },
+        };
+        setNodes((nds) => [...nds, newNode]);
+      } else if (clipboard?.type === "cut") {
+        const cutNode = oldNode as CustomNode;
+        setNodes((nds) => nds.filter((n) => n.id !== cutNode.id));
+
+        setEdges((eds) =>
+          eds.filter(
+            (edge) => edge.source !== cutNode.id && edge.target !== cutNode.id
+          )
+        );
+
+        const newNode: CustomNode = {
+          ...cutNode,
+          id: `${cutNode.type}-${v4()}`,
+          position: mousePos ?? cutNode.position,
+        };
+
+        setNodes((nds) => [...nds, newNode]);
+      }
+    });
+  }, [nodes, mousePos]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Delete" || event.key === "Backspace") {
@@ -198,11 +307,28 @@ function Flow() {
           deleteNode(selectedNodeId);
         }
       }
+      if (event.ctrlKey) {
+        if (event.key === "c") {
+          handleCopyNode();
+        }
+        if (event.key === "x") {
+          handleCutNode();
+        }
+        if (event.key === "v") {
+          handlePasteNode();
+        }
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedNodeId, deleteNode]);
+  }, [
+    selectedNodeId,
+    deleteNode,
+    handlePasteNode,
+    handleCopyNode,
+    handleCutNode,
+  ]);
 
   const onNodesDelete = useCallback(
     (deletedNodes: Node[]) => {
@@ -450,6 +576,7 @@ function Flow() {
           onConnect={onConnect}
           onNodeDrag={onNodeDrag}
           onDrop={handleDrop}
+          onMouseMove={handleMouseMove}
           onDragOver={handleDragOver}
           onPaneClick={onPaneClick}
           onNodeContextMenu={onNodeContextMenu}
@@ -486,6 +613,104 @@ function Flow() {
             ))}
           </svg>
 
+          {/* Clipboard Panel */}
+          <Panel
+            position="top-left"
+            style={{
+              background: "white",
+              borderRadius: "12px",
+              padding: "4px",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              marginLeft: "2rem",
+            }}
+          >
+            <HStack spacing={1}>
+              {/* Copy */}
+              <Tooltip
+                content="Copy"
+                positioning={{ placement: "bottom" }}
+                showArrow
+              >
+                <IconButton
+                  aria-label="Copy node"
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="gray"
+                  disabled={
+                    !selectedNodeId ||
+                    NO_ACTION_NODES.includes(selectedNode?.type as string)
+                  }
+                  onClick={handleCopyNode}
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: "gray.100",
+                    transform: "scale(1.1)",
+                  }}
+                  _active={{
+                    transform: "scale(0.95)",
+                  }}
+                >
+                  <FaCopy size={12} />
+                </IconButton>
+              </Tooltip>
+
+              {/* Cut */}
+              <Tooltip
+                content="Cut"
+                positioning={{ placement: "bottom" }}
+                showArrow
+              >
+                <IconButton
+                  aria-label="Cut node"
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="gray"
+                  disabled={
+                    !selectedNodeId ||
+                    NO_ACTION_NODES.includes(selectedNode?.type as string)
+                  }
+                  onClick={handleCutNode}
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: "gray.100",
+                    transform: "scale(1.1)",
+                  }}
+                  _active={{
+                    transform: "scale(0.95)",
+                  }}
+                >
+                  <FaCut size={12} />
+                </IconButton>
+              </Tooltip>
+
+              {/* Paste */}
+              <Tooltip
+                content="Paste"
+                positioning={{ placement: "bottom" }}
+                showArrow
+              >
+                <IconButton
+                  aria-label="Paste node"
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="gray"
+                  disabled={!clipboard?.data}
+                  onClick={handlePasteNode}
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: "gray.100",
+                    transform: "scale(1.1)",
+                  }}
+                  _active={{
+                    transform: "scale(0.95)",
+                  }}
+                >
+                  <FaPaste size={12} />
+                </IconButton>
+              </Tooltip>
+            </HStack>
+          </Panel>
+
           {/* <Controls /> */}
           <CustomControls locked={locked} setLocked={setLocked} />
           {showMiniMap && (
@@ -502,7 +727,6 @@ function Flow() {
               }}
             />
           )}
-
           {/* Auto Layout */}
           <Panel
             position="bottom-left"
@@ -539,10 +763,8 @@ function Flow() {
               </IconButton>
             </Tooltip>
           </Panel>
-
           {/* Dots Background */}
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-
           {/* Show minimap */}
           <Panel
             position="bottom-left"
@@ -578,7 +800,6 @@ function Flow() {
               </Box>
             </Tooltip>
           </Panel>
-
           {/* Node Context Menu (Delete, Copy, Paste...) */}
           {contextMenu.nodeId && (
             <Menu.Root
@@ -609,6 +830,32 @@ function Flow() {
                   >
                     <Menu.Item
                       cursor={"pointer"}
+                      value="Copy node"
+                      borderRadius="lg"
+                      transition="all 0.2s"
+                      _hover={{
+                        bg: "red.50",
+                        color: "red.500",
+                      }}
+                      onClick={handleCopyNode}
+                    >
+                      Copy Node
+                    </Menu.Item>
+                    <Menu.Item
+                      cursor={"pointer"}
+                      onClick={handleCutNode}
+                      value="Cut node"
+                      borderRadius="lg"
+                      transition="all 0.2s"
+                      _hover={{
+                        bg: "red.50",
+                        color: "red.500",
+                      }}
+                    >
+                      Cut Node
+                    </Menu.Item>
+                    <Menu.Item
+                      cursor={"pointer"}
                       value="Delete node"
                       onClick={() => deleteNode(contextMenu.nodeId as string)}
                       borderRadius="lg"
@@ -625,7 +872,6 @@ function Flow() {
               </Portal>
             </Menu.Root>
           )}
-
           {/* Nodes Menu - List of Nodes */}
           {showNodesMenu && nodeMenuPosition && (
             <Box

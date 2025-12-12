@@ -22,16 +22,15 @@ Mục tiêu
 + Style edge (ConnectionLineType, MakerType, edge styles) (Done)
 + Connect nodes theo chieu ngang (Done)
 + Bấm vào edge thì hiện dấu + thêm node tại đó
-+ Remove node o giua thi connect node keu truoc -> node ke sau cua node bi xoa
-## Tuần 4
-- Handle Copy, cut node
-- Init Backend (Database, Structure, Auth Email, password, google)
-## Tuần 5
++ Remove node o giua thi connect node ke truoc -> node ke sau cua node bi xoa
++ Auto Layout (understand code again)
++ Handle Copy, cut, paste node
+## Tuần 4, 5
 - Handle Panel config, thêm tool (Fake JSON)
 - Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
-- Auto Layout
-## Tuần 6
 - Giao diện debug, chat response, undo redo
+## Tuần 6
+- Init Backend (Database, Structure, Auth Email, password, google)
 - BE lưu graph, tối ưu graph
 ## Tuần 7
 - Ghép MCP client, servers (DOCS, SHEETS)

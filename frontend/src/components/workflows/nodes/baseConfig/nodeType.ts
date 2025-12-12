@@ -3,6 +3,16 @@ import StartNode from "../startNode/StartNode";
 import EndNode from "../endNode/EndNode";
 import LLMNode from "../llmNode/LLMNode";
 import AgentNode from "../agentNode/AgentNode";
+import PluginNode from "../pluginNode/PluginNode";
+import RetrievalNode from "../retrievalNode/RetrievalNode";
+import ToolRetrievalNode from "../toolretrievalNode/ToolRetrievalNode";
+import CrewAiNode from "../crewaiNode/CrewAiNode";
+import ClassifierNode from "../classifierNode/ClassifierNode";
+import AnswerNode from "../answerNode/AnswerNode";
+import CodeNode from "../codeNode/CodeNode";
+import IfElseNode from "../ifelseNode/IfElseNode";
+import HumanNode from "../humanNode/HumanNode";
+import ParamExtractorNode from "../parameterExtractorNode/ParamExtractorNode";
 
 interface SavedTool {
   id: number;
@@ -12,6 +22,7 @@ interface SavedTool {
 
 export interface NodeData {
   label: string;
+  isCut?: boolean;
   onChange?: (key: string, value: any) => void;
   model?: string;
   temperature?: number;
@@ -58,5 +69,22 @@ export const CustomNodeTypes: NodeTypes = {
   start: StartNode,
   end: EndNode,
   llm: LLMNode,
-  agent: AgentNode
+  agent: AgentNode,
+  plugin: PluginNode,
+  retrieval: RetrievalNode,
+  toolretrieval: ToolRetrievalNode,
+  crewai: CrewAiNode,
+  classifier: ClassifierNode,
+  answer: AnswerNode,
+  code: CodeNode,
+  ifelse: IfElseNode,
+  human: HumanNode,
+  parameterExtractor: ParamExtractorNode
 }
+
+export const LogicalOperator = {
+  and: "and",
+  or: "or",
+} as const;
+
+export type LogicalOperator = typeof LogicalOperator[keyof typeof LogicalOperator];

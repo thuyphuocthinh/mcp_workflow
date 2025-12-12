@@ -13,8 +13,9 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
   icon,
   colorScheme,
   children,
-  // id
 }) => {
+  const isCut = (data as any).isCut;
+
   return (
     <Box
       padding="10px"
@@ -25,13 +26,13 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
       textAlign="center"
       position="relative"
       boxShadow="lg"
-      border="1px solid"
-      borderColor="gray.100"
+      border={isCut ? "2px dashed red" : "1px solid"}
+      borderColor={isCut ? "red.400" : "gray.100"}
       transition="all 0.2s"
       _hover={{
         transform: "translateY(-1px)",
         boxShadow: "xl",
-        borderColor: "gray.200",
+        borderColor: isCut ? "red.500" : "gray.200",
       }}
     >
       <HStack spacing={2} mb={1}>
