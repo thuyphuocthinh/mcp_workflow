@@ -37,7 +37,14 @@ import { NO_ACTION_NODES } from "../constants";
 import MiniMapNode from "./MiniMapNode";
 import CustomEdge from "../edges/CustomEdge";
 import { NodesMenu } from "./NodesMenu";
-import { FaCopy, FaCut, FaGripHorizontal, FaPaste } from "react-icons/fa";
+import {
+  FaCopy,
+  FaCut,
+  FaGripHorizontal,
+  FaPaste,
+  FaUndo,
+  FaRedo,
+} from "react-icons/fa";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -89,6 +96,12 @@ function Flow() {
     cutNode,
     pasteNode,
     clipboard,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    setEdgesRaw,
+    setNodesRaw,
   } = useFlowState({
     initNodes: initialNodes,
     initEdges: initialEdges,
@@ -117,6 +130,22 @@ function Flow() {
   } | null>(null);
   const [showMiniMap, setShowMiniMap] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  const handleUndo = useCallback(() => {
+    const prev = undo();
+    if (!prev) return;
+
+    setNodesRaw(prev.nodes);
+    setEdgesRaw(prev.edges);
+  }, [undo, setNodesRaw, setEdgesRaw]);
+
+  const handleRedo = useCallback(() => {
+    const next = redo();
+    if (!next) return;
+
+    setNodesRaw(next.nodes);
+    setEdgesRaw(next.edges);
+  }, [redo, setNodesRaw, setEdgesRaw]);
 
   const handleMouseMove = (evt: React.MouseEvent<HTMLDivElement>) => {
     if (!reactFlowInstance) return;
@@ -316,6 +345,17 @@ function Flow() {
         }
         if (event.key === "v") {
           handlePasteNode();
+        }
+        if (event.key === "z") {
+          if (canUndo()) {
+            handleUndo();
+          }
+        }
+
+        if (event.key === "y") {
+          if (canRedo()) {
+            handleRedo();
+          }
         }
       }
     };
@@ -624,7 +664,59 @@ function Flow() {
               marginLeft: "2rem",
             }}
           >
-            <HStack spacing={1}>
+            <HStack>
+              {/* Undo */}
+              <Tooltip
+                content="Undo"
+                positioning={{ placement: "bottom" }}
+                showArrow
+              >
+                <IconButton
+                  aria-label="Undo"
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="gray"
+                  disabled={!canUndo()}
+                  onClick={handleUndo}
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: "gray.100",
+                    transform: "scale(1.1)",
+                  }}
+                  _active={{
+                    transform: "scale(0.95)",
+                  }}
+                >
+                  <FaUndo size={12} />
+                </IconButton>
+              </Tooltip>
+
+              {/* Redo */}
+              <Tooltip
+                content="Redo"
+                positioning={{ placement: "bottom" }}
+                showArrow
+              >
+                <IconButton
+                  aria-label="Redo"
+                  size="xs"
+                  disabled={!canRedo()}
+                  onClick={handleRedo}
+                  variant="ghost"
+                  colorScheme="gray"
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: "gray.100",
+                    transform: "scale(1.1)",
+                  }}
+                  _active={{
+                    transform: "scale(0.95)",
+                  }}
+                >
+                  <FaRedo size={12} />
+                </IconButton>
+              </Tooltip>
+
               {/* Copy */}
               <Tooltip
                 content="Copy"

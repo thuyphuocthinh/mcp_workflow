@@ -25,20 +25,21 @@ Mục tiêu
 + Remove node o giua thi connect node ke truoc -> node ke sau cua node bi xoa
 + Auto Layout (understand code again)
 + Handle Copy, cut, paste node
++ Undo, redo
 ## Tuần 4, 5
 - Handle Panel config, thêm tool (Fake JSON)
 - Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
-- Giao diện debug, chat response, undo redo
-## Tuần 6
+- Giao diện debug, chat response
+## Tuần 6, 7
 - Init Backend (Database, Structure, Auth Email, password, google)
 - BE lưu graph, tối ưu graph
-## Tuần 7
-- Ghép MCP client, servers (DOCS, SHEETS)
 - Viết api trả ra tool
-- Tạo trang tool
 ## Tuần 8
-- Oauth2 google (Assign Dat)
-- Tích hợp AI model vào và test workflow
+- Ghép MCP client, servers (DOCS, SHEETS)
+- Tạo trang tool
 ## Tuần 9
-- Thêm MCP Mail, Search (Assign Dat)
+- Oauth2 google
+- Thêm MCP Mail, Search
+## Tuần 10
+- Tích hợp AI model vào và test workflow
 - Test, tối ưu performance
