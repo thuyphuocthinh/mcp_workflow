@@ -1,14 +1,15 @@
+import { createBrowserRouter } from "react-router-dom";
 import { GuestRoute } from "./GuestRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
-import LoginPage from "@/pages/login/index";
-import { createBrowserRouter } from "react-router-dom";
 import { ProtectedLayout } from "@/layouts/ProtectedLayout";
+import LoginPage from "@/pages/login";
 import NotFoundPage from "@/pages/notfound";
+import WorkflowPage from "@/pages/workflow";
+import ToolsPage from "@/pages/tools";
 import FlowProvider from "@/components/workflows/flow/FlowProvider";
 
 export const router = createBrowserRouter([
   {
-    path: "workflow",
     element: (
       <ProtectedRoute>
         <ProtectedLayout />
@@ -16,8 +17,26 @@ export const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "",
-        element: <FlowProvider />,
+        path: "workflow",
+        children: [
+          {
+            index: true,
+            element: <WorkflowPage />,
+          },
+          {
+            path: ":id",
+            element: <FlowProvider />,
+          },
+        ],
+      },
+      {
+        path: "tools",
+        children: [
+          {
+            index: true,
+            element: <ToolsPage />,
+          },
+        ],
       },
     ],
   },

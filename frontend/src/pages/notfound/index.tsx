@@ -7,7 +7,7 @@ export default function NotFoundPage() {
     else window.location.href = "/";
   };
 
-  const goHome = () => (window.location.href = "/");
+  const goHome = () => (window.location.href = "/workflow");
 
   return (
     <Box
@@ -33,7 +33,7 @@ export default function NotFoundPage() {
           Trang bạn tìm không tồn tại.
         </Text>
 
-        <VStack spacing={3}>
+        <VStack gap={3}>
           <Button
             leftIcon={<FiHome />}
             colorScheme="teal"
