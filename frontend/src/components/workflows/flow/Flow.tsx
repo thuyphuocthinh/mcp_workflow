@@ -117,7 +117,12 @@ function Flow() {
   const [collapsed, setCollapsed] = useState(false);
   const toggleSidebar = () => setCollapsed((v) => !v);
   const [locked, setLocked] = useState(false);
-  const { onNodeContextMenu, contextMenu, closeContextMenu } = useContextMenu();
+  const {
+    onNodeContextMenu,
+    contextMenu,
+    closeContextMenu,
+    onPaneContextMenu,
+  } = useContextMenu();
   const { showToast } = useCustomToast();
   const selectedNode = useMemo(() => {
     return nodes.find((node) => node.id === selectedNodeId);
@@ -429,8 +434,8 @@ function Flow() {
 
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
-    closeContextMenu();
     setShowNodesMenu(false);
+    closeContextMenu();
     setNodeMenuPosition(null);
     setSelectedEdgeId("");
   }, [setSelectedNodeId]);
@@ -620,6 +625,7 @@ function Flow() {
           onDragOver={handleDragOver}
           onPaneClick={onPaneClick}
           onNodeContextMenu={onNodeContextMenu}
+          onPaneContextMenu={onPaneContextMenu}
           fitView
           snapToGrid
           fitViewOptions={fitViewOptions}
@@ -819,6 +825,7 @@ function Flow() {
               }}
             />
           )}
+
           {/* Auto Layout */}
           <Panel
             position="bottom-left"
@@ -855,8 +862,10 @@ function Flow() {
               </IconButton>
             </Tooltip>
           </Panel>
+
           {/* Dots Background */}
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+
           {/* Show minimap */}
           <Panel
             position="bottom-left"
@@ -892,8 +901,9 @@ function Flow() {
               </Box>
             </Tooltip>
           </Panel>
+
           {/* Node Context Menu (Delete, Copy, Paste...) */}
-          {contextMenu.nodeId && (
+          {contextMenu.nodeId && contextMenu.type === "node" && (
             <Menu.Root
               positioning={{ placement: "right-start" }}
               closeOnSelect={true}
@@ -931,7 +941,7 @@ function Flow() {
                       }}
                       onClick={handleCopyNode}
                     >
-                      Copy Node
+                      Copy
                     </Menu.Item>
                     <Menu.Item
                       cursor={"pointer"}
@@ -944,7 +954,7 @@ function Flow() {
                         color: "red.500",
                       }}
                     >
-                      Cut Node
+                      Cut
                     </Menu.Item>
                     <Menu.Item
                       cursor={"pointer"}
@@ -957,13 +967,76 @@ function Flow() {
                         color: "red.500",
                       }}
                     >
-                      Delete Node
+                      Delete
+                    </Menu.Item>
+                    {clipboard?.data! && (
+                      <Menu.Item
+                        cursor={"pointer"}
+                        value="Paste"
+                        onClick={handlePasteNode}
+                        borderRadius="lg"
+                        transition="all 0.2s"
+                        _hover={{
+                          bg: "red.50",
+                          color: "red.500",
+                        }}
+                      >
+                        Paste
+                      </Menu.Item>
+                    )}
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
+          )}
+
+          {/* Pane Context Menu - Paste Button */}
+          {contextMenu.type === "pane" && clipboard?.data! && (
+            <Menu.Root
+              positioning={{ placement: "right-start" }}
+              closeOnSelect={true}
+              onEscapeKeyDown={closeContextMenu}
+              onSelect={closeContextMenu}
+              open={contextMenu.type === "pane"}
+              onOpenChange={(open) => {
+                if (!open) closeContextMenu();
+              }}
+            >
+              <Menu.Trigger asChild></Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content
+                    position="absolute"
+                    style={{
+                      left: `${contextMenu.x}px`,
+                      top: `${contextMenu.y}px`,
+                    }}
+                    bg="white"
+                    borderRadius="xl"
+                    boxShadow="lg"
+                    border="1px solid"
+                    borderColor="gray.100"
+                    p={2}
+                  >
+                    <Menu.Item
+                      cursor={"pointer"}
+                      value="Paste"
+                      onClick={handlePasteNode}
+                      borderRadius="lg"
+                      transition="all 0.2s"
+                      _hover={{
+                        bg: "red.50",
+                        color: "red.500",
+                      }}
+                    >
+                      Paste
                     </Menu.Item>
                   </Menu.Content>
                 </Menu.Positioner>
               </Portal>
             </Menu.Root>
           )}
+
           {/* Nodes Menu - List of Nodes */}
           {showNodesMenu && nodeMenuPosition && (
             <Box
