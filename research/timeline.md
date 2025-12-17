@@ -30,6 +30,10 @@ Mục tiêu
 - 15/12 => Thêm tool (Fake JSON)
 - 17/12 Giao diện debug, chat response
 - 19/12, 20/12 => panel config
+=> Base Node Properties
+=> LLM | Agent Node extends Base Node
+=> Get Node Properties By Type => render to panels
+=> How to manage states => SINGLE SOURCE OF TRUTH
 - 22/12, 24/12/ 26/12 Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
 ## Tuần 6, 7
 - Init Backend (Database, Structure, Auth Email, password, google)

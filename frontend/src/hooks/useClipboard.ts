@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import useCustomToast from "./useCustomToast";
 
 type ClipboardItem<T> = {
   data: T;
@@ -7,6 +8,7 @@ type ClipboardItem<T> = {
 
 export function useClipboard<T>() {
   const [clipboard, setClipboard] = useState<ClipboardItem<T> | null>(null);
+  const { showToast } = useCustomToast();
 
   // Copy hoặc Cut vào clipboard
   const copy = useCallback((data: T) => {
@@ -26,6 +28,7 @@ export function useClipboard<T>() {
       // Nếu cut, reset clipboard sau khi dán
       onPaste(clipboard.data);
       if (clipboard.type === "cut") setClipboard(null);
+      showToast("Success", "Pasted Node Successfully", "success")
     },
     [clipboard]
   );

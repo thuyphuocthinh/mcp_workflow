@@ -1,4 +1,4 @@
-import { Box, HStack, IconButton, Menu, Portal } from "@chakra-ui/react";
+import { Box, HStack, IconButton, Menu, Portal, Text } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
 import "@xyflow/react/dist/style.css";
 import { useState, useCallback, useMemo, useEffect } from "react";
@@ -44,7 +44,10 @@ import {
   FaPaste,
   FaUndo,
   FaRedo,
+  FaPlay,
+  FaSave,
 } from "react-icons/fa";
+import { FaMessage } from "react-icons/fa6";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -825,6 +828,76 @@ function Flow() {
               }}
             />
           )}
+
+          {/* Gotochat / Debug / Save */}
+          {/* Gotochat / Debug / Save */}
+          <Panel
+            position="top-right"
+            style={{
+              background: "white",
+              borderRadius: "12px",
+              padding: "6px",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              marginRight: "1rem",
+              marginTop: "1rem",
+            }}
+          >
+            <HStack gap={2}>
+              {/* Debug */}
+              <Tooltip content="Debug workflow" showArrow>
+                <IconButton
+                  aria-label="Debug"
+                  size="sm"
+                  colorScheme="orange"
+                  variant="ghost"
+                  px={3}
+                >
+                  <HStack gap={2}>
+                    <FaPlay />
+                    <Text fontSize="xs" fontWeight="medium">
+                      Debug
+                    </Text>
+                  </HStack>
+                </IconButton>
+              </Tooltip>
+
+              {/* Go to Chat */}
+              <Tooltip content="Open Chat" showArrow>
+                <IconButton
+                  aria-label="Chat"
+                  size="sm"
+                  colorScheme="blue"
+                  variant="ghost"
+                  px={3}
+                >
+                  <HStack gap={2}>
+                    <FaMessage />
+                    <Text fontSize="xs" fontWeight="medium">
+                      Chat
+                    </Text>
+                  </HStack>
+                </IconButton>
+              </Tooltip>
+
+              {/* Save */}
+              <Tooltip content="Save workflow" showArrow>
+                <IconButton
+                  aria-label="Save"
+                  size="sm"
+                  colorScheme="purple"
+                  variant="ghost"
+                  px={3}
+                >
+                  <HStack gap={2}>
+                    <FaSave />
+                    <Text fontSize="xs" fontWeight="medium">
+                      Save
+                    </Text>
+                  </HStack>
+                </IconButton>
+              </Tooltip>
+            </HStack>
+          </Panel>
 
           {/* Auto Layout */}
           <Panel
