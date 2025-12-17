@@ -48,6 +48,7 @@ import {
   FaSave,
 } from "react-icons/fa";
 import { FaMessage } from "react-icons/fa6";
+import { DebugPanel } from "./DebugPanel";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -138,6 +139,7 @@ function Flow() {
   } | null>(null);
   const [showMiniMap, setShowMiniMap] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showDebug, setShowDebug] = useState(false);
 
   const handleUndo = useCallback(() => {
     const prev = undo();
@@ -441,6 +443,7 @@ function Flow() {
     closeContextMenu();
     setNodeMenuPosition(null);
     setSelectedEdgeId("");
+    setShowDebug(false);
   }, [setSelectedNodeId]);
 
   const onNodeDrag: OnNodeDrag = useCallback(
@@ -830,7 +833,6 @@ function Flow() {
           )}
 
           {/* Gotochat / Debug / Save */}
-          {/* Gotochat / Debug / Save */}
           <Panel
             position="top-right"
             style={{
@@ -851,6 +853,7 @@ function Flow() {
                   colorScheme="orange"
                   variant="ghost"
                   px={3}
+                  onClick={() => setShowDebug(true)}
                 >
                   <HStack gap={2}>
                     <FaPlay />
@@ -897,6 +900,21 @@ function Flow() {
                 </IconButton>
               </Tooltip>
             </HStack>
+          </Panel>
+
+          <Panel
+            position="top-right"
+            style={{
+              marginRight: "1rem",
+              marginTop: "5rem",
+            }}
+          >
+            {showDebug && (
+              <DebugPanel
+                isOpen={showDebug}
+                onClose={() => setShowDebug(false)}
+              />
+            )}
           </Panel>
 
           {/* Auto Layout */}

@@ -40,9 +40,6 @@ export default function ChatPage() {
   const [selectedWorkflowId, setSelectedWorkflowId] = useState(
     fakeWorkflows[0].id
   );
-  const [chatInput, setChatInput] = useState("");
-  const [chats, setChats] =
-    useState<Record<string, ChatMessage[]>>(fakeWorkflowChats);
 
   const workflowMap = useMemo(
     () => new Map(fakeWorkflows.map((w) => [w.id, w])),
@@ -56,37 +53,7 @@ export default function ChatPage() {
     );
   }, [search]);
 
-  const messages = chats[selectedWorkflowId] ?? [];
   const selectedWorkflow = workflowMap.get(selectedWorkflowId);
-
-  const appendMessage = (workflowId: string, msg: ChatMessage) => {
-    setChats((prev) => ({
-      ...prev,
-      [workflowId]: [...(prev[workflowId] ?? []), msg],
-    }));
-  };
-
-  const handleSend = () => {
-    if (!chatInput.trim()) return;
-
-    appendMessage(selectedWorkflowId, {
-      id: uuidv4(),
-      role: "HUMAN",
-      content: chatInput,
-      created_at: new Date().toISOString(),
-    });
-
-    setChatInput("");
-
-    setTimeout(() => {
-      appendMessage(selectedWorkflowId, {
-        id: uuidv4(),
-        role: "AI",
-        content: "This is a fake AI response 🤖",
-        created_at: new Date().toISOString(),
-      });
-    }, 500);
-  };
 
   return (
     <Flex h="calc(100vh - 72.8px)" overflow="hidden">
@@ -98,13 +65,7 @@ export default function ChatPage() {
         onSelect={setSelectedWorkflowId}
       />
 
-      <ChatMain
-        workflowName={selectedWorkflow?.name}
-        messages={messages}
-        chatInput={chatInput}
-        onInputChange={setChatInput}
-        onSend={handleSend}
-      />
+      <ChatMain workflowName={selectedWorkflow?.name} />
     </Flex>
   );
 }
