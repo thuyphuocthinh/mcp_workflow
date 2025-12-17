@@ -28,9 +28,9 @@ Mục tiêu
 + Undo, redo
 ## Tuần 4, 5
 - 15/12 => Thêm tool (Fake JSON)
-- 17/12, 19/12, 20/12 => panel config
+- 17/12 Giao diện debug, chat response
+- 19/12, 20/12 => panel config
 - 22/12, 24/12/ 26/12 Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
-- 27/12 Giao diện debug, chat response
 ## Tuần 6, 7
 - Init Backend (Database, Structure, Auth Email, password, google)
 - BE lưu graph, tối ưu graph

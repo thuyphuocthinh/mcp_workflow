@@ -47,14 +47,14 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
   const { pathname } = useLocation();
 
   // /workflow/:id
-  const isWorkflowDetail = /^\/workflow\/[^/]+$/.test(pathname);
+  const isWorkflowDetail = /^\/workflows\/[^/]+$/.test(pathname);
   const workflowId = isWorkflowDetail ? pathname.split("/")[2] : null;
 
   return (
     <Box
       bg="gray.50"
       px={4}
-      py={5}
+      py={isWorkflowDetail ? 5 : 4}
       borderBottom="1px solid"
       borderColor="gray.300"
       boxShadow="sm"
@@ -67,13 +67,16 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
           <Breadcrumb.Root gap="8px" fontSize="sm" color="gray.600">
             <Breadcrumb.List>
               <Breadcrumb.Item>
-                <Breadcrumb.Link as={RouterLink} to="/workflow">
+                <Breadcrumb.Link as={RouterLink} to="/workflows">
                   Home
                 </Breadcrumb.Link>
               </Breadcrumb.Item>
               <Breadcrumb.Separator />
               <Breadcrumb.Item>
-                <Breadcrumb.Link as={RouterLink} to={`/workflow/${workflowId}`}>
+                <Breadcrumb.Link
+                  as={RouterLink}
+                  to={`/workflows/${workflowId}`}
+                >
                   Workflow Detail
                 </Breadcrumb.Link>
               </Breadcrumb.Item>
@@ -82,7 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
         ) : (
           // ===== Other pages: menu =====
           <HStack gap={6}>
-            <NavButton to="/workflow">Workflow</NavButton>
+            <NavButton to="/workflows">Workflow</NavButton>
             <NavButton to="/chat">Chat</NavButton>
             <NavButton to="/tools">Tools</NavButton>
           </HStack>

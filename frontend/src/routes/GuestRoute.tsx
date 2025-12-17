@@ -4,7 +4,7 @@ import { type ReactNode } from "react";
 export const GuestRoute = ({ children }: { children: ReactNode }) => {
   const isLoggedIn = false;
 
-  if (isLoggedIn) return <Navigate to="/users" replace />;
+  if (isLoggedIn) return <Navigate to="/workflows" replace />;
 
   return <>{children}</>;
 };

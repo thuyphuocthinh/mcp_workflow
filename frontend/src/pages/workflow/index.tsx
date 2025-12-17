@@ -76,7 +76,7 @@ export default function WorkflowPage() {
   };
 
   const goToWorkflowDetail = (id: string) => {
-    navigate(`/workflow/${id}`);
+    navigate(`/workflows/${id}`);
   };
 
   return (

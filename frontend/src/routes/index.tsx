@@ -1,4 +1,3 @@
-import { createBrowserRouter } from "react-router-dom";
 import { GuestRoute } from "./GuestRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { ProtectedLayout } from "@/layouts/ProtectedLayout";
@@ -7,6 +6,8 @@ import NotFoundPage from "@/pages/notfound";
 import WorkflowPage from "@/pages/workflow";
 import ToolsPage from "@/pages/tools";
 import FlowProvider from "@/components/workflows/flow/FlowProvider";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+import ChatPage from "@/pages/chat";
 
 export const router = createBrowserRouter([
   {
@@ -17,7 +18,11 @@ export const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "workflow",
+        index: true,
+        element: <Navigate to="workflows" replace />,
+      },
+      {
+        path: "workflows",
         children: [
           {
             index: true,
@@ -31,12 +36,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "tools",
-        children: [
-          {
-            index: true,
-            element: <ToolsPage />,
-          },
-        ],
+        element: <ToolsPage />,
+      },
+      {
+        path: "chat",
+        element: <ChatPage />,
       },
     ],
   },

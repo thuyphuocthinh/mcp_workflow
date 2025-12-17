@@ -7,7 +7,7 @@ export default function NotFoundPage() {
     else window.location.href = "/";
   };
 
-  const goHome = () => (window.location.href = "/workflow");
+  const goHome = () => (window.location.href = "/workflows");
 
   return (
     <Box
