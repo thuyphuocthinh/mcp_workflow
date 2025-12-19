@@ -3,12 +3,16 @@ import { Handle, type NodeProps, Position } from "@xyflow/react";
 
 import { nodeConfig } from "../baseConfig/nodeConfig";
 import { BaseNode } from "../baseConfig/BaseNode";
+import { Box, Icon, Text, VStack } from "@chakra-ui/react";
+import { FaRobot } from "react-icons/fa";
 
 const LLMNode: React.FC<NodeProps> = (props) => {
-  const { icon: Icon, colorScheme } = nodeConfig.llm;
+  const { icon: IconProp, colorScheme } = nodeConfig.llm;
+
+  console.log("props: ", props.data);
 
   return (
-    <BaseNode {...props} icon={<Icon />} colorScheme={colorScheme}>
+    <BaseNode {...props} icon={<IconProp />} colorScheme={colorScheme}>
       <Handle
         type="target"
         position={Position.Left}
@@ -35,8 +39,37 @@ const LLMNode: React.FC<NodeProps> = (props) => {
         }}
         className="custom-handle"
       />
+      <VStack gap={1}>
+        <Box
+          bg="ui.inputbgcolor"
+          borderRadius="md"
+          w="full"
+          p="2"
+          display="flex"
+          flexDirection="row"
+          justifyContent="center"
+          alignItems="center"
+          transition="all 0.2s"
+          _hover={{
+            bg: "gray.100",
+          }}
+        >
+          <Icon color="blue.500">
+            <FaRobot />
+          </Icon>
+          <Text fontSize="xs" ml={2} color="gray.700" fontWeight="500">
+            {(props.data.model as string) || "No model selected"}
+          </Text>
+        </Box>
+      </VStack>
     </BaseNode>
   );
 };
 
-export default React.memo(LLMNode);
+export default React.memo(LLMNode, (prevProps, nextProps) => {
+  return (
+    prevProps.data.modelprovider_name === nextProps.data.modelprovider_name &&
+    prevProps.data.model === nextProps.data.model &&
+    prevProps.data.label === nextProps.data.label
+  );
+});

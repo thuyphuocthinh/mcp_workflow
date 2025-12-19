@@ -1,6 +1,7 @@
 import { LogicalOperator } from './nodeType';
 import { LuPlay, LuBot, LuCircle, LuUser, LuGithub, LuBook, LuDatabase, LuBrainCircuit, LuGroup, LuCode, LuCrosshair, LuCodepen, LuUserCog, LuReply } from "react-icons/lu";
 import { v4 } from "uuid";
+import { LLMNodeProperties } from '../llmNode/LLMNodeProperties';
 
 interface NodeConfigItem {
   label: string;
@@ -44,9 +45,16 @@ export const nodeConfig: Record<string, NodeConfigItem> = {
     label: "LLM",
     icon: LuBot,
     colorScheme: "blue",
+    properties: LLMNodeProperties,
     allowedConnections: {
       sources: ["left", "right"],
       targets: ["left", "right"],
+    },
+    initialData: {
+      model: "glm-4-flash",
+      temperature: 0.1,
+      systemMessage: "",
+      userMessage: "${start.query}",
     },
     inputVariables: [],
     outputVariables: ["response"],

@@ -4,6 +4,7 @@ import type { Edge, Node } from "@xyflow/react";
 import { useCallback, useState } from "react";
 import { NO_ACTION_NODES } from "../../constants";
 import { useHistory } from "./UseHistory";
+import type { CustomNode } from "../../nodes/baseConfig/nodeType";
 
 interface FlowStateProps {
   initNodes: Node[];
@@ -40,6 +41,36 @@ export const useFlowState = ({ initNodes, initEdges }: FlowStateProps) => {
     },
     [nodes, pushHistory]
   );
+
+  const onNodeChange = useCallback(
+    (nodeId: string, key: string, value: any) => {
+      setNodes((nds) =>
+        nds.map((node) => {
+          if (node.id !== nodeId) return node;
+
+          if (key === "label") {
+            const isNameExists = nds.some(
+              (n) => n.id !== nodeId && n.data?.label === value,
+            );
+
+            if (isNameExists) {
+              return node;
+            }
+          }
+
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              [key]: value,
+            },
+          } as CustomNode;
+        }),
+      );
+    },
+    [setNodes],
+  );
+
 
   // --- Copy / Cut Node ---
   const copyNode = useCallback(
@@ -81,5 +112,6 @@ export const useFlowState = ({ initNodes, initEdges }: FlowStateProps) => {
     redo,
     canUndo,
     canRedo,
+    onNodeChange
   };
 };

@@ -35,13 +35,10 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
         borderColor: isCut ? "red.500" : "gray.200",
       }}
     >
-      <HStack spacing={2} mb={1}>
+      <HStack gap={2} mb={1}>
         <Box
           aria-label={data.label}
-          icon={icon}
           colorScheme={colorScheme}
-          size="sm"
-          variant="ghost"
           bg={`${colorScheme}.50`}
           color={`${colorScheme}.500`}
           flexShrink={0}
@@ -68,7 +65,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
             color: `${colorScheme}.500`,
           }}
         >
-          {data.label}
+          {data.label as string}
         </Text>
       </HStack>
       {children}

@@ -24,8 +24,8 @@ const CustomEdge: FC<EdgeProps<Edge<CustomEdgeData>>> = ({
   sourcePosition = Position.Right,
   targetPosition = Position.Left,
   style,
-  markerEnd,
   data,
+  selected,
 }) => {
   const [hovered, setHovered] = useState(false);
 
@@ -56,7 +56,7 @@ const CustomEdge: FC<EdgeProps<Edge<CustomEdgeData>>> = ({
           cursor: "pointer",
         }}
         fill="none"
-        markerEnd={markerEnd}
+        markerEnd={`url(#${selected ? "arrow-selected" : "arrow-default"})`}
       />
 
       {/* Path invisible để dễ hover */}

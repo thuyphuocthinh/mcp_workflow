@@ -1,7 +1,7 @@
 import { Box, HStack, IconButton, Menu, Portal, Text } from "@chakra-ui/react";
 import { Tooltip } from "@/components/ui/tooltip";
 import "@xyflow/react/dist/style.css";
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import {
   ReactFlow,
   addEdge,
@@ -49,6 +49,10 @@ import {
 } from "react-icons/fa";
 import { FaMessage } from "react-icons/fa6";
 import { DebugPanel } from "./DebugPanel";
+import { nodeConfig, type INodeConfig } from "../nodes/baseConfig/nodeConfig";
+import { BaseNodeProperties } from "../nodes/baseConfig/BaseNodeProperties";
+import type { VariableReference } from "../nodes/baseConfig/variableSystem";
+import { ConfigPanel } from "./ConfigPanel";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -106,6 +110,7 @@ function Flow() {
     canRedo,
     setEdgesRaw,
     setNodesRaw,
+    onNodeChange,
   } = useFlowState({
     initNodes: initialNodes,
     initEdges: initialEdges,
@@ -133,6 +138,7 @@ function Flow() {
   }, [selectedNodeId]);
   const [showNodesMenu, setShowNodesMenu] = useState(false);
   const [selectedEdgeId, setSelectedEdgeId] = useState("");
+  const [selectedEdgeClick, setSelectedEdgeClick] = useState<string>("");
   const [nodeMenuPosition, setNodeMenuPosition] = useState<{
     x: number;
     y: number;
@@ -140,6 +146,14 @@ function Flow() {
   const [showMiniMap, setShowMiniMap] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [showDebug, setShowDebug] = useState(false);
+  const webhookBaseUrl = useMemo(() => {
+    return `${window.location.origin}/api/webhooks/`;
+  }, []);
+  const isMouseOverCanvasRef = useRef(false);
+  const isMouseOverFlowCanvas = useCallback((): boolean => {
+    return isMouseOverCanvasRef.current;
+  }, []);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   const handleUndo = useCallback(() => {
     const prev = undo();
@@ -185,12 +199,12 @@ function Flow() {
           ...edge.style,
           strokeWidth: 3,
           strokeDasharray: edge.type === "smoothstep" ? "5,5" : undefined,
-          stroke: "#000",
+          stroke: selectedEdgeClick === edge.id ? "#3182ce" : "#000",
           markerEnd: `url(#arrow-${edge.id})`,
         },
       };
     });
-  }, [edges, nodes]);
+  }, [edges, nodes, selectedEdgeClick]);
 
   const nodesWithSelection = useMemo(() => {
     if (!nodes) return [];
@@ -230,6 +244,7 @@ function Flow() {
         nodes.filter((node) => node.id !== nodeId)
       );
       setNodes(filterNodes);
+      setSelectedNodeId(null);
 
       const leftEdge = edges.find((edge) => edge.target === nodeId);
       const rightEdge = edges.find((edge) => edge.source === nodeId);
@@ -339,14 +354,24 @@ function Flow() {
     });
   }, [nodes, mousePos]);
 
+  const onCanvasMouseEnter = useCallback(() => {
+    isMouseOverCanvasRef.current = true;
+  }, []);
+
+  const onCanvasMouseLeave = useCallback(() => {
+    isMouseOverCanvasRef.current = false;
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Delete" || event.key === "Backspace") {
         if (selectedNodeId) {
+          if (isMouseOverFlowCanvas()) return;
           deleteNode(selectedNodeId);
         }
       }
       if (event.ctrlKey) {
+        if (isMouseOverFlowCanvas()) return;
         if (event.key === "c") {
           handleCopyNode();
         }
@@ -380,6 +405,29 @@ function Flow() {
     handleCutNode,
   ]);
 
+  useEffect(() => {
+    const checkInitialMousePosition = (e: MouseEvent) => {
+      if (canvasContainerRef.current) {
+        const rect = canvasContainerRef.current.getBoundingClientRect();
+        const isInside =
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom;
+        isMouseOverCanvasRef.current = isInside;
+      }
+      document.removeEventListener("mousemove", checkInitialMousePosition);
+    };
+
+    document.addEventListener("mousemove", checkInitialMousePosition, {
+      once: true,
+    });
+
+    return () => {
+      document.removeEventListener("mousemove", checkInitialMousePosition);
+    };
+  }, []);
+
   const onNodesDelete = useCallback(
     (deletedNodes: Node[]) => {
       const nodesToKeep = deletedNodes.filter(
@@ -400,16 +448,20 @@ function Flow() {
           (node) => !nodesActuallyDeleted.some((n) => n.id === node.id)
         )
       );
+
+      setSelectedNodeId("");
     },
     [nodes]
   );
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
+      isMouseOverCanvasRef.current = true;
       setSelectedNodeId(node.id);
       setShowNodesMenu(false);
       setNodeMenuPosition(null);
       setSelectedEdgeId("");
+      setSelectedEdgeClick("");
     },
     [setSelectedNodeId]
   );
@@ -443,12 +495,15 @@ function Flow() {
     closeContextMenu();
     setNodeMenuPosition(null);
     setSelectedEdgeId("");
+    setSelectedEdgeClick("");
     setShowDebug(false);
+    isMouseOverCanvasRef.current = false;
   }, [setSelectedNodeId]);
 
   const onNodeDrag: OnNodeDrag = useCallback(
     (_, node) => {
       console.log("drag event", node.data);
+      isMouseOverCanvasRef.current = true;
     },
     [reactFlowInstance]
   );
@@ -482,13 +537,22 @@ function Flow() {
       ...nodes,
       {
         id: `${nodeType}-${v4()}`,
-        data: { label: generateUniqueName(nodeType, nodes) },
+        data: {
+          label: generateUniqueName(nodeType, nodes),
+          ...nodeConfig[nodeType]?.initialData,
+        },
         position,
         type: nodeType,
         width: 200,
       },
     ]);
   };
+
+  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    setSelectedEdgeId(edge.id);
+    setSelectedEdgeClick(edge.id);
+    isMouseOverCanvasRef.current = true;
+  }, []);
 
   const handleAddNodeFromEdge = useCallback(
     ({ id, x, y }: { id: string; x: number; y: number }) => {
@@ -528,7 +592,10 @@ function Flow() {
           x: nodeMenuPosition.x,
           y: nodeMenuPosition.y,
         }),
-        data: { label: generateUniqueName(nodeType, nodes) },
+        data: {
+          label: generateUniqueName(nodeType, nodes),
+          ...nodeConfig[nodeType]?.initialData,
+        },
         width: 200,
       };
 
@@ -546,6 +613,7 @@ function Flow() {
       setShowNodesMenu(false);
       setNodeMenuPosition(null);
       setSelectedEdgeId("");
+      setSelectedEdgeClick("");
     },
     [edges, nodes, selectedEdgeId, nodeMenuPosition]
   );
@@ -579,6 +647,52 @@ function Flow() {
       );
     }, 500);
   }, [nodes, edges, reactFlowInstance, setNodes]);
+
+  const getNodePropertiesComponent = useCallback(
+    (node: Node | null) => {
+      if (!node) return null;
+      if (node.type === "webhook") {
+        node.data.webhookUrl = webhookBaseUrl;
+      }
+
+      const nodeType = node.type as INodeConfig;
+      const PropertiesComponent = nodeConfig[nodeType]?.properties;
+      const { icon: Icon, colorScheme } = nodeConfig[nodeType];
+      const availableVariables: VariableReference[] = [
+        {
+          nodeId: "",
+          variableName: "example_variable",
+          variableType: "string",
+        },
+      ];
+
+      return (
+        <BaseNodeProperties
+          icon={<Icon />}
+          colorScheme={colorScheme}
+          nodeName={node.data.label as string}
+          onNameChange={(newName: string) =>
+            onNodeChange(node.id, "label", newName)
+          }
+          nameError={node.data.label ? "" : "Node Name is required"}
+          node={node}
+          availableVariables={availableVariables}
+          onNodeDataChange={(nodeId: string, key: string, value: any) => {
+            console.log(nodeId, key, value);
+          }}
+        >
+          {PropertiesComponent && (
+            <PropertiesComponent
+              node={node}
+              availableVariables={availableVariables}
+              onNodeDataChange={onNodeChange}
+            />
+          )}
+        </BaseNodeProperties>
+      );
+    },
+    [nodes]
+  );
 
   return (
     <Box w="full" h="100%" display="flex">
@@ -616,7 +730,7 @@ function Flow() {
         {collapsed ? <LuArrowRight /> : <LuArrowLeft />}
       </IconButton>
 
-      <Box flex="1">
+      <Box flex="1" ref={canvasContainerRef} position="relative">
         <ReactFlow
           onNodeClick={onNodeClick}
           nodes={nodesWithSelection}
@@ -624,6 +738,7 @@ function Flow() {
           nodeTypes={CustomNodeTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onEdgeClick={onEdgeClick}
           onConnect={onConnect}
           onNodeDrag={onNodeDrag}
           onDrop={handleDrop}
@@ -632,6 +747,8 @@ function Flow() {
           onPaneClick={onPaneClick}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
+          onPaneMouseEnter={onCanvasMouseLeave}
+          onPaneMouseLeave={onCanvasMouseEnter}
           fitView
           snapToGrid
           fitViewOptions={fitViewOptions}
@@ -648,11 +765,10 @@ function Flow() {
           edgeTypes={edgeTypesWithCallback}
           attributionPosition="bottom-left"
         >
-          <svg style={{ display: "inline-block" }}>
-            {edgesWithStyles.map((edge) => (
+          <svg style={{ position: "absolute", width: 0, height: 0 }}>
+            <defs>
               <marker
-                id={`arrow-${edge.id}`}
-                key={edge.id}
+                id="arrow-default"
                 markerWidth="10"
                 markerHeight="10"
                 refX="8"
@@ -662,7 +778,19 @@ function Flow() {
               >
                 <path d="M0,0 L0,10 L10,5 z" fill={"#000"} />
               </marker>
-            ))}
+
+              <marker
+                id="arrow-selected"
+                markerWidth="10"
+                markerHeight="10"
+                refX="8"
+                refY="5"
+                orient="auto"
+                markerUnits="strokeWidth"
+              >
+                <path d="M0,0 L0,10 L10,5 z" fill="#3182ce" />
+              </marker>
+            </defs>
           </svg>
 
           {/* Clipboard Panel */}
@@ -902,21 +1030,6 @@ function Flow() {
             </HStack>
           </Panel>
 
-          <Panel
-            position="top-right"
-            style={{
-              marginRight: "1rem",
-              marginTop: "5rem",
-            }}
-          >
-            {showDebug && (
-              <DebugPanel
-                isOpen={showDebug}
-                onClose={() => setShowDebug(false)}
-              />
-            )}
-          </Panel>
-
           {/* Auto Layout */}
           <Panel
             position="bottom-left"
@@ -1148,6 +1261,32 @@ function Flow() {
           )}
         </ReactFlow>
       </Box>
+
+      {/* Debug/Config Panel */}
+      <Panel
+        position="top-right"
+        style={{
+          marginRight: "1rem",
+          marginTop: "9.5rem",
+        }}
+      >
+        <HStack gap={"4"} zIndex={10}>
+          {showDebug && (
+            <DebugPanel
+              isOpen={showDebug}
+              onClose={() => setShowDebug(false)}
+            />
+          )}
+          {selectedNodeId && (
+            <ConfigPanel
+              nodes={nodes}
+              selectedNodeId={selectedNodeId}
+              getNodePropertiesComponent={getNodePropertiesComponent}
+              onClose={() => setSelectedNodeId("")}
+            />
+          )}
+        </HStack>
+      </Panel>
     </Box>
   );
 }
