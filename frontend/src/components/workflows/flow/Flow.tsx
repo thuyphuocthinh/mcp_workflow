@@ -364,34 +364,20 @@ function Flow() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isMouseOverFlowCanvas()) return;
+
       if (event.key === "Delete" || event.key === "Backspace") {
         if (selectedNodeId) {
-          if (isMouseOverFlowCanvas()) return;
           deleteNode(selectedNodeId);
         }
       }
-      if (event.ctrlKey) {
-        if (isMouseOverFlowCanvas()) return;
-        if (event.key === "c") {
-          handleCopyNode();
-        }
-        if (event.key === "x") {
-          handleCutNode();
-        }
-        if (event.key === "v") {
-          handlePasteNode();
-        }
-        if (event.key === "z") {
-          if (canUndo()) {
-            handleUndo();
-          }
-        }
 
-        if (event.key === "y") {
-          if (canRedo()) {
-            handleRedo();
-          }
-        }
+      if (event.ctrlKey) {
+        if (event.key === "c") handleCopyNode();
+        if (event.key === "x") handleCutNode();
+        if (event.key === "v") handlePasteNode();
+        if (event.key === "z" && canUndo()) handleUndo();
+        if (event.key === "y" && canRedo()) handleRedo();
       }
     };
 
@@ -746,8 +732,8 @@ function Flow() {
           onPaneClick={onPaneClick}
           onNodeContextMenu={onNodeContextMenu}
           onPaneContextMenu={onPaneContextMenu}
-          onPaneMouseEnter={onCanvasMouseLeave}
-          onPaneMouseLeave={onCanvasMouseEnter}
+          onPaneMouseEnter={onCanvasMouseEnter}
+          onPaneMouseLeave={onCanvasMouseLeave}
           fitView
           snapToGrid
           fitViewOptions={fitViewOptions}
