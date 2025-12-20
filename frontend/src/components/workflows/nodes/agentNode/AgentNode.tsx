@@ -6,6 +6,7 @@ import { BaseNode } from "../baseConfig/BaseNode";
 import { Box, Card, Flex, Icon, Text, VStack } from "@chakra-ui/react";
 import { FaRobot } from "react-icons/fa";
 import type { Tool } from "@/types";
+import { toolIconMap, type ToolKey } from "@/components/common/ToolIcons";
 
 const AgentNode: React.FC<NodeProps> = (props) => {
   const { icon: IconProp, colorScheme } = nodeConfig.agent;
@@ -69,7 +70,7 @@ const AgentNode: React.FC<NodeProps> = (props) => {
               <Card.Body py={2}>
                 <Flex align="center" justify="space-between">
                   <Flex align="center" gap={2}>
-                    <Icon as={tool.icon} boxSize={4} />
+                    <Icon as={toolIconMap[tool.key as ToolKey]} boxSize={4} />
                     <Text fontSize="sm" fontWeight="medium">
                       {tool.name}
                     </Text>

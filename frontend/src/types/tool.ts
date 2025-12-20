@@ -3,4 +3,5 @@ export type Tool = {
   name: string;
   description: string;
   icon: React.ElementType;
+  key: string;
 };

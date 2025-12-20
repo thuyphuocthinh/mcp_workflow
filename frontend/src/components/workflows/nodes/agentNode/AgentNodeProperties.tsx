@@ -22,7 +22,18 @@ export const AgentNodeProperties = ({
 
   const onToolsChange = (tools: Tool[]) => {
     setSelectedTools(tools);
-    onNodeDataChange(node.id, "tools", tools);
+    onNodeDataChange(
+      node.id,
+      "tools",
+      tools.map((tool) => {
+        return {
+          id: tool.id,
+          name: tool.name,
+          key: tool.key,
+          description: tool.description,
+        };
+      })
+    );
   };
 
   return (
