@@ -38,13 +38,13 @@ Mục tiêu
 ## Tuần 6, 7
 - Init Backend (Database, Structure, Auth Email, password, google)
 - BE lưu graph, tối ưu graph
-- Viết api trả ra tool
-## Tuần 8
 - Ghép MCP client, servers (DOCS, SHEETS)
-- Tạo trang tool
-## Tuần 9
-- Oauth2 google
+## Tuần 8
 - Thêm MCP Mail, Search
+- Viết api trả ra tool
+## Tuần 9
+- Tạo trang tool
+- Oauth2 google
 ## Tuần 10
 - Tích hợp AI model vào và test workflow
 - Test, tối ưu performance

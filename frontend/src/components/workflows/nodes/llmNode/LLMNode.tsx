@@ -66,10 +66,4 @@ const LLMNode: React.FC<NodeProps> = (props) => {
   );
 };
 
-export default React.memo(LLMNode, (prevProps, nextProps) => {
-  return (
-    prevProps.data.modelprovider_name === nextProps.data.modelprovider_name &&
-    prevProps.data.model === nextProps.data.model &&
-    prevProps.data.label === nextProps.data.label
-  );
-});
+export default React.memo(LLMNode);

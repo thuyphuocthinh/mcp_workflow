@@ -87,13 +87,4 @@ const AgentNode: React.FC<NodeProps> = (props) => {
   );
 };
 
-export default React.memo(AgentNode, (prevProps, nextProps) => {
-  return (
-    prevProps.data.model === nextProps.data.model &&
-    prevProps.data.label === nextProps.data.label &&
-    JSON.stringify(prevProps.data.tools) ===
-      JSON.stringify(nextProps.data.tools) &&
-    JSON.stringify(prevProps.data.retrievalTools) ===
-      JSON.stringify(nextProps.data.retrievalTools)
-  );
-});
+export default React.memo(AgentNode);

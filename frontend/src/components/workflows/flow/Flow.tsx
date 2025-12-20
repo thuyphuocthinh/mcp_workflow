@@ -347,6 +347,10 @@ function Flow() {
           ...cutNode,
           id: `${cutNode.type}-${v4()}`,
           position: mousePos ?? cutNode.position,
+          data: {
+            ...cutNode.data,
+            isCut: false,
+          },
         };
 
         setNodes((nds) => [...nds, newNode]);
@@ -364,25 +368,33 @@ function Flow() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isMouseOverFlowCanvas()) return;
-
       if (event.key === "Delete" || event.key === "Backspace") {
         if (selectedNodeId) {
+          if (!isMouseOverFlowCanvas()) return;
           deleteNode(selectedNodeId);
         }
       }
 
       if (event.ctrlKey) {
-        if (event.key === "c") handleCopyNode();
-        if (event.key === "x") handleCutNode();
-        if (event.key === "v") handlePasteNode();
+        if (event.key === "c") {
+          if (!isMouseOverFlowCanvas()) return;
+          handleCopyNode();
+        }
+        if (event.key === "x") {
+          if (!isMouseOverFlowCanvas()) return;
+          handleCutNode();
+        }
+        if (event.key === "v") {
+          handlePasteNode();
+        }
         if (event.key === "z" && canUndo()) handleUndo();
         if (event.key === "y" && canRedo()) handleRedo();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
   }, [
     selectedNodeId,
     deleteNode,
