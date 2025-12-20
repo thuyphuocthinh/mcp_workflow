@@ -676,7 +676,7 @@ function Flow() {
         </BaseNodeProperties>
       );
     },
-    [nodes]
+    [nodes, selectedNodeId]
   );
 
   return (

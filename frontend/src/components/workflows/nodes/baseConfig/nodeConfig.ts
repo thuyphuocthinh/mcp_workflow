@@ -52,7 +52,12 @@ export const nodeConfig: Record<string, NodeConfigItem> = {
       targets: ["left", "right"],
     },
     initialData: {
-      model: "glm-4-flash",
+      model: {
+        id: "gpt-4o",
+        name: "GPT-4o",
+        provider: "OpenAI",
+        description: "Best for reasoning, coding, and chat",
+      },
       temperature: 0.1,
       systemMessage: "",
       userMessage: "${start.query}",
@@ -72,7 +77,12 @@ export const nodeConfig: Record<string, NodeConfigItem> = {
     outputVariables: ["response"],
     inputVariables: [],
     initialData: {
-      model: "glm-4-flash",
+      model: {
+        id: "gpt-4o",
+        name: "GPT-4o",
+        provider: "OpenAI",
+        description: "Best for reasoning, coding, and chat",
+      },
       temperature: 0.1,
       systemMessage: "",
       userMessage: "",

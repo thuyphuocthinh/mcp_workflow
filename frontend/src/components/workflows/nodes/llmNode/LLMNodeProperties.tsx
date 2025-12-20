@@ -22,7 +22,7 @@ export const LLMNodeProperties = ({
         value={model}
         onChange={(m) => {
           setModel(m);
-          onNodeDataChange(node.id, "model", m?.name || "");
+          onNodeDataChange(node.id, "model", m);
         }}
       />
 

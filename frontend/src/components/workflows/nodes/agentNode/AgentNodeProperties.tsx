@@ -1,10 +1,10 @@
-import { ModelSelect, type AIModel } from "@/components/common/ModelSelect";
+import { ModelSelect } from "@/components/common/ModelSelect";
 import type { VariableReference } from "../baseConfig/variableSystem";
-import { useState } from "react";
 import { VariableSelector } from "@/components/common/VariableSelector";
 import ToolSelector from "@/components/common/ToolSelector";
 import { tools } from "@/constants/tools";
 import type { Tool } from "@/types";
+import { useCallback } from "react";
 
 interface AgentNodePropertiesProps {
   node: any;
@@ -17,32 +17,30 @@ export const AgentNodeProperties = ({
   onNodeDataChange,
   availableVariables,
 }: AgentNodePropertiesProps) => {
-  const [model, setModel] = useState<AIModel>();
-  const [selectedTools, setSelectedTools] = useState<Tool[]>([]);
-
-  const onToolsChange = (tools: Tool[]) => {
-    setSelectedTools(tools);
-    onNodeDataChange(
-      node.id,
-      "tools",
-      tools.map((tool) => {
-        return {
-          id: tool.id,
-          name: tool.name,
-          key: tool.key,
-          description: tool.description,
-        };
-      })
-    );
-  };
+  const onToolsChange = useCallback(
+    (tools: Tool[]) => {
+      onNodeDataChange(
+        node.id,
+        "tools",
+        tools.map((tool) => {
+          return {
+            id: tool.id,
+            name: tool.name,
+            key: tool.key,
+            description: tool.description,
+          };
+        })
+      );
+    },
+    [node.id, onNodeDataChange]
+  );
 
   return (
     <>
       <ModelSelect
-        value={model}
+        value={node.data.model}
         onChange={(m) => {
-          setModel(m);
-          onNodeDataChange(node.id, "model", m?.name || "");
+          onNodeDataChange(node.id, "model", m);
         }}
       />
 
@@ -55,7 +53,7 @@ export const AgentNodeProperties = ({
 
       <ToolSelector
         tools={tools}
-        value={selectedTools}
+        value={node.data.tools || []}
         onChange={onToolsChange}
       />
     </>
