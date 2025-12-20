@@ -40,6 +40,7 @@ export const ConfigPanel = ({
           borderRadius: "24px",
         },
       }}
+      overflowY="auto"
     >
       <CloseButton
         onClick={onClose}

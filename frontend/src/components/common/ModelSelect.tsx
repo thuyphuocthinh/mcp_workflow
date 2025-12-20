@@ -1,6 +1,15 @@
 "use client";
 
-import { Box, Card, HStack, VStack, Text, Menu, Icon } from "@chakra-ui/react";
+import {
+  Box,
+  Card,
+  HStack,
+  VStack,
+  Text,
+  Menu,
+  Icon,
+  Portal,
+} from "@chakra-ui/react";
 import { FaRobot } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { FiChevronDown } from "react-icons/fi";
@@ -113,61 +122,65 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
         </HStack>
       </Menu.Trigger>
 
-      <Menu.Content minW="360px" p="2">
-        <VStack align="stretch" gap="2">
-          {FAKE_MODELS.map((model) => {
-            const isSelected = selected?.id === model.id;
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content minW="360px" w={"full"} p="2">
+            <VStack align="stretch" gap="2">
+              {FAKE_MODELS.map((model) => {
+                const isSelected = selected?.id === model.id;
 
-            return (
-              <Menu.Item
-                value={model.id}
-                key={model.id}
-                onClick={() => handleSelect(model)}
-                p="0"
-                borderRadius="md"
-                bg={isSelected ? "blue.50" : "transparent"}
-                _hover={{ bg: "gray.50" }}
-                cursor={"pointer"}
-              >
-                <Card.Root
-                  variant="subtle"
-                  w="full"
-                  borderWidth="1px"
-                  borderColor={isSelected ? "blue.400" : "border"}
-                  _hover={{
-                    transform: "translateY(-1px)",
-                    boxShadow: "sm",
-                    borderColor: "blue.300",
-                  }}
-                  transition="all 0.1s ease-in-out"
-                >
-                  <HStack align="start" gap="3">
-                    <Box
-                      p="2"
-                      borderRadius="md"
-                      bg={isSelected ? "blue.100" : "gray.100"}
+                return (
+                  <Menu.Item
+                    value={model.id}
+                    key={model.id}
+                    onClick={() => handleSelect(model)}
+                    p="0"
+                    borderRadius="md"
+                    bg={isSelected ? "blue.50" : "transparent"}
+                    _hover={{ bg: "gray.50" }}
+                    cursor={"pointer"}
+                  >
+                    <Card.Root
+                      variant="subtle"
+                      w="full"
+                      borderWidth="1px"
+                      borderColor={isSelected ? "blue.400" : "border"}
+                      _hover={{
+                        transform: "translateY(-1px)",
+                        boxShadow: "sm",
+                        borderColor: "blue.300",
+                      }}
+                      transition="all 0.1s ease-in-out"
                     >
-                      <Icon as={FaRobot} />
-                    </Box>
+                      <HStack align="start" gap="3">
+                        <Box
+                          p="2"
+                          borderRadius="md"
+                          bg={isSelected ? "blue.100" : "gray.100"}
+                        >
+                          <Icon as={FaRobot} />
+                        </Box>
 
-                    <VStack align="start" gap="1">
-                      <HStack>
-                        <Text fontWeight="semibold">{model.name}</Text>
-                        <Text fontSize="xs" color="fg.muted">
-                          · {model.provider}
-                        </Text>
+                        <VStack align="start" gap="1">
+                          <HStack>
+                            <Text fontWeight="semibold">{model.name}</Text>
+                            <Text fontSize="xs" color="fg.muted">
+                              · {model.provider}
+                            </Text>
+                          </HStack>
+                          <Text fontSize="sm" color="fg.muted">
+                            {model.description}
+                          </Text>
+                        </VStack>
                       </HStack>
-                      <Text fontSize="sm" color="fg.muted">
-                        {model.description}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </Card.Root>
-              </Menu.Item>
-            );
-          })}
-        </VStack>
-      </Menu.Content>
+                    </Card.Root>
+                  </Menu.Item>
+                );
+              })}
+            </VStack>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
     </Menu.Root>
   );
 }

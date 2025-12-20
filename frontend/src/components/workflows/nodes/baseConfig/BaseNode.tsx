@@ -1,6 +1,7 @@
 import { Box, HStack, Text } from "@chakra-ui/react";
 import type React from "react";
 import type { NodeProps } from "@xyflow/react";
+import { NO_ACTION_NODES } from "../../constants";
 
 interface BaseNodeProps extends NodeProps {
   icon?: React.ReactElement;
@@ -15,6 +16,9 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
   children,
 }) => {
   const isCut = (data as any).isCut;
+  const showMarginoBottom = !NO_ACTION_NODES.includes(
+    (data.label as string).toLowerCase()
+  );
 
   return (
     <Box
@@ -35,7 +39,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
         borderColor: isCut ? "red.500" : "gray.200",
       }}
     >
-      <HStack gap={2}>
+      <HStack gap={2} mb={showMarginoBottom ? "2" : 0}>
         <Box
           aria-label={data.label}
           colorScheme={colorScheme}
@@ -61,6 +65,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
           color="gray.700"
           transition="all 0.2s"
           isTruncated
+          wordBreak={"break-all"}
           _hover={{
             color: `${colorScheme}.500`,
           }}

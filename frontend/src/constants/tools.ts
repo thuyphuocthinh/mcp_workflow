@@ -1,0 +1,78 @@
+import type { Tool } from "@/types";
+import { v4 as uuidv4 } from "uuid";
+import { FaGoogleDrive, FaGoogle } from "react-icons/fa";
+import { SiGoogledocs, SiGooglesheets } from "react-icons/si";
+import { MdEmail } from "react-icons/md";
+import { FaFigma, FaGithub, FaSlack } from "react-icons/fa";
+import { SiNotion } from "react-icons/si";
+import { MdPictureAsPdf, MdWbSunny } from "react-icons/md";
+
+export const tools: Tool[] = [
+  {
+    id: uuidv4(),
+    name: "Google Docs",
+    description:
+      "Create and edit documents online with real-time collaboration.",
+    icon: SiGoogledocs,
+  },
+  {
+    id: uuidv4(),
+    name: "Google Sheets",
+    description: "Analyze data with powerful spreadsheets and formulas.",
+    icon: SiGooglesheets,
+  },
+  {
+    id: uuidv4(),
+    name: "Google Drive",
+    description: "Store, share, and access files securely in the cloud.",
+    icon: FaGoogleDrive,
+  },
+  {
+    id: uuidv4(),
+    name: "Gmail",
+    description: "Send, receive, and manage your emails efficiently.",
+    icon: MdEmail,
+  },
+  {
+    id: uuidv4(),
+    name: "Google Search",
+    description: "Search the world’s information instantly.",
+    icon: FaGoogle,
+  },
+  {
+    id: uuidv4(),
+    name: "Figma",
+    description: "Design, prototype, and collaborate on UI/UX in real time.",
+    icon: FaFigma,
+  },
+  {
+    id: uuidv4(),
+    name: "GitHub",
+    description: "Host, review, and manage code repositories.",
+    icon: FaGithub,
+  },
+  {
+    id: uuidv4(),
+    name: "Slack",
+    description: "Communicate with your team through organized channels.",
+    icon: FaSlack,
+  },
+  {
+    id: uuidv4(),
+    name: "Notion",
+    description: "Organize docs, tasks, and knowledge in one workspace.",
+    icon: SiNotion,
+  },
+  {
+    id: uuidv4(),
+    name: "Weather",
+    description: "Check real-time weather forecasts and conditions.",
+    icon: MdWbSunny,
+  },
+  {
+    id: uuidv4(),
+    name: "PDF Viewer",
+    description: "View, manage, and export PDF documents easily.",
+    icon: MdPictureAsPdf,
+  },
+];

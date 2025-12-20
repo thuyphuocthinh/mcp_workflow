@@ -496,7 +496,6 @@ function Flow() {
     setNodeMenuPosition(null);
     setSelectedEdgeId("");
     setSelectedEdgeClick("");
-    setShowDebug(false);
     isMouseOverCanvasRef.current = false;
   }, [setSelectedNodeId]);
 
@@ -1271,18 +1270,18 @@ function Flow() {
         }}
       >
         <HStack gap={"4"} zIndex={10}>
-          {showDebug && (
-            <DebugPanel
-              isOpen={showDebug}
-              onClose={() => setShowDebug(false)}
-            />
-          )}
           {selectedNodeId && (
             <ConfigPanel
               nodes={nodes}
               selectedNodeId={selectedNodeId}
               getNodePropertiesComponent={getNodePropertiesComponent}
               onClose={() => setSelectedNodeId("")}
+            />
+          )}
+          {showDebug && (
+            <DebugPanel
+              isOpen={showDebug}
+              onClose={() => setShowDebug(false)}
             />
           )}
         </HStack>

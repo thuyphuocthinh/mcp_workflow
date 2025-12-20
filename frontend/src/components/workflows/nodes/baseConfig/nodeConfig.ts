@@ -2,6 +2,7 @@ import { LogicalOperator } from './nodeType';
 import { LuPlay, LuBot, LuCircle, LuUser, LuGithub, LuBook, LuDatabase, LuBrainCircuit, LuGroup, LuCode, LuCrosshair, LuCodepen, LuUserCog, LuReply } from "react-icons/lu";
 import { v4 } from "uuid";
 import { LLMNodeProperties } from '../llmNode/LLMNodeProperties';
+import { AgentNodeProperties } from '../agentNode/AgentNodeProperties';
 
 interface NodeConfigItem {
   label: string;
@@ -63,6 +64,7 @@ export const nodeConfig: Record<string, NodeConfigItem> = {
     label: "Agent",
     icon: LuUser,
     colorScheme: "yellow",
+    properties: AgentNodeProperties,
     allowedConnections: {
       sources: ["left", "right"],
       targets: ["left", "right"],
@@ -74,7 +76,7 @@ export const nodeConfig: Record<string, NodeConfigItem> = {
       temperature: 0.1,
       systemMessage: "",
       userMessage: "",
-      tools: [{}],
+      tools: [],
       retrievalTools: [],
     },
   },
