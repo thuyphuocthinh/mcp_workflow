@@ -35,7 +35,7 @@ export const BaseNode: React.FC<BaseNodeProps> = ({
         borderColor: isCut ? "red.500" : "gray.200",
       }}
     >
-      <HStack gap={2} mb={1}>
+      <HStack gap={2}>
         <Box
           aria-label={data.label}
           colorScheme={colorScheme}
