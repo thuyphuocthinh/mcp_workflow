@@ -385,10 +385,17 @@ function Flow() {
           handleCutNode();
         }
         if (event.key === "v") {
+          if (!isMouseOverFlowCanvas()) return;
           handlePasteNode();
         }
-        if (event.key === "z" && canUndo()) handleUndo();
-        if (event.key === "y" && canRedo()) handleRedo();
+        if (event.key === "z" && canUndo()) {
+          if (!isMouseOverFlowCanvas()) return;
+          handleUndo();
+        }
+        if (event.key === "y" && canRedo()) {
+          if (!isMouseOverFlowCanvas()) return;
+          handleRedo();
+        }
       }
     };
 

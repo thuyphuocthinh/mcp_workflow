@@ -1,8 +1,9 @@
 "use client";
 
 import { Box, Textarea, VStack, Text, Portal } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { VariableReference } from "../workflows/nodes/baseConfig/variableSystem";
+import debounce from "lodash/debounce";
 
 type VariableSelectorProps = {
   value?: string;
@@ -47,11 +48,7 @@ export function VariableSelector({
     });
   };
 
-  const handleChange = (val: string) => {
-    setText(val);
-    onChange?.(val);
-
-    const cursor = textareaRef.current?.selectionStart ?? 0;
+  const processMention = useCallback((val: string, cursor: number) => {
     const beforeCursor = val.slice(0, cursor);
     const match = beforeCursor.match(/@([\w.]*)$/);
 
@@ -63,6 +60,28 @@ export function VariableSelector({
       setShowMenu(false);
       setQuery("");
     }
+  }, []);
+
+  const debouncedProcessMention = useMemo(
+    () => debounce(processMention, 200),
+    [processMention]
+  );
+
+  // cleanup khi unmount
+  useEffect(() => {
+    return () => {
+      debouncedProcessMention.cancel();
+    };
+  }, [debouncedProcessMention]);
+
+  const handleChange = (val: string) => {
+    setText(val);
+    onChange?.(val);
+
+    const cursor = textareaRef.current?.selectionStart ?? 0;
+
+    // debounce logic nặng
+    debouncedProcessMention(val, cursor);
   };
 
   const handleSelectVariable = (variable: VariableReference) => {
