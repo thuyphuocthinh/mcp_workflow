@@ -53,6 +53,7 @@ import { nodeConfig, type INodeConfig } from "../nodes/baseConfig/nodeConfig";
 import { BaseNodeProperties } from "../nodes/baseConfig/BaseNodeProperties";
 import type { VariableReference } from "../nodes/baseConfig/variableSystem";
 import { ConfigPanel } from "./ConfigPanel";
+import type { FlowData } from "../nodes/baseConfig/flowDataType";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -111,6 +112,9 @@ function Flow() {
     setEdgesRaw,
     setNodesRaw,
     onNodeChange,
+    setLastSavedSnapshot,
+    isGraphModified,
+    setIsGraphModified,
   } = useFlowState({
     initNodes: initialNodes,
     initEdges: initialEdges,
@@ -698,6 +702,55 @@ function Flow() {
     [nodes, selectedNodeId]
   );
 
+  const renderFlowFromData = useCallback(
+    (data: FlowData) => {
+      const { nodes, edges, viewport } = data;
+
+      setNodesRaw(nodes);
+      setEdgesRaw(edges);
+
+      if (viewport) {
+        reactFlowInstance.setViewport(viewport, { duration: 300 });
+      } else {
+        requestAnimationFrame(() => {
+          reactFlowInstance.fitView({ padding: 0.2 });
+        });
+      }
+    },
+    [setNodesRaw, setEdgesRaw, reactFlowInstance]
+  );
+
+  const saveFlow = useCallback(() => {
+    const viewport = reactFlowInstance.getViewport();
+
+    const flowData = {
+      nodes,
+      edges,
+      viewport,
+      meta: {
+        version: 1,
+        updatedAt: Date.now(),
+      },
+    };
+
+    setLastSavedSnapshot({
+      nodes,
+      edges,
+    });
+    setIsGraphModified(false);
+    return flowData;
+  }, [nodes, edges, reactFlowInstance]);
+
+  // useEffect(() => {
+  //   async function loadFlow() {
+  //     const res = await fetch("/api/workflow/123");
+  //     const data = await res.json();
+  //     renderFlowFromData(data);
+  //   }
+
+  //   loadFlow();
+  // }, []);
+
   return (
     <Box w="full" h="100%" display="flex">
       <Box
@@ -1022,6 +1075,8 @@ function Flow() {
                   colorScheme="purple"
                   variant="ghost"
                   px={3}
+                  onClick={saveFlow}
+                  disabled={!isGraphModified}
                 >
                   <HStack gap={2}>
                     <FaSave />

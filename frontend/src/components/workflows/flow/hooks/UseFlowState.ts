@@ -1,7 +1,7 @@
 import { useClipboard } from "@/hooks/useClipboard";
 import useCustomToast from "@/hooks/useCustomToast";
 import type { Edge, Node } from "@xyflow/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { NO_ACTION_NODES } from "../../constants";
 import { useHistory } from "./UseHistory";
 import type { CustomNode } from "../../nodes/baseConfig/nodeType";
@@ -11,13 +11,37 @@ interface FlowStateProps {
   initEdges: Edge[];
 }
 
+const isEqualGraph = (
+  a: { nodes: Node[]; edges: Edge[] },
+  b: { nodes: Node[]; edges: Edge[] },
+) => {
+  return JSON.stringify(a) === JSON.stringify(b);
+};
+
+
 export const useFlowState = ({ initNodes, initEdges }: FlowStateProps) => {
   const [nodes, setNodesRaw] = useState<Node[]>(initNodes);
   const [edges, setEdgesRaw] = useState<Edge[]>(initEdges);
+  const [isGraphModified, setIsGraphModified] = useState<boolean>(false);
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState<{
+    nodes: Node[];
+    edges: Edge[];
+  }>({
+    nodes: initNodes,
+    edges: initEdges,
+  });
 
   const { undo, redo, canUndo, canRedo, push: pushHistory } = useHistory();
   const { copy, cut, paste, clipboard } = useClipboard();
   const { showToast } = useCustomToast();
+
+  useEffect(() => {
+    const modified = !isEqualGraph(
+      { nodes, edges },
+      lastSavedSnapshot,
+    );
+    setIsGraphModified(modified);
+  }, [nodes, edges, lastSavedSnapshot]);
 
   // --- Wrappers setNodes / setEdges để push history ---
   const setNodes = useCallback(
@@ -71,7 +95,6 @@ export const useFlowState = ({ initNodes, initEdges }: FlowStateProps) => {
     [setNodes],
   );
 
-
   // --- Copy / Cut Node ---
   const copyNode = useCallback(
     (nodeId: string) => {
@@ -112,6 +135,9 @@ export const useFlowState = ({ initNodes, initEdges }: FlowStateProps) => {
     redo,
     canUndo,
     canRedo,
-    onNodeChange
+    onNodeChange,
+    isGraphModified,
+    setLastSavedSnapshot,
+    setIsGraphModified
   };
 };
