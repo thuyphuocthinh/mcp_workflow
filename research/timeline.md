@@ -35,16 +35,22 @@ Mục tiêu
 => Get Node Properties By Type => render to panels
 => How to manage states => SINGLE SOURCE OF TRUTH
 - 22/12, 24/12/ 26/12 Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
-## Tuần 6, 7
-- Init Backend (Database, Structure, Auth Email, password, google)
+- Init Backend (Database, Structure, Auth Email, password)
 - BE lưu graph, tối ưu graph
++ User (first_name, last_name, email, password, created_at, updated_at)
++ Graphs
+## Tuần 6
+- Ghep services FE
+- Ghép chạy được LLM
+## Tuần 7
 - Ghép MCP client, servers (DOCS, SHEETS)
-## Tuần 8
 - Thêm MCP Mail, Search
+## Tuần 8
 - Viết api trả ra tool
-## Tuần 9
 - Tạo trang tool
 - Oauth2 google
+## Tuần 9
+- Ghép tools, chạy agent
 ## Tuần 10
 - Tích hợp AI model vào và test workflow
 - Test, tối ưu performance
