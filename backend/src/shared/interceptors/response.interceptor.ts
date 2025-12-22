@@ -17,7 +17,13 @@ export class ResponseInterceptor implements NestInterceptor {
         if (result?.paging) {
           return new PagingResponse(result.data, result.paging);
         }
-        return new SuccessResponse(result);
+        if (result?.data && result?.message) {
+          return new SuccessResponse({data: result.data, message: result?.message});
+        } else if (result?.data) {
+          return new SuccessResponse({data: result.data});
+        } else {
+          return new SuccessResponse({message: result?.message});
+        }
       }),
     );
   }

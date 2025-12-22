@@ -11,7 +11,7 @@ export class PagingResponse<T = any> extends SuccessResponse<T> {
   paging: PagingMeta;
 
   constructor(data: T, paging: PagingMeta) {
-    super(data);
+    super({data, message: "Operation Success"});
     this.paging = paging;
   }
 }

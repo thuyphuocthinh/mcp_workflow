@@ -1,10 +1,15 @@
 import { BaseResponse } from './base.response';
 
 export class SuccessResponse<T = any> extends BaseResponse {
-  data: T;
+  data?: T;
+  message?: string;
 
-  constructor(data: T) {
+  constructor(options?: {
+    data?: T;
+    message?: string;
+  }) {
     super('SUCCESS');
-    this.data = data;
+    this.data = options?.data;
+    this.message = options?.message;
   }
 }
