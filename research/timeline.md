@@ -26,7 +26,7 @@ Mục tiêu
 + Auto Layout (understand code again)
 + Handle Copy, cut, paste node
 + Undo, redo
-## Tuần 4, 5
+## Tuần 4
 - 15/12 => Thêm tool (Fake JSON)
 - 17/12 Giao diện debug, chat response
 - 19/12, 20/12 => panel config
@@ -34,14 +34,57 @@ Mục tiêu
 => LLM | Agent Node extends Base Node
 => Get Node Properties By Type => render to panels
 => How to manage states => SINGLE SOURCE OF TRUTH
+## Tuần 5
 - 22/12, 24/12/ 26/12 Handle saved, unsaved, save graph FE side, render data => UI graph (Thinh)
-- Init Backend (Database, Structure, Auth Email, password)
+- Init Backend (Database, Structure, Auth Email, Password)
 - BE lưu graph, tối ưu graph
 + User (first_name, last_name, email, password, created_at, updated_at)
-+ Graphs
++ Graphs (id, name, description, nodes(JSON), edges(JSON), user_id, created_at, updated_at)
+FE send request CREATE graph {
+    name,
+    description
+}
+=> CREATE DEFAULT GRAPH
+FE send request SAVE graph {
+    name,
+    description,
+    config: {
+        nodes: [
+            {
+                id,
+                type,
+                position,
+                data: {
+                    label,
+                    userPrompt,
+                    tools?,
+                    variables?
+                }
+            }
+        ],
+        edges: [
+            {
+                id,
+                source,
+                target,
+                soureHandle,
+                targetHandle
+            }
+        ]
+    }
+}
+=> VALIDATE GRAPH => SAVE
+FE send request run workflow
+=> VALIDATE GRAPH
+=> TOPO SORT
+=> RUN IN ORDER WITH AI MODEL IF EXISTS
+=> STREAMING
++ Models (id, type, name, created_at, updated_at)
++ Tools (id, name, list, created_at, updated_at)
++ OAuth
 ## Tuần 6
-- Ghep services FE
-- Ghép chạy được LLM
+- Ghép services FE
+- Run AI model free, Ghép chạy được LLM
 ## Tuần 7
 - Ghép MCP client, servers (DOCS, SHEETS)
 - Thêm MCP Mail, Search
