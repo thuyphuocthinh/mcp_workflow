@@ -75,25 +75,27 @@ FE send request SAVE graph {
 }
 => VALIDATE GRAPH => SAVE
 FE send request run workflow
-=> VALIDATE GRAPH
-=> TOPO SORT
-=> RUN IN ORDER WITH AI MODEL IF EXISTS
+=> VALIDATE GRAPH DÙNG TOPO SORT
+- Research langchain/langraph/ReAct agent flow =>
+Planner
+   ↓
+Executor → Tool
+   ↺ (retry / reflect)
+   ↓
+Evaluator → route → Executor / End
 => STREAMING
-+ Models (id, type, name, created_at, updated_at)
-+ Tools (id, name, list, created_at, updated_at)
-+ OAuth
+- Thứ 7
+=> Code demo langraph hoặc dùng thư viện ...
 ## Tuần 6
 - Ghép services FE
-- Run AI model free, Ghép chạy được LLM
+- Run AI model free, Ghép chạy được LLM (chưa cần agent)
 ## Tuần 7
 - Ghép MCP client, servers (DOCS, SHEETS)
-- Thêm MCP Mail, Search
 ## Tuần 8
 - Viết api trả ra tool
 - Tạo trang tool
 - Oauth2 google
-## Tuần 9
+## Tuần 9, Tuần 10
 - Ghép tools, chạy agent
-## Tuần 10
 - Tích hợp AI model vào và test workflow
 - Test, tối ưu performance
