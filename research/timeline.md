@@ -86,6 +86,73 @@ Evaluator → route → Executor / End
 => STREAMING
 - Thứ 7
 => Code demo langraph hoặc dùng thư viện ...
+```
+        ┌────────────┐
+        │   START    │
+        └─────┬──────┘
+              ↓
+        ┌────────────┐
+        │   LLM      │
+        │ (generate) │
+        └─────┬──────┘
+              ↓
+        ┌────────────┐
+        │  CHECK     │
+        │ ok ?       │
+        └───┬───┬────┘
+            │   │
+           yes  no
+            │   │
+            ↓   └───────────┐
+         ┌───────┐          │
+         │  END  │◄─────────┘
+         └───────┘
+```
+```
+type State = {
+  input: string
+  output?: string
+  ok?: boolean
+}
+
+const llmNode = async (state: State) => {
+  const output = await llm.stream(state.input) // stream
+  return { output }
+}
+
+const checkNode = async (state: State) => {
+  const ok = state.output && state.output.length > 20
+  return { ok }
+}
+
+const graph = new StateGraph<State>()
+  .addNode("llm", llmNode)
+  .addNode("check", checkNode)
+
+graph.addEdge("START", "llm")
+graph.addEdge("llm", "check")
+
+graph.addConditionalEdges(
+  "check",
+  (state) => state.ok ? "END" : "llm"
+)
+
+const app = graph.compile()
+
+@Post("/chat")
+async chat(@Body() dto, @Res() res) {
+  const stream = await app.stream({
+    input: dto.message
+  })
+
+  for await (const chunk of stream) {
+    res.write(chunk.output ?? "")
+  }
+
+  res.end()
+}
+[text](https://chatgpt.com/g/g-p-69208a0d14d88191aa8ede10ba87375d-mcp-workflow/c/694e9c63-4380-8323-aca9-86fc2c5c2a7b)
+```
 ## Tuần 6
 - Ghép services FE, register, login, get list graphs
 - Ghép chạy được LLM stream ở BE (chưa cần agent)
