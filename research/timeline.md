@@ -87,9 +87,10 @@ Evaluator → route → Executor / End
 - Thứ 7
 => Code demo langraph hoặc dùng thư viện ...
 ## Tuần 6
-- Ghép services FE
-- Run AI model free, Ghép chạy được LLM (chưa cần agent)
+- Ghép services FE, register, login, get list graphs
+- Ghép chạy được LLM stream ở BE (chưa cần agent)
 ## Tuần 7
+- Ghép stream FE
 - Ghép MCP client, servers (DOCS, SHEETS)
 ## Tuần 8
 - Viết api trả ra tool
@@ -98,4 +99,3 @@ Evaluator → route → Executor / End
 ## Tuần 9, Tuần 10
 - Ghép tools, chạy agent
 - Tích hợp AI model vào và test workflow
-- Test, tối ưu performance

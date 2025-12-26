@@ -85,3 +85,135 @@ Câu trả lời là **Có**, ReAct Agent hoàn toàn có thể đóng vai trò 
 **Tóm lại:** ReAct Agent vận hành theo cơ chế "suy nghĩ - hành động - quan sát" và nó thường được đặt vào vị trí một **Node** trong LangGraph để thực thi các tác vụ đòi hỏi khả năng tương tác với công cụ bên ngoài và tư duy lặp lại,,.
 
 Để dễ hiểu hơn, hãy tưởng tượng **ReAct Agent là một chuyên gia trong một dự án**. Khi chuyên gia này được mời vào nhóm (đưa vào hệ thống LangGraph), họ sẽ đảm nhận một vị trí tại **một bàn làm việc nhất định (Node)**. Tại đó, họ thực hiện quy trình: đọc tài liệu (Suy luận), tra cứu thêm dữ liệu (Hành động), và ghi lại kết quả vào sổ tay chung của nhóm (State) cho đến khi xong việc.
+----------------------
+----------------------
+## LangGraph gồm
+
+### 1. Execution Context (State)
+
+* Là **ngữ cảnh thực thi chung** của toàn bộ graph
+* Lưu toàn bộ thông tin cần thiết trong quá trình agent chạy
+* Mọi node:
+
+  * Đọc state hiện tại
+  * Cập nhật lại state sau khi xử lý
+* State quyết định **hướng đi tiếp theo của flow**, không phải node
+* Có thể được lưu lại (checkpoint) để debug hoặc resume
+
+---
+
+### 2. Edges (Kết nối các node, luồng đi)
+
+* Xác định **node nào được thực thi tiếp theo**
+* Có thể là:
+
+  * Luồng cố định
+  * Luồng phụ thuộc vào trạng thái trong state
+* Edges chịu trách nhiệm:
+
+  * Rẽ nhánh
+  * Lặp (retry)
+  * Kết thúc flow
+* Logic điều hướng **nằm ở edges**, không nằm trong node
+
+---
+
+### 3. Nodes (Nơi thực hiện hành vi)
+
+* Mỗi node đại diện cho **một bước xử lý độc lập**
+* Node **không quyết định flow**
+* Node chỉ tập trung vào **hành vi của mình**
+
+#### Planner
+
+* Phân tích input ban đầu
+* Lập kế hoạch hoặc chiến lược xử lý
+* Chia bài toán thành các bước
+
+#### Executor
+
+* Thực thi kế hoạch đã tạo
+* Gọi LLM, tool, hoặc logic nghiệp vụ
+* Tạo ra kết quả trung gian
+
+#### Evaluator
+
+* Đánh giá kết quả từ Executor
+* Xác định kết quả đạt hay chưa
+* Ghi kết quả đánh giá vào state để phục vụ điều hướng
+
+---
+
+### 4. Flow
+
+* Flow là **trình tự thực thi các node**
+* Được xác định bởi:
+
+  * State
+  * Edges
+* Flow có thể:
+
+  * Chạy tuần tự
+  * Lặp lại (retry)
+  * Quay về lập kế hoạch
+  * Kết thúc khi đạt điều kiện
+
+---
+
+**Tóm gọn 1 câu theo đúng khung mày đưa:**
+LangGraph vận hành bằng cách dùng **State làm trung tâm**, **Nodes để thực thi hành vi**, **Edges để điều hướng**, và **Flow để kiểm soát toàn bộ vòng đời của agent**.
+
+```
+START
+  ↓
+Planner
+  ↓
+Executor
+  ↓
+Evaluator
+  ↓
+ ┌──────────────────────┐
+ │ PASS    → END        │
+ │ RETRY   → Executor   │
+ │ REFLECT → Planner    │
+ └──────────────────────┘
+
+```
+### Langchain
+```
+START
+  ↓
+Agent A (GPT + Sheets)
+  ↓
+Agent B (GPT + Docs)
+  ↓
+Agent C (Gemini + Drive)
+  ↓
+END
+
+```
+### Langraph
+```
+START
+  ↓
+Planner (Could be an AI node or human creator)
+  ↓
+Executor A (GPT + Sheets)
+  ↓
+Evaluator A
+  ├─ PASS → Executor B
+  └─ FAIL → Executor A
+        ↓
+Executor B (GPT + Docs)
+  ↓
+Evaluator B
+  ├─ PASS → Executor C
+  └─ FAIL → Executor B
+        ↓
+Executor C (Gemini + Drive)
+  ↓
+Evaluator C
+  ├─ PASS → END
+  └─ FAIL → Executor C
+
+```
