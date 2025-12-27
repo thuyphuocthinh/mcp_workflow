@@ -154,6 +154,7 @@ async chat(@Body() dto, @Res() res) {
 [text](https://chatgpt.com/g/g-p-69208a0d14d88191aa8ede10ba87375d-mcp-workflow/c/694e9c63-4380-8323-aca9-86fc2c5c2a7b)
 ```
 ## Tuần 6
+- Tìm hiểu lại streaming, flow đã viết langraph tham khảo từ gpt
 - Ghép services FE, register, login, get list graphs
 - Ghép chạy được LLM stream ở BE (chưa cần agent)
 ## Tuần 7
