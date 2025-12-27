@@ -7,8 +7,10 @@ import {
   Post,
   Query,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { type Response } from 'express';
 import { GraphService } from './services/graphs.service';
 import { CreateGraphDto } from './dtos/create-graph.dto';
 import { UpdateGraphDto } from './dtos/update-graph.dto';
@@ -63,4 +65,40 @@ export class GraphController {
     );
   }
 
+  @Post(':id/run/stream')
+  async runGraphStream(
+    @Req() req: any,
+    @Param('id') graphId: string,
+    @Body('input') input: string,
+    @Res() res: Response,
+  ) {
+    const userId = req.user.sub;
+
+    const graph = await this.graphService.getGraphRaw(
+      graphId,
+      userId,
+    );
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const stream = await this.graphService.streamRun(graph, input);
+
+    try {
+      for await (const event of stream) {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+
+      res.write(`event: end\ndata: done\n\n`);
+      res.end();
+    } catch (err) {
+      res.write(
+        `event: error\ndata: ${JSON.stringify({
+          message: err.message,
+        })}\n\n`,
+      );
+      res.end();
+    }
+  }
 }

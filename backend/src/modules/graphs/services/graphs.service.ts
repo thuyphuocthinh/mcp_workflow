@@ -9,12 +9,14 @@ import { FlowEdge, FlowNode } from '../types/graph.types';
 import { v4 } from 'uuid';
 import { SuccessResponse } from '@/shared/response/success.response';
 import { PagingResponse } from '@/shared/response/paging.response';
+import { WorkflowRuntimeService } from './workflow.service';
 
 @Injectable()
 export class GraphService {
   constructor(
     @InjectModel(Graph.name)
     private readonly graphModel: Model<GraphDocument>,
+    private readonly workflowRuntime: WorkflowRuntimeService,
   ) {}
 
     async createGraph(
@@ -193,5 +195,30 @@ export class GraphService {
         if (visited !== nodes.length) {
         throw new BadRequestException('Graph contains cycle (not a DAG)');
         }
+    }
+
+    async getGraphRaw(
+        graphId: string,
+        userId: string,
+    ): Promise<GraphDocument> {
+        const graph = await this.graphModel
+            .findOne({
+                _id: new Types.ObjectId(graphId),
+                user_id: new Types.ObjectId(userId),
+            })
+            .exec();
+
+        if (!graph) {
+            throw new NotFoundException('Graph not found');
+        }
+
+        return graph;
+    }
+
+    async streamRun(
+        graph: GraphDocument,
+        input: string,
+    ) {
+        return this.workflowRuntime.runStream(graph, input);
     }
 }
