@@ -7,11 +7,14 @@ import {
 import { Injectable } from "@nestjs/common";
 import { GraphDocument } from "../schemas/graphs.schema";
 import { NodeRegistry } from "../registry/node.registry";
+import { FALLBACK_PROMPT } from "../constants/graph.constants";
 
 export const State = Annotation.Root({
   input: Annotation<string>({
-    reducer: (prev, next) => next ?? prev,
+    reducer: (prev, next) => next ?? prev ?? FALLBACK_PROMPT,
+    default: () => FALLBACK_PROMPT,
   }),
+
 
   output: Annotation<string | undefined>({
     reducer: (_, next) => next,
@@ -22,10 +25,11 @@ export const State = Annotation.Root({
   }),
 
   retryCount: Annotation<number>({
-    reducer: (prev = 0, next = 0) => next,
+    reducer: (prev = 0, next = 0) => prev + next,
     default: () => 0,
   }),
 });
+
 
 @Injectable()
 export class WorkflowRuntimeService {
