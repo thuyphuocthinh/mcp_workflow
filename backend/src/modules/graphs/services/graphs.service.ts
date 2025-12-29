@@ -160,40 +160,40 @@ export class GraphService {
         const adj = new Map<string, string[]>();
 
         for (const node of nodes) {
-        inDegree.set(node.id, 0);
-        adj.set(node.id, []);
+            inDegree.set(node.id, 0);
+            adj.set(node.id, []);
         }
 
         for (const edge of edges) {
-        if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) {
-            throw new BadRequestException('Edge references invalid node');
-        }
+            if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) {
+                throw new BadRequestException('Edge references invalid node');
+            }
 
-        adj.get(edge.source)!.push(edge.target);
-        inDegree.set(edge.target, inDegree.get(edge.target)! + 1);
+            adj.get(edge.source)!.push(edge.target);
+            inDegree.set(edge.target, inDegree.get(edge.target)! + 1);
         }
 
         // Kahn's algorithm
         const queue: string[] = [];
         for (const [id, deg] of inDegree.entries()) {
-        if (deg === 0) queue.push(id);
+            if (deg === 0) queue.push(id);
         }
 
         let visited = 0;
         while (queue.length) {
-        const current = queue.shift()!;
-        visited++;
+            const current = queue.shift()!;
+            visited++;
 
-        for (const next of adj.get(current)!) {
-            inDegree.set(next, inDegree.get(next)! - 1);
-            if (inDegree.get(next) === 0) {
-            queue.push(next);
+            for (const next of adj.get(current)!) {
+                inDegree.set(next, inDegree.get(next)! - 1);
+                if (inDegree.get(next) === 0) {
+                    queue.push(next);
+                }
             }
-        }
         }
 
         if (visited !== nodes.length) {
-        throw new BadRequestException('Graph contains cycle (not a DAG)');
+            throw new BadRequestException('Graph contains cycle (not a DAG)');
         }
     }
 

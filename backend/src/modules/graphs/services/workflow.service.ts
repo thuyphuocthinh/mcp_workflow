@@ -36,62 +36,68 @@ export class WorkflowRuntimeService {
   constructor(private readonly nodeRegistry: NodeRegistry) {}
 
     build(graph: GraphDocument) {
-        const runtime = new StateGraph(State);
+      const runtime = new StateGraph(State);
 
-        let llmNodeId: string | undefined;
-        let evaluatorNodeId: string | undefined;
+      let llmNodeId: string | undefined;
+      let evaluatorNodeId: string | undefined;
 
-        /* ---------- add nodes ---------- */
-        for (const node of graph.nodes) {
-        if (node.type === "llm") {
-            llmNodeId = node.id;
-            runtime.addNode(node.id, this.nodeRegistry.llm());
-        }
+      /* ---------- add nodes ---------- */
+      for (const node of graph.nodes) {
+      if (node.type === "llm") {
+          llmNodeId = node.id;
+          runtime.addNode(node.id, this.nodeRegistry.llm());
+      }
 
-        if (node.type === "evaluator") {
-            evaluatorNodeId = node.id;
-            runtime.addNode(node.id, this.nodeRegistry.evaluator());
-        }
-        }
+      if (node.type === "evaluator") {
+          evaluatorNodeId = node.id;
+          runtime.addNode(node.id, this.nodeRegistry.evaluator());
+      }
+      }
 
-        if (!llmNodeId || !evaluatorNodeId) {
+      if (!llmNodeId || !evaluatorNodeId) {
         throw new Error("Graph must have llm and evaluator nodes");
-        }
+      }
 
-        /* ---------- edges ---------- */
-        runtime.addEdge(START, llmNodeId as any);
-        runtime.addEdge(llmNodeId as any, evaluatorNodeId as any);
+      /* ---------- edges ---------- */
+      runtime.addEdge(START, llmNodeId as any);
+      runtime.addEdge(llmNodeId as any, evaluatorNodeId as any);
 
-        runtime.addConditionalEdges(
+      runtime.addConditionalEdges(
         evaluatorNodeId as any,
         (state) => {
             if (!state.ok && state.retryCount < 3) {
-            return llmNodeId!;
+              return llmNodeId!;
             }
             return END;
         },
-        );
+      );
 
-        return runtime.compile();
+      return runtime.compile();
     }
 
     async *runStream(
-        graph: GraphDocument,
-        input: string,
+      graph: GraphDocument,
+      input: string,
     ): AsyncGenerator<any> {
-        const app = this.build(graph);
+      const app = this.build(graph);
 
-        const initialState = {
-            input,
-            output: undefined,
-            ok: false,
-            retryCount: 0,
-        };
+      const initialState = {
+          input,
+          output: undefined,
+          ok: false,
+          retryCount: 0,
+      };
 
-        const stream = await app.stream(initialState);
+      const stream = await app.stream(initialState);
 
-        for await (const event of stream) {
-            yield event;
-        }
+      for await (const event of stream) {
+        yield event;
+      }
     }
+    /*
+      async function* = hàm sinh ra dữ liệu theo thời gian
+      yield = push 1 event ra ngoài ngay lập tức
+      generator sẽ bị pause cho tới khi consumer consume event đó (bằng cách .next())
+      async generator => nó bị pause do bất đồng bộ từ stream của graph
+    */
 }
