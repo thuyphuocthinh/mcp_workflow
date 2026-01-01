@@ -53,7 +53,9 @@ import { nodeConfig, type INodeConfig } from "../nodes/baseConfig/nodeConfig";
 import { BaseNodeProperties } from "../nodes/baseConfig/BaseNodeProperties";
 import type { VariableReference } from "../nodes/baseConfig/variableSystem";
 import { ConfigPanel } from "./ConfigPanel";
-import type { FlowData } from "../nodes/baseConfig/flowDataType";
+import type { i_edge, i_graph, i_graph_update } from "@/types/graph";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { update_graph_service } from "@/services";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -95,7 +97,11 @@ const fitViewOptions: FitViewOptions = {
   padding: 0.2,
 };
 
-function Flow() {
+interface FlowProps {
+  graph: i_graph;
+}
+
+function Flow({ graph }: FlowProps) {
   const {
     nodes,
     edges,
@@ -703,53 +709,82 @@ function Flow() {
   );
 
   const renderFlowFromData = useCallback(
-    (data: FlowData) => {
-      const { nodes, edges, viewport } = data;
+    (data: i_graph) => {
+      const { nodes, edges } = data;
 
-      setNodesRaw(nodes);
+      setNodesRaw(nodes as Node[]);
       setEdgesRaw(edges);
 
-      if (viewport) {
-        reactFlowInstance.setViewport(viewport, { duration: 300 });
-      } else {
-        requestAnimationFrame(() => {
-          reactFlowInstance.fitView({ padding: 0.2 });
-        });
-      }
+      requestAnimationFrame(() => {
+        reactFlowInstance.fitView({ padding: 0.2 });
+      });
     },
     [setNodesRaw, setEdgesRaw, reactFlowInstance]
   );
 
+  const queryClient = useQueryClient();
+
+  const updateGraphMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: i_graph_update }) =>
+      update_graph_service(id, data),
+
+    onSuccess: (res, variables) => {
+      queryClient.setQueryData(["graph-detail", variables.id], res);
+
+      queryClient.invalidateQueries({
+        queryKey: ["workflows"],
+      });
+
+      showToast("Succecss", "Saved Workflow Successfully", "success");
+    },
+
+    onError: (err) => {
+      showToast("Succecss", err.message || "Something went wrong", "success");
+    },
+  });
+
   const saveFlow = useCallback(() => {
-    const viewport = reactFlowInstance.getViewport();
-
-    const flowData = {
-      nodes,
-      edges,
-      viewport,
-      meta: {
-        version: 1,
-        updatedAt: Date.now(),
-      },
-    };
-
     setLastSavedSnapshot({
       nodes,
       edges,
     });
+
     setIsGraphModified(false);
-    return flowData;
+
+    const nodesSave = nodes.map((node) => {
+      return {
+        id: node.id,
+        type: node.type,
+        position: node.position,
+        data: node.data,
+      };
+    });
+
+    const edgesSave: i_edge[] = edges.map((edge) => {
+      return {
+        id: edge.id,
+        type: edge.type!,
+        source: edge.source!,
+        target: edge.target!,
+        sourceHandle: edge.sourceHandle!,
+        targetHandle: edge.targetHandle!,
+      };
+    });
+
+    updateGraphMutation.mutate({
+      id: graph.id,
+      data: {
+        name: graph.name,
+        description: graph.description!,
+        nodes: nodesSave,
+        edges: edgesSave,
+      },
+    });
   }, [nodes, edges, reactFlowInstance]);
 
-  // useEffect(() => {
-  //   async function loadFlow() {
-  //     const res = await fetch("/api/workflow/123");
-  //     const data = await res.json();
-  //     renderFlowFromData(data);
-  //   }
-
-  //   loadFlow();
-  // }, []);
+  useEffect(() => {
+    renderFlowFromData(graph);
+  }, []);
 
   return (
     <Box w="full" h="100%" display="flex">
@@ -1077,6 +1112,7 @@ function Flow() {
                   px={3}
                   onClick={saveFlow}
                   disabled={!isGraphModified}
+                  loading={updateGraphMutation.isPending}
                 >
                   <HStack gap={2}>
                     <FaSave />

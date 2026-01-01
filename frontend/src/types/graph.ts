@@ -15,7 +15,7 @@ export type i_edge = {
   type: string;
   source: string;
   target: string;
-  soureHandle: string;
+  sourceHandle: string;
   targetHandle: string;
 };
 
@@ -30,13 +30,15 @@ export interface i_graph {
 }
 
 export interface i_graph_create {
-    name: string;
-    description?: string;
+  name: string;
+  description?: string;
 }
 
 export interface i_update_graph_metadata extends i_graph_create {}
 
 export interface i_graph_update {
-    nodes: i_node[];
-    edges: i_edge[];
+  name: string;
+  description: string;
+  nodes: i_node[];
+  edges: i_edge[];
 }

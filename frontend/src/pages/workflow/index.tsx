@@ -18,18 +18,49 @@ import { FiMoreVertical, FiEdit2, FiTrash2, FiInbox } from "react-icons/fi";
 import { useState } from "react";
 import { FaRobot } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { get_list_graphs } from "@/services";
-import type { i_graph } from "@/types/graph";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  create_graph_service,
+  get_list_graphs,
+  update_graph_metadata_service,
+} from "@/services";
+import type { i_graph, i_update_graph_metadata } from "@/types/graph";
 
 const PAGE_SIZE = 10;
 
 export default function WorkflowPage() {
   const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
+
+  const [createValue, setCreateValue] = useState({
+    name: "",
+    description: "",
+  });
+
   const [editingWorkflow, setEditingWorkflow] = useState<i_graph | null>(null);
   const [deletingWorkflow, setDeletingWorkflow] = useState<i_graph | null>(
     null
   );
+
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: create_graph_service,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      setCreating(false);
+      setCreateValue({ name: "", description: "" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: i_update_graph_metadata }) =>
+      update_graph_metadata_service(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      setEditingWorkflow(null);
+    },
+  });
 
   const [editValue, setEditValue] = useState({
     name: "",
@@ -55,7 +86,20 @@ export default function WorkflowPage() {
   const totalPages = workflows?.paging.totalPages ?? 1;
 
   const handleSave = (id: string) => {
-    console.log("save", id, editValue);
+    updateMutation.mutate({
+      id,
+      data: {
+        name: editValue.name,
+        description: editValue.description || undefined,
+      },
+    });
+  };
+
+  const handleCreate = () => {
+    createMutation.mutate({
+      name: createValue.name,
+      description: createValue.description || undefined,
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -77,9 +121,12 @@ export default function WorkflowPage() {
   return (
     <>
       <Box p={6}>
-        <Heading size="lg" mb={6}>
-          Workflows
-        </Heading>
+        <Flex justify="space-between" align="center" mb={6}>
+          <Heading size="lg">Workflows</Heading>
+          <Button colorScheme="blue" onClick={() => setCreating(true)}>
+            Create workflow
+          </Button>
+        </Flex>
 
         {pageData.length === 0 ? (
           <Flex
@@ -222,6 +269,7 @@ export default function WorkflowPage() {
         )}
       </Box>
 
+      {/* Dialog Edit */}
       <Dialog.Root
         open={!!editingWorkflow}
         onOpenChange={() => setEditingWorkflow(null)}
@@ -261,10 +309,8 @@ export default function WorkflowPage() {
               </Button>
               <Button
                 colorScheme="blue"
-                onClick={() => {
-                  handleSave(editingWorkflow!.id);
-                  setEditingWorkflow(null);
-                }}
+                loading={updateMutation.isPending}
+                onClick={() => handleSave(editingWorkflow!.id)}
               >
                 Save
               </Button>
@@ -273,6 +319,7 @@ export default function WorkflowPage() {
         </Dialog.Positioner>
       </Dialog.Root>
 
+      {/* Dialog Delete */}
       <Dialog.Root
         open={!!deletingWorkflow}
         onOpenChange={() => setDeletingWorkflow(null)}
@@ -304,6 +351,54 @@ export default function WorkflowPage() {
                 }}
               >
                 Delete
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+
+      {/* Dialog Create */}
+      <Dialog.Root open={creating} onOpenChange={() => setCreating(false)}>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Create workflow</Dialog.Title>
+            </Dialog.Header>
+
+            <Dialog.Body>
+              <VStack gap={4}>
+                <Input
+                  placeholder="Workflow name"
+                  value={createValue.name}
+                  onChange={(e) =>
+                    setCreateValue((v) => ({ ...v, name: e.target.value }))
+                  }
+                />
+                <Input
+                  placeholder="Description"
+                  value={createValue.description}
+                  onChange={(e) =>
+                    setCreateValue((v) => ({
+                      ...v,
+                      description: e.target.value,
+                    }))
+                  }
+                />
+              </VStack>
+            </Dialog.Body>
+
+            <Dialog.Footer>
+              <Button variant="ghost" onClick={() => setCreating(false)}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme="blue"
+                loading={createMutation.isPending}
+                onClick={handleCreate}
+                disabled={!createValue.name.trim()}
+              >
+                Create
               </Button>
             </Dialog.Footer>
           </Dialog.Content>
