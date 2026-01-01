@@ -17,6 +17,7 @@ import { UpdateGraphDto } from './dtos/update-graph.dto';
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { SuccessResponse } from '@/shared/response/success.response';
 import { PagingResponse } from '@/shared/response/paging.response';
+import { UpdateMetadata } from './dtos/update-metadata.dto';
 
 @Controller('graphs')
 @UseGuards(JwtAuthGuard)
@@ -30,6 +31,16 @@ export class GraphController {
   ): Promise<SuccessResponse> {
     const userId = req.user.sub;
     return this.graphService.createGraph(userId, dto);
+  }
+
+  @Patch(':id/update-metadata')
+  async updateGraphMetadata(
+    @Req() req: any,
+    @Param('id') graphId: string,
+    @Body() dto: UpdateMetadata,
+  ): Promise<SuccessResponse> {
+    const userId = req.user.sub;
+    return this.graphService.updateGraphMetadata(graphId, userId, dto);
   }
 
   @Patch(':id')

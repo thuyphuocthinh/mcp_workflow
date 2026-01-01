@@ -10,6 +10,7 @@ import { v4 } from 'uuid';
 import { SuccessResponse } from '@/shared/response/success.response';
 import { PagingResponse } from '@/shared/response/paging.response';
 import { WorkflowRuntimeService } from './workflow.service';
+import { UpdateMetadata } from '../dtos/update-metadata.dto';
 
 @Injectable()
 export class GraphService {
@@ -70,6 +71,41 @@ export class GraphService {
         return new SuccessResponse({
             data: mapGraphToResponse(populated)
         })
+    }
+
+    async updateGraphMetadata(
+        graphId: string,
+        userId: string,
+        data: UpdateMetadata,
+    ): Promise<SuccessResponse> {
+        const graph = await this.graphModel.findOneAndUpdate(
+            {
+            _id: graphId,
+            user_id: new Types.ObjectId(userId),
+            },
+            {
+            $set: {
+                ...(data.name !== undefined && { name: data.name }),
+                ...(data.description !== undefined && {
+                description: data.description,
+                }),
+            },
+            },
+            {
+            new: true,
+            runValidators: true,
+            },
+        );
+
+        if (!graph) {
+            throw new NotFoundException('Graph not found');
+        }
+
+        const populated = await graph.populate('user_id', 'email name');
+
+        return new SuccessResponse({
+            data: mapGraphToResponse(populated),
+        });
     }
 
     async updateGraph(
