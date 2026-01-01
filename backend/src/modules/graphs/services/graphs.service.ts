@@ -121,7 +121,7 @@ export class GraphService {
                 .exec();
 
         if (!graph) {
-        throw new NotFoundException('Graph not found');
+            throw new NotFoundException('Graph not found');
         }
 
         if (dto.nodes || dto.edges) {
