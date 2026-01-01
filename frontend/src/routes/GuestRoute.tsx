@@ -1,10 +1,23 @@
-import { Navigate } from "react-router-dom";
-import { type ReactNode } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { get_profile_service } from "@/services/user";
+import { TOKEN_KEY } from "@/constants";
 
-export const GuestRoute = ({ children }: { children: ReactNode }) => {
-  const isLoggedIn = false;
+export const GuestRoute = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
 
-  if (isLoggedIn) return <Navigate to="/workflows" replace />;
+  const { data: me, isLoading } = useQuery({
+    queryKey: ["me"],
+    queryFn: get_profile_service,
+    enabled: !!token,
+    retry: false,
+  });
 
-  return <>{children}</>;
+  if (token && isLoading) return null;
+
+  if (me) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
 };

@@ -10,51 +10,51 @@ import {
   Button,
   Input,
   Field,
+  HStack,
 } from "@chakra-ui/react";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { useMutation } from "@tanstack/react-query";
-import { login_service } from "@/services";
 import { useNavigate } from "react-router-dom";
 import useCustomToast from "@/hooks/useCustomToast";
-import { TOKEN_KEY } from "@/constants";
 import { PasswordInput } from "@/components/ui/password-input";
+import { regiser_service } from "@/services";
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
   const { showToast } = useCustomToast();
 
-  const loginMutation = useMutation({
-    mutationFn: login_service,
+  const registerMutation = useMutation({
+    mutationFn: regiser_service,
 
-    onSuccess: (res) => {
-      console.log("res: ", res);
-      const token = res.data?.token;
-      localStorage.setItem(TOKEN_KEY, token as string);
-      showToast("Success", "Login Success", "success");
-      navigate("/");
+    onSuccess: () => {
+      showToast("Success", "Register success. Please login.", "success");
+      navigate("/login");
     },
 
-    onError: (err) => {
+    onError: (err: any) => {
       showToast("Error", err.message || "Something went wrong", "error");
     },
   });
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      setError("Email is required");
+
+    if (!firstName || !lastName || !email || !password) {
+      setError("All fields are required");
       return;
     }
-    if (!password) {
-      setError("Password is required");
-      return;
-    }
+
     setError(null);
-    loginMutation.mutate({
+
+    registerMutation.mutate({
+      first_name: firstName,
+      last_name: lastName,
       email,
       password,
     });
@@ -66,27 +66,44 @@ export default function LoginPage() {
         <Box maxW="md" w="full">
           <VStack gap={8} align="stretch">
             <Heading as="h1" size="xl">
-              Welcome Back
+              Create Account
             </Heading>
-            <Text color="gray.500">Please login to your account</Text>
+            <Text color="gray.500">Please fill in the information below</Text>
 
             <Box as="form" onSubmit={handleSubmit}>
               <VStack gap={4} align="stretch">
+                <HStack gap={4}>
+                  <Field.Root id="first_name" required>
+                    <Field.Label>First name</Field.Label>
+                    <Input
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="John"
+                    />
+                  </Field.Root>
+
+                  <Field.Root id="last_name" required>
+                    <Field.Label>Last name</Field.Label>
+                    <Input
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Doe"
+                    />
+                  </Field.Root>
+                </HStack>
+
                 <Field.Root id="email" required>
                   <Field.Label>Email</Field.Label>
                   <Input
                     type="email"
                     value={email}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setEmail(e.target.value)
-                    }
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@example.com"
                   />
                 </Field.Root>
 
                 <Field.Root id="password" required>
                   <Field.Label>Password</Field.Label>
-
                   <PasswordInput
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -104,20 +121,20 @@ export default function LoginPage() {
                   type="submit"
                   colorScheme="blue"
                   width="full"
-                  loading={loginMutation.isPending}
+                  loading={registerMutation.isPending}
                 >
-                  Login
+                  Register
                 </Button>
 
                 <Text textAlign="center" fontSize="sm" color="gray.600">
-                  Don’t have an account?{" "}
+                  Already have an account?{" "}
                   <Button
-                    variant={"outline"}
+                    variant="outline"
                     colorScheme="blue"
-                    onClick={() => navigate("/register")}
+                    onClick={() => navigate("/login")}
                     ml={2}
                   >
-                    Register
+                    Login
                   </Button>
                 </Text>
               </VStack>

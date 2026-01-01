@@ -13,6 +13,11 @@ import {
 import { useLocation, Link as RouterLink } from "react-router-dom";
 import { LuWallet } from "react-icons/lu";
 import { NavLink } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import type { i_user } from "@/types";
+import { TOKEN_KEY } from "@/constants";
+import { useNavigate } from "react-router-dom";
+import type { i_success_response } from "@/types/base";
 
 interface NavbarProps {
   balance: number;
@@ -49,6 +54,17 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
   // /workflow/:id
   const isWorkflowDetail = /^\/workflows\/[^/]+$/.test(pathname);
   const workflowId = isWorkflowDetail ? pathname.split("/")[2] : null;
+
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const user = queryClient.getQueryData<i_success_response<i_user>>(["me"]);
+
+  const handleLogout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    queryClient.clear();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <Box
@@ -111,12 +127,22 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
         ) : (
           <HStack gap={3}>
             <Text fontSize="sm" fontWeight="medium">
-              Thịnh
+              {user?.data?.first_name} {user?.data?.last_name}
             </Text>
-            <Avatar.Root>
-              <Avatar.Fallback name="Segun Adebayo" />
-              <Avatar.Image src="https://bit.ly/sage-adebayo" />
+
+            <Avatar.Root cursor="pointer">
+              <Avatar.Fallback name={user?.data?.first_name} />
+              {/* <Avatar.Image src={user?.avatar_url} /> */}
             </Avatar.Root>
+
+            <Button
+              size="sm"
+              variant="ghost"
+              colorScheme="red"
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
           </HStack>
         )}
       </Flex>

@@ -8,6 +8,7 @@ import ToolsPage from "@/pages/tools";
 import FlowProvider from "@/components/workflows/flow/FlowProvider";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import ChatPage from "@/pages/chat";
+import RegisterPage from "@/pages/register";
 
 export const router = createBrowserRouter([
   {
@@ -45,13 +46,13 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    path: "login",
-    element: (
-      <GuestRoute>
-        <LoginPage />
-      </GuestRoute>
-    ),
+    element: <GuestRoute />,
+    children: [
+      { path: "login", element: <LoginPage /> },
+      { path: "register", element: <RegisterPage /> },
+    ],
   },
+
   {
     path: "*",
     element: <NotFoundPage />,
