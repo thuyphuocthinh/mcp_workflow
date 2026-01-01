@@ -739,7 +739,7 @@ function Flow({ graph }: FlowProps) {
     },
 
     onError: (err) => {
-      showToast("Succecss", err.message || "Something went wrong", "success");
+      showToast("Error", err.message || "Something went wrong", "error");
     },
   });
 
