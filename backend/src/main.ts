@@ -4,9 +4,16 @@ import { ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from '@/shared/interceptors/response.interceptor';
 import { HttpExceptionFilter } from '@/shared/exceptions/exceptions.filter';
 import { LoggingInterceptor } from '@/shared/interceptors/logging.interceptor';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(
+    helmet({
+      hidePoweredBy: true, // X-Powered-By
+    }),
+  );
+
   app.setGlobalPrefix('api/v1');
   app.enableCors({
     origin: '*',
