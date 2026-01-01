@@ -50,11 +50,11 @@ export class GraphService {
         const defaultEdges: FlowEdge[] = [
             {
                 id: v4(),
-                type: 'default',
+                type: 'custom-edge',
                 source: startNodeId,
                 target: endNodeId,
-                soureHandle: 'left',
-                targetHandle: 'right',
+                soureHandle: 'right',
+                targetHandle: 'left',
             },
         ];
 
