@@ -34,3 +34,9 @@ export interface i_graph_create {
     description?: string;
 }
 
+export interface i_update_graph_metadata extends i_graph_create {}
+
+export interface i_graph_update {
+    nodes: i_node[];
+    edges: i_edge[];
+}
