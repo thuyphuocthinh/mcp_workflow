@@ -82,10 +82,10 @@ export class WorkflowRuntimeService {
       const app = this.build(graph);
 
       const initialState = {
-          input,
-          output: undefined,
-          ok: false,
-          retryCount: 0,
+        input,
+        output: undefined,
+        ok: false,
+        retryCount: 0,
       };
 
       const stream = await app.stream(initialState);

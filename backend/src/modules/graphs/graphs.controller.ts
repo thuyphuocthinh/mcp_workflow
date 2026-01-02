@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Patch,
   Post,
@@ -18,10 +19,13 @@ import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { SuccessResponse } from '@/shared/response/success.response';
 import { PagingResponse } from '@/shared/response/paging.response';
 import { UpdateMetadata } from './dtos/update-metadata.dto';
+import { StreamEvent } from './contracts/stream.contract';
 
 @Controller('graphs')
 @UseGuards(JwtAuthGuard)
 export class GraphController {
+  private readonly logger = new Logger(GraphController.name);
+
   constructor(private readonly graphService: GraphService) {}
 
   @Post()
@@ -98,8 +102,21 @@ export class GraphController {
 
     try {
       for await (const event of stream) {
-        res.write(`data: ${JSON.stringify(event)}\n\n`);
-      }
+      const [nodeType, nodeData] = Object.entries(event)[0];
+
+      const standardizedEvent: StreamEvent = {
+        nodeType,
+        input: (nodeData as any).input,
+        output: (nodeData as any).output,
+        ok: (nodeData as any).ok,
+        retryCount: (nodeData as any).retryCount,
+        meta: (nodeData as any).meta,
+      };
+
+      res.write(`data: ${JSON.stringify(standardizedEvent)}\n\n`);
+      this.logger.log(`event:: ${JSON.stringify(standardizedEvent)}`);
+    }
+
 
       res.write(`event: end\ndata: done\n\n`);
       res.end();
