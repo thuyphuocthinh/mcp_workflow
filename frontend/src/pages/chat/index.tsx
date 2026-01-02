@@ -1,59 +1,55 @@
 import { Flex } from "@chakra-ui/react";
-import { useMemo, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { ChatBotList } from "@/components/chat/ChatBotList";
 import { ChatMain } from "@/components/chat/ChatMain";
-import type { ChatMessage, Workflow } from "@/types";
-
-/* ================== Fake workflows ================== */
-const fakeWorkflows: Workflow[] = Array.from({ length: 30 }).map((_, i) => ({
-  id: uuidv4(),
-  name: `Workflow ${i + 1}`,
-}));
-
-/* ================== Fake chats ================== */
-
-const fakeWorkflowChats: Record<string, ChatMessage[]> = Object.fromEntries(
-  fakeWorkflows.map((wf) => [
-    wf.id,
-    [
-      {
-        id: uuidv4(),
-        role: "HUMAN",
-        content: `Hello AI, this is ${wf.name}`,
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: uuidv4(),
-        role: "AI",
-        content: `Hi! I'm AI responding to ${wf.name}`,
-        created_at: new Date().toISOString(),
-      },
-    ],
-  ])
-);
-
-/* ================== Page ================== */
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { get_list_graphs } from "@/services";
+import { PAGE_SIZE } from "@/constants";
+import type { i_graph } from "@/types/graph";
 
 export default function ChatPage() {
   const [search, setSearch] = useState("");
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState(
-    fakeWorkflows[0].id
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(
+    null
   );
 
-  const workflowMap = useMemo(
-    () => new Map(fakeWorkflows.map((w) => [w.id, w])),
-    []
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
+    useInfiniteQuery({
+      queryKey: ["workflows"],
+      queryFn: ({ pageParam = 1 }) =>
+        get_list_graphs({ page: pageParam as number, limit: PAGE_SIZE }),
+      initialPageParam: 1,
+      getNextPageParam: (lastPage, allPages) => {
+        const hasMore = lastPage?.data?.length === PAGE_SIZE;
+        return hasMore ? allPages.length + 1 : undefined;
+      },
+    });
+
+  const workflows: i_graph[] = useMemo(
+    () => data?.pages.flatMap((page) => page.data!) || [],
+    [data]
   );
+
+  useEffect(() => {
+    if (!selectedWorkflowId && workflows.length > 0) {
+      setSelectedWorkflowId(workflows[0].id);
+    }
+  }, [workflows, selectedWorkflowId]);
 
   const filteredWorkflows = useMemo(() => {
     const keyword = search.toLowerCase();
-    return fakeWorkflows.filter((wf) =>
-      wf.name.toLowerCase().includes(keyword)
-    );
-  }, [search]);
+    return workflows.filter((wf) => wf.name.toLowerCase().includes(keyword));
+  }, [search, workflows]);
 
-  const selectedWorkflow = workflowMap.get(selectedWorkflowId);
+  const selectedWorkflow = useMemo(() => {
+    return workflows.find((w) => w.id === selectedWorkflowId) || workflows[0];
+  }, [workflows, selectedWorkflowId]);
+
+  const handleScrollEnd = useCallback(() => {
+    if (!isFetchingNextPage && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   return (
     <Flex h="calc(100vh - 72.8px)" overflow="hidden">
@@ -63,9 +59,12 @@ export default function ChatPage() {
         onSearch={setSearch}
         selectedId={selectedWorkflowId}
         onSelect={setSelectedWorkflowId}
+        onScrollEnd={handleScrollEnd}
+        isLoading={isLoading}
+        isFetchingNextPage={isFetchingNextPage}
       />
 
-      <ChatMain workflowName={selectedWorkflow?.name} />
+      <ChatMain workflowName={selectedWorkflow?.name} isPlayground={true} />
     </Flex>
   );
 }

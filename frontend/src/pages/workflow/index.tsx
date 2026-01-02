@@ -25,8 +25,7 @@ import {
   update_graph_metadata_service,
 } from "@/services";
 import type { i_graph, i_update_graph_metadata } from "@/types/graph";
-
-const PAGE_SIZE = 10;
+import { PAGE_SIZE } from "@/constants";
 
 export default function WorkflowPage() {
   const [page, setPage] = useState(1);

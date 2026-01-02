@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { get_detail_graph_service } from "@/services";
 import Flow from "./Flow";
-import { Box, Text } from "@chakra-ui/react";
+import { Box, Center, Spinner, Text } from "@chakra-ui/react";
 
 const FlowProvider = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,9 +20,9 @@ const FlowProvider = () => {
 
   if (isLoading) {
     return (
-      <Box p={4}>
-        <Text>Loading graph...</Text>
-      </Box>
+      <Center h="calc(100vh - 60px)">
+        <Spinner size="lg" />
+      </Center>
     );
   }
 
