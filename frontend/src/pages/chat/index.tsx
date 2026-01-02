@@ -6,6 +6,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { get_list_graphs } from "@/services";
 import { PAGE_SIZE } from "@/constants";
 import type { i_graph } from "@/types/graph";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function ChatPage() {
   const [search, setSearch] = useState("");
@@ -13,6 +14,8 @@ export default function ChatPage() {
     null
   );
 
+  const navigate = useNavigate();
+  const location = useLocation();
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useInfiniteQuery({
       queryKey: ["workflows"],
@@ -34,6 +37,16 @@ export default function ChatPage() {
     if (!selectedWorkflowId && workflows.length > 0) {
       setSelectedWorkflowId(workflows[0].id);
     }
+    const searchParams = new URLSearchParams(location.search);
+    searchParams.set("workflowId", selectedWorkflowId!);
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: `?${searchParams.toString()}`,
+      },
+      { replace: true }
+    );
   }, [workflows, selectedWorkflowId]);
 
   const filteredWorkflows = useMemo(() => {
