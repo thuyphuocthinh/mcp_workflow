@@ -56,6 +56,7 @@ import { ConfigPanel } from "./ConfigPanel";
 import type { i_edge, i_graph, i_graph_update } from "@/types/graph";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { update_graph_service } from "@/services";
+import { useNavigate, useParams } from "react-router-dom";
 
 const defaultStartNodeId = `start-${v4()}`;
 const defaultEndNodeId = `end-${v4()}`;
@@ -164,6 +165,8 @@ function Flow({ graph }: FlowProps) {
     return isMouseOverCanvasRef.current;
   }, []);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { id: workflowId } = useParams<{ id: string }>();
 
   const handleUndo = useCallback(() => {
     const prev = undo();
@@ -786,6 +789,10 @@ function Flow({ graph }: FlowProps) {
     renderFlowFromData(graph);
   }, []);
 
+  const onGoToChat = useCallback(() => {
+    navigate(`/chat?workflowId=${workflowId}`, { replace: true });
+  }, [navigate, workflowId]);
+
   return (
     <Box w="full" h="100%" display="flex">
       <Box
@@ -1093,7 +1100,7 @@ function Flow({ graph }: FlowProps) {
                   variant="ghost"
                   px={3}
                 >
-                  <HStack gap={2}>
+                  <HStack gap={2} onClick={onGoToChat}>
                     <FaMessage />
                     <Text fontSize="xs" fontWeight="medium">
                       Chat

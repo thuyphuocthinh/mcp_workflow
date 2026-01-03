@@ -57,7 +57,7 @@ const LLMNode: React.FC<NodeProps> = (props) => {
             <FaRobot />
           </Icon>
           <Text fontSize="xs" ml={2} color="gray.700" fontWeight="500">
-            {((props.data.model as AIModel).name as string) ||
+            {((props.data?.model as AIModel)?.name as string) ||
               "No model selected"}
           </Text>
         </Box>

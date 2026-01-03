@@ -6,14 +6,15 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { get_list_graphs } from "@/services";
 import { PAGE_SIZE } from "@/constants";
 import type { i_graph } from "@/types/graph";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function ChatPage() {
   const [search, setSearch] = useState("");
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(
-    null
-  );
+  const [searchParams] = useSearchParams();
 
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(
+    searchParams.get("workflowId")
+  );
   const navigate = useNavigate();
   const location = useLocation();
   const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
