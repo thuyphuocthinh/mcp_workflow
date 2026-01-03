@@ -157,8 +157,8 @@ async chat(@Body() dto, @Res() res) {
 - Tìm hiểu lại streaming, flow đã viết langraph tham khảo từ gpt
 - Ghép services FE, register, login, get list graphs
 - Ghép chạy được LLM stream ở BE (chưa cần agent) => chuẩn hóa lại data trả về từ streaming
-## Tuần 7
 - Ghép stream FE
+## Tuần 7
 - Ghép MCP client, servers (DOCS, SHEETS)
 ## Tuần 8
 - Viết api trả ra tool

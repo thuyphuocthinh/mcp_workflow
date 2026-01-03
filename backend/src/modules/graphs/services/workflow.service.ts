@@ -8,13 +8,13 @@ import { Injectable } from "@nestjs/common";
 import { GraphDocument } from "../schemas/graphs.schema";
 import { NodeRegistry } from "../registry/node.registry";
 import { FALLBACK_PROMPT } from "../constants/graph.constants";
+import { v4 } from "uuid";
 
 export const State = Annotation.Root({
   input: Annotation<string>({
     reducer: (prev, next) => next ?? prev ?? FALLBACK_PROMPT,
     default: () => FALLBACK_PROMPT,
   }),
-
 
   output: Annotation<string | undefined>({
     reducer: (_, next) => next,
@@ -43,15 +43,13 @@ export class WorkflowRuntimeService {
 
       /* ---------- add nodes ---------- */
       for (const node of graph.nodes) {
-      if (node.type === "llm") {
-          llmNodeId = node.id;
-          runtime.addNode(node.id, this.nodeRegistry.llm());
-      }
+        if (node.type === "llm") {
+            llmNodeId = node.id;
+            runtime.addNode(node.id, this.nodeRegistry.llm());
+        }
 
-      if (node.type === "evaluator") {
-          evaluatorNodeId = node.id;
-          runtime.addNode(node.id, this.nodeRegistry.evaluator());
-      }
+        evaluatorNodeId = v4();
+        runtime.addNode(evaluatorNodeId, this.nodeRegistry.evaluator());
       }
 
       if (!llmNodeId || !evaluatorNodeId) {
