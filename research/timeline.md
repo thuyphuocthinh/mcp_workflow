@@ -160,6 +160,8 @@ async chat(@Body() dto, @Res() res) {
 - Ghép stream FE
 ## Tuần 7
 - Ghép MCP client, servers (DOCS, SHEETS)
+https://www.youtube.com/watch?v=RhTiAOGwbYE
+https://www.youtube.com/watch?v=ZoZxQwp1PiM
 ## Tuần 8
 - Viết api trả ra tool
 - Tạo trang tool
