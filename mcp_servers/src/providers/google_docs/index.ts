@@ -3,7 +3,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { z } from "zod";
 import fs from "node:fs/promises";
 import path from "node:path";
-import express from 'express'
+import express from "express";
 
 const DATA_PATH = path.join(process.cwd(), "./docs.json");
 
@@ -13,6 +13,7 @@ async function readDocs() {
     .then(JSON.parse)
     .catch(() => []);
 }
+
 async function writeDocs(docs: any[]) {
   await fs.writeFile(DATA_PATH, JSON.stringify(docs, null, 2));
 }
@@ -169,32 +170,16 @@ server.registerPrompt(
 
 // === Start server ===
 async function main() {
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: () => crypto.randomUUID(),
-  });
-
   const app = express();
   app.use(express.json());
 
-  app.post("/mcp", async (req, res) => {
-    await transport.handleRequest(req, res, req.body);
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => crypto.randomUUID(),
+    enableJsonResponse: true,
   });
-
-  app.get("/mcp", async (req, res) => {
-    await transport.handleRequest(req, res);
-  });
-
-  app.delete("/mcp", async (req, res) => {
-    await transport.handleRequest(req, res);
-  });
-
 
   await server.connect(transport);
-
-  app.listen(8000, () => {
-    console.log("✅ MCP Server HTTP listening on http://localhost:8000/mcp");
-  });
-
+  app.listen(8000, () => console.log("Server listening on port 8000"));
 }
 
 main().catch(console.error);

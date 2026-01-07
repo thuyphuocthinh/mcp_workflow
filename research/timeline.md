@@ -159,7 +159,7 @@ async chat(@Body() dto, @Res() res) {
 - Ghép chạy được LLM stream ở BE (chưa cần agent) => chuẩn hóa lại data trả về từ streaming
 - Ghép stream FE
 ## Tuần 7
-- Ghép MCP client, servers (DOCS, SHEETS)
+- Ghép MCP client, servers (DOCS, SEARCH)
 https://www.youtube.com/watch?v=RhTiAOGwbYE
 https://www.youtube.com/watch?v=ZoZxQwp1PiM
 ## Tuần 8
