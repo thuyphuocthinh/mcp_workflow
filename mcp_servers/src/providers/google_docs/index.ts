@@ -1,8 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import fs from "node:fs/promises";
 import path from "node:path";
+import express from 'express'
 
 const DATA_PATH = path.join(process.cwd(), "./docs.json");
 
@@ -166,12 +167,34 @@ server.registerPrompt(
   }
 );
 
-
 // === Start server ===
 async function main() {
-  const transport = new StdioServerTransport();
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => crypto.randomUUID(),
+  });
+
+  const app = express();
+  app.use(express.json());
+
+  app.post("/mcp", async (req, res) => {
+    await transport.handleRequest(req, res, req.body);
+  });
+
+  app.get("/mcp", async (req, res) => {
+    await transport.handleRequest(req, res);
+  });
+
+  app.delete("/mcp", async (req, res) => {
+    await transport.handleRequest(req, res);
+  });
+
+
   await server.connect(transport);
-  console.log("✅ Google Docs MCP Server started");
+
+  app.listen(8000, () => {
+    console.log("✅ MCP Server HTTP listening on http://localhost:8000/mcp");
+  });
+
 }
 
 main().catch(console.error);
