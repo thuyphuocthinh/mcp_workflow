@@ -3,6 +3,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { z } from "zod";
 import express from "express";
 import crypto from "node:crypto";
+import { create, all } from "mathjs";
 
 // Tạo MCP server
 const server = new McpServer({
@@ -10,92 +11,91 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
-// --- add ---
-server.registerTool(
-  "add",
-  {
-    title: "Add",
-    description: "Add two numbers",
-    inputSchema: {
-      a: z.number().describe("First number"),
-      b: z.number().describe("Second number"),
-    },
-  },
-  async ({ a, b }, extra) => {
-    return {
-      content: [
-        { type: "text", text: `Result: ${a + b}` },
-      ],
-    };
-  }
-);
+const math = create(all);
 
-// --- subtract ---
 server.registerTool(
-  "subtract",
+  "evaluate",
   {
-    title: "Subtract",
-    description: "Subtract two numbers",
+    title: "Evaluate Expression",
+    description: "Evaluate a mathematical expression",
     inputSchema: {
-      a: z.number().describe("First number"),
-      b: z.number().describe("Second number"),
+      expression: z.string().describe("Math expression, e.g. (2+3)*sin(pi/2)"),
     },
   },
-  async ({ a, b }, extra) => {
-    return {
-      content: [
-        { type: "text", text: `Result: ${a - b}` },
-      ],
-    };
-  }
-);
-
-// --- multiply ---
-server.registerTool(
-  "multiply",
-  {
-    title: "Multiply",
-    description: "Multiply two numbers",
-    inputSchema: {
-      a: z.number().describe("First number"),
-      b: z.number().describe("Second number"),
-    },
-  },
-  async ({ a, b }, extra) => {
-    return {
-      content: [
-        { type: "text", text: `Result: ${a * b}` },
-      ],
-    };
-  }
-);
-
-// --- divide ---
-server.registerTool(
-  "divide",
-  {
-    title: "Divide",
-    description: "Divide two numbers",
-    inputSchema: {
-      a: z.number().describe("Numerator"),
-      b: z.number().describe("Denominator"),
-    },
-  },
-  async ({ a, b }, extra) => {
-    if (b === 0) {
+  async (args, extra) => {
+    try {
+      const result = math.evaluate(args.expression);
       return {
         content: [
-          { type: "text", text: "Error: Division by zero" },
+          { type: "text", text: `Result: ${result}` },
+        ],
+      };
+    } catch (err: any) {
+      return {
+        content: [
+          { type: "text", text: `Error: ${err.message}` },
         ],
       };
     }
-    return {
-      content: [
-        { type: "text", text: `Result: ${a / b}` },
-      ],
-    };
   }
 );
+
+server.registerTool(
+  "evaluateWithVars",
+  {
+    title: "Evaluate With Variables",
+    description: "Evaluate expression with variables",
+    inputSchema: {
+      expression: z.string(),
+      variables: z.record(z.string(), z.number()).optional(),
+    },
+  },
+  async ({ expression, variables = {} }) => {
+    try {
+      const result = math.evaluate(expression, variables);
+      return {
+        content: [
+          { type: "text", text: `Result: ${result}` },
+        ],
+      };
+    } catch (e: any) {
+      return {
+        content: [
+          { type: "text", text: `Error: ${e.message}` },
+        ],
+      };
+    }
+  }
+);
+
+server.registerTool(
+  "derivative",
+  {
+    title: "Derivative",
+    description: "Compute derivative of expression",
+    inputSchema: {
+      expression: z.string(),
+      variable: z.string().default("x"),
+    },
+  },
+  async ({ expression, variable }) => {
+    try {
+      const result = math.derivative(expression, variable).toString();
+      return {
+        content: [
+          { type: "text", text: result },
+        ],
+      };
+    } catch (e: any) {
+      return {
+        content: [
+          { type: "text", text: `Error: ${e.message}` },
+        ],
+      };
+    }
+  }
+);
+
 
 // --- Start MCP server ---
 async function main() {
