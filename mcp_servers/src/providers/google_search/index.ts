@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { z } from "zod";
 import express from "express";
 import crypto from "crypto";
+import { googleSearch } from "../../utils/googleSearch.util.js";
 
 // === Fake search results ===
 const FAKE_SEARCH_RESULTS = [
@@ -24,30 +25,28 @@ server.registerTool(
   "search",
   {
     title: "Search Web",
-    description: "Perform a web search and return top results",
+    description: "Perform a real Google web search",
     inputSchema: {
-      query: z.string().describe("The search query"),
-      limit: z.number().optional().describe("Number of results to return (default 3)"),
+      query: z.string(),
+      limit: z.number().optional(),
     },
   },
-  async (args) => {
+  async (args, extra) => {
     const { query, limit = 3 } = args;
 
-    const results = FAKE_SEARCH_RESULTS.filter(r =>
-      r.title.toLowerCase().includes(query.toLowerCase()) ||
-      r.snippet.toLowerCase().includes(query.toLowerCase())
-    ).slice(0, limit);
+    const results = await googleSearch(query, limit);
 
     return {
       content: [
         {
-          type: "text", // phải là "text", không được "json"
+          type: "text",
           text: JSON.stringify(results, null, 2),
         },
       ],
     };
   }
 );
+
 
 
 // === registerResource: top-search-results ===

@@ -169,3 +169,4 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 ## Tuần 9, Tuần 10
 - Ghép tools, chạy agent
 - Tích hợp AI model vào và test workflow
+- Thêm nhập api key model gemini để user nhập vào dùng workflow
