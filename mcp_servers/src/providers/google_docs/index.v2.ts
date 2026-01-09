@@ -3,6 +3,7 @@ import fetch, { RequestInit, HeadersInit } from "node-fetch";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import express from "express";
 
 /**
  * =====================================================
@@ -223,9 +224,17 @@ server.registerTool(
  * START SERVER
  * =====================================================
  */
-const transport = new StreamableHTTPServerTransport({
-  sessionIdGenerator: () => crypto.randomUUID(),
-});
 
-await server.connect(transport);
-console.log("✅ Google Docs MCP Server running");
+export async function main() {
+  const app = express();
+  app.use(express.json());
+
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => crypto.randomUUID(),
+    enableJsonResponse: true,
+  });
+
+  await server.connect(transport);
+  const port =  process.env.MCP_GOOGLE_DOCS_PORT;
+  app.listen(port, () => console.log(`Google Docs MCP listening on port ${port}`));
+}

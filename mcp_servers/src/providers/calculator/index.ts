@@ -98,7 +98,7 @@ server.registerTool(
 
 
 // --- Start MCP server ---
-async function main() {
+export async function main() {
   const app = express();
   app.use(express.json());
 
@@ -108,8 +108,6 @@ async function main() {
   });
 
   await server.connect(transport);
-
-  app.listen(8003, () => console.log("Calculator MCP Server listening on port 8002"));
+  const port =  process.env.MCP_CALCULATOR_PORT;
+  app.listen(port, () => console.log(`Calculator MCP Server listening on port ${port}`));
 }
-
-main().catch(console.error);

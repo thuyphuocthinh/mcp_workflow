@@ -96,7 +96,7 @@ server.registerPrompt(
 );
 
 // === Start MCP server with Express + HTTP transport ===
-async function main() {
+export async function main() {
   const app = express();
   app.use(express.json());
 
@@ -107,9 +107,6 @@ async function main() {
 
   await server.connect(transport);
 
-  app.listen(8001, () => {
-    console.log("Google Search MCP Server listening on port 8001");
-  });
+  const port = process.env.MCP_GOOGLE_SEARCH_PORT;
+  app.listen(port, () => console.log(`Google Search MCP Server listening on port ${port}`));
 }
-
-main().catch(console.error);

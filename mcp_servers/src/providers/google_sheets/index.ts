@@ -131,7 +131,7 @@ server.registerTool(
 );
 
 // --- Start MCP server ---
-async function main() {
+export async function main() {
   const app = express();
   app.use(express.json());
 
@@ -141,8 +141,6 @@ async function main() {
   });
 
   await server.connect(transport);
-
-  app.listen(8002, () => console.log("Google Sheets MCP Server listening on port 8001"));
+  const port = process.env.MCP_GOOGLE_SHEETS_PORT;
+  app.listen(port, () => console.log(`Google Sheets MCP Server listening on port ${port}`));
 }
-
-main().catch(console.error);

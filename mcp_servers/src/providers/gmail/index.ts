@@ -129,7 +129,7 @@ server.registerTool(
 );
 
 // ================= START SERVER =================
-async function main() {
+ export async function main() {
   const app = express();
   app.use(express.json());
 
@@ -139,10 +139,6 @@ async function main() {
   });
 
   await server.connect(transport);
-
-  app.listen(8004, () =>
-    console.log("📧 Gmail MCP Server listening on port 8004")
-  );
+  const port =  process.env.MCP_GMAIL_PORT;
+  app.listen(port, () => console.log(`Gmail MCP Server listening on port ${port}`));
 }
-
-main().catch(console.error);
