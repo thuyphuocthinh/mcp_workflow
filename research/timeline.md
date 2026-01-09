@@ -164,10 +164,10 @@ https://www.youtube.com/watch?v=RhTiAOGwbYE
 https://www.youtube.com/watch?v=ZoZxQwp1PiM
 - Viết api trả ra tool
 + model tool (fake JSON or db ?)
-- Ghép apit tool, click tool => drawer chi tiet tool
+- Ghép api tool, click tool => drawer chi tiet tool
 ## Tuần 8
+- Thêm nhập api key model gemini để user nhập vào dùng workflow
 - Thêm Oauth cho tool cần oauth
-## Tuần 9, Tuần 10
+## Tuần 9
 - Ghép tools, chạy agent
 - Tích hợp AI model vào và test workflow
-- Thêm nhập api key model gemini để user nhập vào dùng workflow
