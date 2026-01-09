@@ -162,10 +162,11 @@ async chat(@Body() dto, @Res() res) {
 - Ghép MCP client, servers (DOCS, SEARCH)
 https://www.youtube.com/watch?v=RhTiAOGwbYE
 https://www.youtube.com/watch?v=ZoZxQwp1PiM
-## Tuần 8
 - Viết api trả ra tool
++ model tool (fake JSON or db ?)
+## Tuần 8
 - Tạo trang tool
-- Oauth2 google
+- Thêm Oauth cho tool cần oauth
 ## Tuần 9, Tuần 10
 - Ghép tools, chạy agent
 - Tích hợp AI model vào và test workflow

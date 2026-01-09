@@ -1,0 +1,117 @@
+[
+  {
+    "id": "google-docs",
+    "name": "Google Docs",
+    "description": "Create, read, and modify Google Docs documents",
+    "endpoint": "http://localhost:8000/mcp",
+    "transport": "http",
+    "auth": {
+      "type": "oauth",
+      "provider": "google",
+      "scopes": ["https://www.googleapis.com/auth/documents"]
+    },
+    "tools": [
+      {
+        "name": "createDoc",
+        "description": "Create a new Google Docs document"
+      },
+      {
+        "name": "getDoc",
+        "description": "Get a Google Docs document by ID"
+      },
+      {
+        "name": "appendText",
+        "description": "Append text to the end of a document"
+      },
+      {
+        "name": "replaceText",
+        "description": "Replace text in a document"
+      }
+    ],
+    "enabled": true
+  },
+
+  {
+    "id": "google-search",
+    "name": "Google Search",
+    "description": "Search the web using Google Custom Search",
+    "endpoint": "http://localhost:8001/mcp",
+    "transport": "http",
+    "auth": {
+      "type": "api_key",
+      "env": "GOOGLE_API_KEY"
+    },
+    "tools": [
+      {
+        "name": "search",
+        "description": "Search the web and return top results"
+      }
+    ],
+    "enabled": true
+  },
+
+  {
+    "id": "calculator",
+    "name": "Calculator",
+    "description": "Perform mathematical calculations",
+    "endpoint": "http://localhost:8003/mcp",
+    "transport": "http",
+    "auth": {
+      "type": "none"
+    },
+    "tools": [
+      {
+        "name": "add",
+        "description": "Add two numbers"
+      },
+      {
+        "name": "subtract",
+        "description": "Subtract two numbers"
+      },
+      {
+        "name": "multiply",
+        "description": "Multiply two numbers"
+      },
+      {
+        "name": "divide",
+        "description": "Divide two numbers"
+      },
+      {
+        "name": "evaluateWithVars",
+        "description": "Evaluate a math expression with variables"
+      }
+    ],
+    "enabled": true
+  },
+
+  {
+    "id": "gmail",
+    "name": "Gmail",
+    "description": "Send, read, and search Gmail messages",
+    "endpoint": "http://localhost:8004/mcp",
+    "transport": "http",
+    "auth": {
+      "type": "oauth",
+      "provider": "google",
+      "scopes": [
+        "https://www.googleapis.com/auth/gmail.readonly",
+        "https://www.googleapis.com/auth/gmail.send"
+      ]
+    },
+    "tools": [
+      {
+        "name": "sendEmail",
+        "description": "Send an email via Gmail"
+      },
+      {
+        "name": "listEmails",
+        "description": "List recent Gmail messages"
+      },
+      {
+        "name": "getEmail",
+        "description": "Get a Gmail message by ID"
+      }
+    ],
+    "enabled": true
+  }
+]
