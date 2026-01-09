@@ -1,7 +1,8 @@
 [
   {
-    "id": "google-docs",
+    "id": "3c6a1d4a-7f4b-4b6a-9b6c-1f9c7f4d5a21",
     "name": "Google Docs",
+    "key": "google_docs",
     "description": "Create, read, and modify Google Docs documents",
     "endpoint": "http://localhost:8000/mcp",
     "transport": "http",
@@ -15,24 +16,18 @@
         "name": "createDoc",
         "description": "Create a new Google Docs document"
       },
-      {
-        "name": "getDoc",
-        "description": "Get a Google Docs document by ID"
-      },
+      { "name": "getDoc", "description": "Get a Google Docs document by ID" },
       {
         "name": "appendText",
         "description": "Append text to the end of a document"
       },
-      {
-        "name": "replaceText",
-        "description": "Replace text in a document"
-      }
+      { "name": "replaceText", "description": "Replace text in a document" }
     ],
     "enabled": true
   },
-
   {
-    "id": "google-search",
+    "id": "a91b4d2e-6c4f-4a6e-9c1b-8d2e6f7a3c54",
+    "key": "google_search",
     "name": "Google Search",
     "description": "Search the web using Google Custom Search",
     "endpoint": "http://localhost:8001/mcp",
@@ -49,10 +44,10 @@
     ],
     "enabled": true
   },
-
   {
-    "id": "calculator",
+    "id": "f2c7a9e1-4b63-4c9e-b9d2-7a1e3f6c8d90",
     "name": "Calculator",
+    "key": "calculator",
     "description": "Perform mathematical calculations",
     "endpoint": "http://localhost:8003/mcp",
     "transport": "http",
@@ -60,22 +55,10 @@
       "type": "none"
     },
     "tools": [
-      {
-        "name": "add",
-        "description": "Add two numbers"
-      },
-      {
-        "name": "subtract",
-        "description": "Subtract two numbers"
-      },
-      {
-        "name": "multiply",
-        "description": "Multiply two numbers"
-      },
-      {
-        "name": "divide",
-        "description": "Divide two numbers"
-      },
+      { "name": "add", "description": "Add two numbers" },
+      { "name": "subtract", "description": "Subtract two numbers" },
+      { "name": "multiply", "description": "Multiply two numbers" },
+      { "name": "divide", "description": "Divide two numbers" },
       {
         "name": "evaluateWithVars",
         "description": "Evaluate a math expression with variables"
@@ -83,10 +66,10 @@
     ],
     "enabled": true
   },
-
   {
-    "id": "gmail",
+    "id": "6e4b8c2f-1a7d-4e3b-9d5a-2f8c1b7e4a63",
     "name": "Gmail",
+    "key": "gmail",
     "description": "Send, read, and search Gmail messages",
     "endpoint": "http://localhost:8004/mcp",
     "transport": "http",
@@ -99,18 +82,9 @@
       ]
     },
     "tools": [
-      {
-        "name": "sendEmail",
-        "description": "Send an email via Gmail"
-      },
-      {
-        "name": "listEmails",
-        "description": "List recent Gmail messages"
-      },
-      {
-        "name": "getEmail",
-        "description": "Get a Gmail message by ID"
-      }
+      { "name": "sendEmail", "description": "Send an email via Gmail" },
+      { "name": "listEmails", "description": "List recent Gmail messages" },
+      { "name": "getEmail", "description": "Get a Gmail message by ID" }
     ],
     "enabled": true
   }

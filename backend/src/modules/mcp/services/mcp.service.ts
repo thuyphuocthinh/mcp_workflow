@@ -21,6 +21,7 @@ export class McpService {
             z.object({
                 id: z.string(),
                 name: z.string(),
+                key: z.string(),
                 description: z.string().optional(),
                 tools: z.array(
                 z.object({
@@ -37,6 +38,7 @@ export class McpService {
         data: parsed.map((item: any) => ({
             id: item.id,
             name: item.name,
+            key: item.key,
             description: item.description,
             tools: item.tools,
         }))
