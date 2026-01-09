@@ -31,7 +31,6 @@ export default function LoginPage() {
     mutationFn: login_service,
 
     onSuccess: (res) => {
-      console.log("res: ", res);
       const token = res.data?.token;
       localStorage.setItem(TOKEN_KEY, token as string);
       showToast("Success", "Login Success", "success");

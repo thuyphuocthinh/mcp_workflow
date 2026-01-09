@@ -164,8 +164,8 @@ https://www.youtube.com/watch?v=RhTiAOGwbYE
 https://www.youtube.com/watch?v=ZoZxQwp1PiM
 - Viết api trả ra tool
 + model tool (fake JSON or db ?)
+- Ghép apit tool, click tool => drawer chi tiet tool
 ## Tuần 8
-- Tạo trang tool
 - Thêm Oauth cho tool cần oauth
 ## Tuần 9, Tuần 10
 - Ghép tools, chạy agent
