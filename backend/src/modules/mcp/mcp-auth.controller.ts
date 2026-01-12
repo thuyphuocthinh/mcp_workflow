@@ -7,10 +7,12 @@ import {
   Body,
   Req,
   UseGuards,
+  Res,
 } from '@nestjs/common';
 
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { AuthorizeToolDto } from './dtos/authorize-tool.dto';
+import { GoogleAuthGuard } from './strategy/google.auth';
 
 @Controller('tool-auth')
 @UseGuards(JwtAuthGuard)
@@ -22,7 +24,7 @@ export class UserToolAuthController {
   /* ================= AUTHORIZE ================= */
   @Post('authorize')
   authorize(
-    @Req() req,
+    @Req() req: any,
     @Body() dto: AuthorizeToolDto,
   ) {
     return this.userToolAuthService.authorize({
@@ -57,4 +59,35 @@ export class UserToolAuthController {
       toolKey,
     });
   }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  async googleLogin() {
+    // passport tự redirect → không cần code gì ở đây
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleCallback(@Req() req: any, @Res() res: any) {
+    const {
+      providerKey,
+      accessToken,
+      refreshToken,
+      profile,
+    } = req.user;
+
+    await this.userToolAuthService.authorize({
+      userId: req.user.id,
+      toolKey: providerKey,
+      provider: 'google',
+      token: accessToken,
+      raw: {
+        refreshToken,
+        profile,
+      },
+    });
+
+    res.redirect(`${process.env.FE_URL}/tools?authorized=${providerKey}`);
+  }
+
 }
