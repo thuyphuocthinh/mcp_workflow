@@ -20,6 +20,7 @@ import { TOKEN_KEY } from "@/constants";
 import { useNavigate } from "react-router-dom";
 import type { i_success_response } from "@/types/base";
 import { ModelKeySettingModal } from "@/components/setting/ModalKeySettingModal";
+import { UserMenu } from "./UserMenu";
 
 interface NavbarProps {
   balance: number;
@@ -129,25 +130,11 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
             </Text>
           </HStack>
         ) : (
-          <HStack gap={3}>
-            <Text fontSize="sm" fontWeight="medium">
-              {user?.data?.first_name} {user?.data?.last_name}
-            </Text>
-
-            <Avatar.Root cursor="pointer" onClick={onOpen}>
-              <Avatar.Fallback name={user?.data?.first_name} />
-              {/* <Avatar.Image src={user?.avatar_url} /> */}
-            </Avatar.Root>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              colorScheme="red"
-              onClick={handleLogout}
-            >
-              Logout
-            </Button>
-          </HStack>
+          <UserMenu
+            user={user}
+            onOpenSettings={onOpen} // mở ModelKeySettingModal
+            handleLogout={handleLogout}
+          />
         )}
       </Flex>
 
