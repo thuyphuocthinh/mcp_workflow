@@ -171,3 +171,4 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 ## Tuần 9
 - Ghép tools, chạy agent
 - Tích hợp AI model vào và test workflow
+- Fix bugs general

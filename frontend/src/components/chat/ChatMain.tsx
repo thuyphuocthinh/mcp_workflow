@@ -35,6 +35,10 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    setMessages([]);
+  }, [workflowId]);
+
   const appendMessage = (msg: ChatMessage) => {
     setMessages((prev) => [...prev, msg]);
   };

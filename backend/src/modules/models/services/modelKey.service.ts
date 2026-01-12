@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ModelKeyDto } from '../dtos/modelKey.dto';
 import { EncryptionService } from './crypto.service';
+import { SuccessResponse } from '@/shared/response/success.response';
 
 @Injectable()
 export class ModelKeyService {
@@ -17,18 +18,20 @@ export class ModelKeyService {
   /* =========================
      GET ALL KEYS BY USER
      ========================= */
-  async getAll(userId: string): Promise<ModelKeyContract[]> {
+  async getAll(userId: string): Promise<SuccessResponse> {
     const keys = await this.modelKeyModel
       .find({ user_id: new Types.ObjectId(userId) })
       .lean();
 
-    return keys.map(
-      k => new ModelKeyContract(
-        k._id.toString(),
-        '****' + this.encryptionService.decrypt(k.encryptedKey).slice(-4),
-        k.modelType,
-      ),
-    );
+    return new SuccessResponse({
+      data: keys.map(
+        k => new ModelKeyContract(
+          k._id.toString(),
+          '****' + this.encryptionService.decrypt(k.encryptedKey).slice(-4),
+          k.modelType,
+        ),
+      )
+    })
   }
 
   /* =========================
@@ -37,7 +40,7 @@ export class ModelKeyService {
   async upsertByType(
     userId: string,
     dto: ModelKeyDto,
-  ): Promise<ModelKeyContract> {
+  ): Promise<SuccessResponse> {
     const encryptedKey = this.encryptionService.encrypt(dto.key);
 
     const doc = await this.modelKeyModel.findOneAndUpdate(
@@ -56,11 +59,13 @@ export class ModelKeyService {
       },
     );
 
-    return new ModelKeyContract(
-      doc._id.toString(),
-      '****' + dto.key.slice(-4),
-      doc.modelType,
-    );
+    return new SuccessResponse({
+      data: new ModelKeyContract(
+        doc._id.toString(),
+        '****' + dto.key.slice(-4),
+        doc.modelType,
+      )
+    })
   }
 
   /* =========================
@@ -70,7 +75,7 @@ export class ModelKeyService {
     userId: string,
     modelType: string,
     newKey: string,
-  ): Promise<ModelKeyContract> {
+  ): Promise<SuccessResponse> {
     const doc = await this.modelKeyModel.findOneAndUpdate(
       {
         user_id: new Types.ObjectId(userId),
@@ -88,11 +93,13 @@ export class ModelKeyService {
       throw new NotFoundException('Model key not found');
     }
 
-    return new ModelKeyContract(
-      doc._id.toString(),
-      '****' + this.getDecryptedKey(userId, modelType),
-      doc.modelType,
-    );
+    return new SuccessResponse({
+      data: new ModelKeyContract(
+        doc._id.toString(),
+        '****' + (await this.getDecryptedKey(userId, modelType)).slice(-4),
+        doc.modelType,
+      )
+    })
   }
 
   /* =========================
@@ -101,7 +108,7 @@ export class ModelKeyService {
   async deleteByType(
     userId: string,
     modelType: string,
-  ): Promise<void> {
+  ): Promise<SuccessResponse> {
     const res = await this.modelKeyModel.deleteOne({
       user_id: new Types.ObjectId(userId),
       modelType,
@@ -110,6 +117,10 @@ export class ModelKeyService {
     if (res.deletedCount === 0) {
       throw new NotFoundException('Model key not found');
     }
+
+    return new SuccessResponse({
+      message: "Deleted Successfully"
+    })
   }
 
   async getDecryptedKey(

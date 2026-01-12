@@ -63,13 +63,12 @@ export class ModelKeyController {
      DELETE KEY BY MODEL TYPE
      DELETE /model-keys/:modelType
      ========================= */
-  @Delete(':modelType')
+  @Delete(":modelType")
   async deleteByType(
     @Req() req: any,
     @Param('modelType') modelType: string,
   ) {
     const userId = req.user.sub;
-    await this.modelKeyService.deleteByType(userId, modelType);
-    return { success: true };
+    return this.modelKeyService.deleteByType(userId, modelType);
   }
 }

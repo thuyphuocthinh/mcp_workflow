@@ -9,6 +9,7 @@ import {
   Breadcrumb,
   chakra,
   Button,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { useLocation, Link as RouterLink } from "react-router-dom";
 import { LuWallet } from "react-icons/lu";
@@ -18,6 +19,7 @@ import type { i_user } from "@/types";
 import { TOKEN_KEY } from "@/constants";
 import { useNavigate } from "react-router-dom";
 import type { i_success_response } from "@/types/base";
+import { ModelKeySettingModal } from "@/components/setting/ModalKeySettingModal";
 
 interface NavbarProps {
   balance: number;
@@ -49,6 +51,8 @@ export const NavButton = ({ to, children }: NavButtonProps) => {
 };
 
 export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
+  const { open, onOpen, onClose } = useDisclosure();
+
   const { pathname } = useLocation();
 
   // /workflow/:id
@@ -130,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
               {user?.data?.first_name} {user?.data?.last_name}
             </Text>
 
-            <Avatar.Root cursor="pointer">
+            <Avatar.Root cursor="pointer" onClick={onOpen}>
               <Avatar.Fallback name={user?.data?.first_name} />
               {/* <Avatar.Image src={user?.avatar_url} /> */}
             </Avatar.Root>
@@ -146,6 +150,8 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
           </HStack>
         )}
       </Flex>
+
+      <ModelKeySettingModal isOpen={open} onClose={onClose} />
     </Box>
   );
 };
