@@ -1,47 +1,99 @@
-import { Injectable } from '@nestjs/common';
-import fs from "fs/promises";
-import path from "path";
-import { z } from 'zod';
-import { SuccessResponse } from '@/shared/response/success.response';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+
+import { SuccessResponse } from "@/shared/response/success.response";
+import { McpContract } from "../contract/mcp.contract";
+import { mapToolToContract } from "../helper/mcp.helper";
+
+import { CreateMcpToolDto } from "../dtos/create-mcp.dto";
+import { UpdateMcpToolDto } from "../dtos/update-mcp.dto";
+import { ToolDocument } from "../schemas/tool.schema";
+import { UserToolAuthDocument } from "../schemas/user-tool-auth.schema";
 
 @Injectable()
 export class McpService {
-  async loadMcpRegistry(): Promise<SuccessResponse> {
-    const filePath = path.resolve(
-        process.cwd(),
-        'src',
-        'modules',
-        'mcp',
-        'config',
-        'mcp-registry.json'
+  constructor(
+    @InjectModel("Tool")
+    private readonly toolModel: Model<ToolDocument>,
+
+    @InjectModel('UserToolAuth')
+    private readonly userToolAuthModel: Model<UserToolAuthDocument>,
+  ) {}
+
+  /* ================= GET ALL ================= */
+  async getAll(
+    userId: string,
+  ): Promise<SuccessResponse<McpContract[]>> {
+
+    // 1. Lấy tất cả tool enabled
+    const tools = await this.toolModel
+      .find({ enabled: true })
+      .lean();
+
+    // 2. Lấy auth của user
+    const authList = await this.userToolAuthModel
+      .find({
+        user_id: userId,
+        status: 'AUTHORIZED',
+      })
+      .select('tool_key status')
+      .lean();
+
+    // 3. Map auth theo tool_key
+    const authMap = new Set(
+      authList.map(a => a.tool_key),
     );
 
-    const raw = await fs.readFile(filePath, 'utf-8');
-    const McpRegistrySchema = z.array(
-            z.object({
-                id: z.string(),
-                name: z.string(),
-                key: z.string(),
-                description: z.string().optional(),
-                tools: z.array(
-                z.object({
-                    name: z.string(),
-                    description: z.string(),
-                })
-            ),
-        })
-    );
+    // 4. Merge → contract
+    return new SuccessResponse({
+      data: tools.map(tool => ({
+        ...mapToolToContract(tool),
+        is_authorized: authMap.has(tool.key),
+      })),
+    });
+  }
 
-    const parsed = McpRegistrySchema.parse(JSON.parse(raw));
+
+  /* ================= ADD ================= */
+  async add(
+    dto: CreateMcpToolDto
+  ): Promise<SuccessResponse<McpContract>> {
+    const tool = await this.toolModel.create(dto);
 
     return new SuccessResponse({
-        data: parsed.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            key: item.key,
-            description: item.description,
-            tools: item.tools,
-        }))
-    })
+      data: mapToolToContract(tool.toObject())
+    });
+  }
+
+  /* ================= UPDATE ================= */
+  async update(
+    id: string,
+    dto: UpdateMcpToolDto
+  ): Promise<SuccessResponse<McpContract>> {
+    const tool = await this.toolModel
+      .findByIdAndUpdate(id, dto, { new: true })
+      .lean();
+
+    if (!tool) {
+      throw new NotFoundException("Tool not found");
+    }
+
+    return new SuccessResponse({
+      data: mapToolToContract(tool)
+    });
+  }
+
+  /* ================= DELETE ================= */
+  async delete(id: string): Promise<SuccessResponse<null>> {
+    const tool = await this.toolModel.findByIdAndDelete(id);
+
+    if (!tool) {
+      throw new NotFoundException("Tool not found");
+    }
+
+    return new SuccessResponse({
+      data: null
+    });
   }
 }
