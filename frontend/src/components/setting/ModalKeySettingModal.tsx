@@ -9,8 +9,10 @@ import {
   Text,
   HStack,
   Tabs,
+  IconButton,
 } from "@chakra-ui/react";
-import { useMemo, useState } from "react";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -35,19 +37,21 @@ const MODELS: { label: string; value: i_model }[] = [
 export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
   const { showToast } = useCustomToast();
   const queryClient = useQueryClient();
+
+  const [activeModel, setActiveModel] = useState<i_model>("GPT");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const [keyInputs, setKeyInputs] = useState<Record<i_model, string>>({
+    GPT: "",
+    GEMINI: "",
+  });
+
   const [visibleMap, setVisibleMap] = useState<Record<i_model, boolean>>({
     GPT: false,
     GEMINI: false,
   });
 
-  /* active tab */
-  const [activeModel, setActiveModel] = useState<i_model>("GPT");
-
-  /* input per model */
-  const [keyInputs, setKeyInputs] = useState<Record<i_model, string>>({
-    GPT: "",
-    GEMINI: "",
-  });
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   /* ================= GET ALL KEYS ================= */
   const { data } = useQuery({
@@ -60,49 +64,52 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
 
   const storedKeyMap = useMemo(() => {
     const map = new Map<i_model, string>();
-    keys.forEach((k) => {
-      map.set(k.modelType as i_model, k.key);
-    });
+    keys.forEach((k) => map.set(k.modelType as i_model, k.key));
     return map;
   }, [keys]);
 
-  const getInputValue = (model: i_model) => {
-    if (keyInputs[model]) return keyInputs[model];
-    return storedKeyMap.get(model) ?? "";
-  };
-
-  /* map existing keys */
-  const keyMap = useMemo(() => {
+  const hasKeyMap = useMemo(() => {
     const map = new Map<i_model, boolean>();
     keys.forEach((k) => map.set(k.modelType as i_model, true));
     return map;
   }, [keys]);
 
-  const hasKey = keyMap.get(activeModel) === true;
+  const hasKey = hasKeyMap.get(activeModel) === true;
 
-  /* ================= UPSERT ================= */
+  /* ================= HELPERS ================= */
+  const maskKey = (key: string) => {
+    if (key.length < 8) return "****";
+    return `${key.slice(0, 3)}****${key.slice(-4)}`;
+  };
+
+  const getDisplayValue = (model: i_model) => {
+    if (keyInputs[model]) return keyInputs[model];
+    const stored = storedKeyMap.get(model);
+    if (!stored) return "";
+    return visibleMap[model] ? stored : maskKey(stored);
+  };
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [activeModel]);
+
+  /* ================= MUTATIONS ================= */
   const upsertMutation = useMutation({
     mutationFn: upsert_key_service,
     onSuccess: () => {
-      showToast("Success", "Saved successfully", "success");
+      showToast("Success", "API key saved", "success");
       queryClient.invalidateQueries({ queryKey: ["model-keys"] });
-      setKeyInputs((prev) => ({ ...prev, [activeModel]: "" }));
-    },
-    onError: () => {
-      showToast("Error", "Failed to save key", "error");
+      setKeyInputs((p) => ({ ...p, [activeModel]: "" }));
     },
   });
 
-  /* ================= DELETE ================= */
   const deleteMutation = useMutation({
     mutationFn: delete_key_service,
     onSuccess: () => {
-      showToast("Success", "Deleted successfully", "success");
+      showToast("Success", "API key deleted", "success");
       queryClient.invalidateQueries({ queryKey: ["model-keys"] });
-      setKeyInputs((prev) => ({ ...prev, [activeModel]: "" }));
-    },
-    onError: () => {
-      showToast("Error", "Failed to delete key", "error");
+      setConfirmDeleteOpen(false);
+      setKeyInputs((p) => ({ ...p, [activeModel]: "" }));
     },
   });
 
@@ -121,111 +128,157 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
   };
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()}>
-      <Dialog.Backdrop />
+    <>
+      {/* ================= MAIN MODAL ================= */}
+      <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()}>
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content maxW="720px" w="100%">
+            <Dialog.Header>
+              <Dialog.Title>Model API Keys</Dialog.Title>
+            </Dialog.Header>
 
-      <Dialog.Positioner>
-        <Dialog.Content>
-          <Dialog.Header>
-            <Dialog.Title>Model API Keys</Dialog.Title>
-          </Dialog.Header>
+            <Dialog.Body>
+              <Tabs.Root
+                value={activeModel}
+                onValueChange={(e) => setActiveModel(e.value as i_model)}
+                variant="outline"
+              >
+                <Tabs.List>
+                  {MODELS.map((m) => (
+                    <Tabs.Trigger key={m.value} value={m.value} flex="1">
+                      {m.label}
+                    </Tabs.Trigger>
+                  ))}
+                </Tabs.List>
 
-          <Dialog.Body>
-            <Tabs.Root
-              value={activeModel}
-              onValueChange={(e) => setActiveModel(e.value as i_model)}
-              variant="enclosed"
-            >
-              <Tabs.List>
-                {MODELS.map((m) => (
-                  <Tabs.Trigger key={m.value} value={m.value}>
-                    {m.label}
-                  </Tabs.Trigger>
-                ))}
-              </Tabs.List>
+                {MODELS.map((m) => {
+                  const exists = hasKeyMap.get(m.value);
 
-              {MODELS.map((m) => {
-                const exists = keyMap.get(m.value) === true;
+                  return (
+                    <Tabs.Content key={m.value} value={m.value}>
+                      <VStack pt={6} gap={4} align="stretch">
+                        <Field.Root>
+                          <Field.Label>
+                            API Key{" "}
+                            {exists && (
+                              <Text as="span" fontSize="xs" color="green.500">
+                                (saved)
+                              </Text>
+                            )}
+                          </Field.Label>
 
-                return (
-                  <Tabs.Content key={m.value} value={m.value}>
-                    <VStack gap={4} align="stretch" pt={4} w={"100%"}>
-                      <Field.Root>
-                        <Field.Label>
-                          API Key{" "}
-                          {exists && (
-                            <Text as="span" fontSize="xs" color="green.600">
-                              (already saved)
-                            </Text>
-                          )}
-                        </Field.Label>
-
-                        <HStack w={"100%"}>
-                          <Input
-                            type={visibleMap[m.value] ? "text" : "password"}
-                            placeholder={exists ? "Saved API key" : "sk-****"}
-                            value={getInputValue(m.value)}
-                            onChange={(e) =>
-                              setKeyInputs((prev) => ({
-                                ...prev,
-                                [m.value]: e.target.value,
-                              }))
-                            }
-                          />
-
-                          {exists && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() =>
-                                setVisibleMap((prev) => ({
-                                  ...prev,
-                                  [m.value]: !prev[m.value],
+                          <HStack width={"100%"}>
+                            <Input
+                              ref={m.value === activeModel ? inputRef : null}
+                              type={visibleMap[m.value] ? "text" : "password"}
+                              value={getDisplayValue(m.value)}
+                              placeholder="sk-xxxx"
+                              onChange={(e) =>
+                                setKeyInputs((p) => ({
+                                  ...p,
+                                  [m.value]: e.target.value,
                                 }))
                               }
-                            >
-                              {visibleMap[m.value] ? "Hide" : "Show"}
-                            </Button>
-                          )}
-                        </HStack>
-                      </Field.Root>
-                    </VStack>
-                  </Tabs.Content>
-                );
-              })}
-            </Tabs.Root>
-          </Dialog.Body>
+                            />
 
-          <Dialog.Footer>
-            <HStack w="full" justify="flex-end">
-              {hasKey && (
-                <Button
-                  colorScheme="red"
-                  variant="ghost"
-                  onClick={handleDelete}
-                  loading={deleteMutation.isPending}
-                >
-                  Delete key
-                </Button>
-              )}
+                            {exists && (
+                              <IconButton
+                                aria-label="toggle visibility"
+                                variant="ghost"
+                                onClick={() =>
+                                  setVisibleMap((p) => ({
+                                    ...p,
+                                    [m.value]: !p[m.value],
+                                  }))
+                                }
+                              >
+                                {visibleMap[m.value] ? (
+                                  <EyeOff size={18} />
+                                ) : (
+                                  <Eye size={18} />
+                                )}
+                              </IconButton>
+                            )}
+                          </HStack>
+                        </Field.Root>
+                      </VStack>
+                    </Tabs.Content>
+                  );
+                })}
+              </Tabs.Root>
+            </Dialog.Body>
 
+            <Dialog.Footer>
+              <HStack w="full" justify="space-between">
+                {hasKey ? (
+                  <Button
+                    variant="ghost"
+                    colorScheme="red"
+                    onClick={() => setConfirmDeleteOpen(true)}
+                    leftIcon={<Trash2 size={16} />}
+                  >
+                    Delete key
+                  </Button>
+                ) : (
+                  <Text fontSize="sm" color="gray.500">
+                    No key stored
+                  </Text>
+                )}
+
+                <HStack>
+                  <Button variant="ghost" onClick={onClose}>
+                    Cancel
+                  </Button>
+                  <Button
+                    colorScheme="blue"
+                    onClick={handleSave}
+                    loading={upsertMutation.isPending}
+                    disabled={!keyInputs[activeModel]}
+                  >
+                    Save
+                  </Button>
+                </HStack>
+              </HStack>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+
+      {/* ================= CONFIRM DELETE ================= */}
+      <Dialog.Root
+        open={confirmDeleteOpen}
+        onOpenChange={(e) => !e.open && setConfirmDeleteOpen(false)}
+      >
+        <Dialog.Backdrop />
+        <Dialog.Positioner>
+          <Dialog.Content maxW="400px">
+            <Dialog.Header>
+              <Dialog.Title>Delete API Key</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              Are you sure? This action cannot be undone.
+            </Dialog.Body>
+            <Dialog.Footer>
               <HStack>
-                <Button variant="ghost" onClick={onClose}>
+                <Button
+                  variant="ghost"
+                  onClick={() => setConfirmDeleteOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button
-                  colorScheme="blue"
-                  onClick={handleSave}
-                  loading={upsertMutation.isPending}
-                  disabled={!keyInputs[activeModel]}
+                  colorScheme="red"
+                  onClick={handleDelete}
+                  loading={deleteMutation.isPending}
                 >
-                  Save
+                  Delete
                 </Button>
               </HStack>
-            </HStack>
-          </Dialog.Footer>
-        </Dialog.Content>
-      </Dialog.Positioner>
-    </Dialog.Root>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Dialog.Root>
+    </>
   );
 };
