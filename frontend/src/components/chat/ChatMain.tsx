@@ -186,7 +186,9 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
                       {msg.content}
                     </Text>
                   ) : (
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    <Box>
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </Box>
                   )}
                 </HStack>
               </Flex>
