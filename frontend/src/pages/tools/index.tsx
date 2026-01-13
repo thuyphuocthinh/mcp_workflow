@@ -13,7 +13,8 @@ import {
   Spinner,
 } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { FiInbox } from "react-icons/fi";
 
 export default function ToolsPage() {
   const { data: tools, isLoading } = useQuery({
@@ -44,47 +45,56 @@ export default function ToolsPage() {
         <Center>
           <Spinner />
         </Center>
+      ) : tools?.data?.length === 0 ? (
+        <Center py={20} flexDir="column" color="gray.500">
+          <Icon as={FiInbox} boxSize={12} mb={4} />
+          <Text fontSize="md" fontWeight="medium">
+            No tools available
+          </Text>
+          <Text fontSize="sm" color="gray.400">
+            Tools will appear here when they are added
+          </Text>
+        </Center>
       ) : (
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
-          {tools &&
-            tools?.data?.map((tool) => (
-              <Card.Root
-                key={tool.id}
-                borderRadius="xl"
-                boxShadow="sm"
-                transition="all 0.2s ease"
-                _hover={{ boxShadow: "lg", transform: "translateY(-2px)" }}
-                cursor={"pointer"}
-                onClick={() => handleOpenDrawer(tool)}
-              >
-                <Card.Header>
-                  <Flex align="center" gap={3}>
-                    <Box
-                      w="40px"
-                      h="40px"
-                      borderRadius="md"
-                      bg="gray.100"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Icon
-                        as={mapIcons[tool.key]}
-                        boxSize={5}
-                        color="gray.700"
-                      />
-                    </Box>
-                    <Heading size="sm">{tool.name}</Heading>
-                  </Flex>
-                </Card.Header>
+          {tools?.data?.map((tool) => (
+            <Card.Root
+              key={tool.id}
+              borderRadius="xl"
+              boxShadow="sm"
+              transition="all 0.2s ease"
+              _hover={{ boxShadow: "lg", transform: "translateY(-2px)" }}
+              cursor="pointer"
+              onClick={() => handleOpenDrawer(tool)}
+            >
+              <Card.Header>
+                <Flex align="center" gap={3}>
+                  <Box
+                    w="40px"
+                    h="40px"
+                    borderRadius="md"
+                    bg="gray.100"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Icon
+                      as={mapIcons[tool.key]}
+                      boxSize={5}
+                      color="gray.700"
+                    />
+                  </Box>
+                  <Heading size="sm">{tool.name}</Heading>
+                </Flex>
+              </Card.Header>
 
-                <Card.Body>
-                  <Text fontSize="sm" color="gray.600">
-                    {tool.description}
-                  </Text>
-                </Card.Body>
-              </Card.Root>
-            ))}
+              <Card.Body>
+                <Text fontSize="sm" color="gray.600">
+                  {tool.description}
+                </Text>
+              </Card.Body>
+            </Card.Root>
+          ))}
         </SimpleGrid>
       )}
 

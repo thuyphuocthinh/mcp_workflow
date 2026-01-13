@@ -11,7 +11,7 @@ import {
   Tabs,
   IconButton,
 } from "@chakra-ui/react";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Trash } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -73,8 +73,6 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
     keys.forEach((k) => map.set(k.modelType as i_model, true));
     return map;
   }, [keys]);
-
-  const hasKey = hasKeyMap.get(activeModel) === true;
 
   /* ================= HELPERS ================= */
   const maskKey = (key: string) => {
@@ -183,22 +181,30 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
                             />
 
                             {exists && (
-                              <IconButton
-                                aria-label="toggle visibility"
-                                variant="ghost"
-                                onClick={() =>
-                                  setVisibleMap((p) => ({
-                                    ...p,
-                                    [m.value]: !p[m.value],
-                                  }))
-                                }
-                              >
-                                {visibleMap[m.value] ? (
-                                  <EyeOff size={18} />
-                                ) : (
-                                  <Eye size={18} />
-                                )}
-                              </IconButton>
+                              <HStack gap={2}>
+                                <IconButton
+                                  aria-label="toggle visibility"
+                                  variant="ghost"
+                                  onClick={() =>
+                                    setVisibleMap((p) => ({
+                                      ...p,
+                                      [m.value]: !p[m.value],
+                                    }))
+                                  }
+                                >
+                                  {visibleMap[m.value] ? (
+                                    <EyeOff size={18} />
+                                  ) : (
+                                    <Eye size={18} />
+                                  )}
+                                </IconButton>
+                                <IconButton
+                                  variant={"ghost"}
+                                  onClick={() => setConfirmDeleteOpen(true)}
+                                >
+                                  <Trash size={18} color="red" />
+                                </IconButton>
+                              </HStack>
                             )}
                           </HStack>
                         </Field.Root>
@@ -210,22 +216,7 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
             </Dialog.Body>
 
             <Dialog.Footer>
-              <HStack w="full" justify="space-between">
-                {hasKey ? (
-                  <Button
-                    variant="ghost"
-                    colorScheme="red"
-                    onClick={() => setConfirmDeleteOpen(true)}
-                    leftIcon={<Trash2 size={16} />}
-                  >
-                    Delete key
-                  </Button>
-                ) : (
-                  <Text fontSize="sm" color="gray.500">
-                    No key stored
-                  </Text>
-                )}
-
+              <HStack w="full" justify="flex-end">
                 <HStack>
                   <Button variant="ghost" onClick={onClose}>
                     Cancel
@@ -271,6 +262,8 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
                   colorScheme="red"
                   onClick={handleDelete}
                   loading={deleteMutation.isPending}
+                  bg="red.500"
+                  _hover={{ bg: "red.600" }}
                 >
                   Delete
                 </Button>

@@ -169,6 +169,13 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 - Thêm nhập api key model gemini để user nhập vào dùng workflow
 - Thêm Oauth cho tool cần oauth
 ## Tuần 9
-- Ghép tools, chạy agent
+- Ghép tools, chạy agent (T7)
 - Tích hợp AI model vào và test workflow
-- Fix bugs general
+## Tuần 10
+- Tích hợp AI model vào và test workflow, kỹ langraph
+## Tuần 11
+- Viết test cho cả FE và BE, add eslint, commitlint config
+## Tuần 12
+- Review CI-CD và viết CI-CD triển khai
+## Tuần 13
+- Fix bugs tối ưu UI, refactor UI
