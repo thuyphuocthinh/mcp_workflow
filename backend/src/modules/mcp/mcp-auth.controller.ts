@@ -15,50 +15,10 @@ import { AuthorizeToolDto } from './dtos/authorize-tool.dto';
 import { GoogleAuthGuard } from './strategy/google.auth';
 
 @Controller('tool-auth')
-@UseGuards(JwtAuthGuard)
 export class UserToolAuthController {
   constructor(
     private readonly userToolAuthService: UserToolAuthService,
   ) {}
-
-  /* ================= AUTHORIZE ================= */
-  @Post('authorize')
-  authorize(
-    @Req() req: any,
-    @Body() dto: AuthorizeToolDto,
-  ) {
-    return this.userToolAuthService.authorize({
-      userId: req.user.id,
-      toolKey: dto.toolKey,
-      provider: dto.provider,
-      token: dto.token,
-      raw: dto.raw,
-    });
-  }
-
-  /* ================= REVOKE ================= */
-  @Post('revoke/:toolKey')
-  revoke(
-    @Req() req,
-    @Param('toolKey') toolKey: string,
-  ) {
-    return this.userToolAuthService.revoke({
-      userId: req.user.id,
-      toolKey,
-    });
-  }
-
-  /* ================= GET AUTH (OPTIONAL) ================= */
-  @Get(':toolKey')
-  getAuth(
-    @Req() req,
-    @Param('toolKey') toolKey: string,
-  ) {
-    return this.userToolAuthService.getAuth({
-      userId: req.user.id,
-      toolKey,
-    });
-  }
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
@@ -88,6 +48,48 @@ export class UserToolAuthController {
     });
 
     res.redirect(`${process.env.FE_URL}/tools?authorized=${providerKey}`);
+  }
+
+  /* ================= AUTHORIZE ================= */
+  @Post('authorize')
+  @UseGuards(JwtAuthGuard)
+  authorize(
+    @Req() req: any,
+    @Body() dto: AuthorizeToolDto,
+  ) {
+    return this.userToolAuthService.authorize({
+      userId: req.user.id,
+      toolKey: dto.toolKey,
+      provider: dto.provider,
+      token: dto.token,
+      raw: dto.raw,
+    });
+  }
+
+  /* ================= REVOKE ================= */
+  @Post('revoke/:toolKey')
+  @UseGuards(JwtAuthGuard)
+  revoke(
+    @Req() req,
+    @Param('toolKey') toolKey: string,
+  ) {
+    return this.userToolAuthService.revoke({
+      userId: req.user.id,
+      toolKey,
+    });
+  }
+
+  /* ================= GET AUTH (OPTIONAL) ================= */
+  @Get(':toolKey')
+  @UseGuards(JwtAuthGuard)
+  getAuth(
+    @Req() req,
+    @Param('toolKey') toolKey: string,
+  ) {
+    return this.userToolAuthService.getAuth({
+      userId: req.user.id,
+      toolKey,
+    });
   }
 
 }

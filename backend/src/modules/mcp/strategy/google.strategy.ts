@@ -8,7 +8,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL!,
+      callbackURL: process.env.GOOGLE_REDIRECT_URI!,
       passReqToCallback: true,
     });
   }
@@ -21,7 +21,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ) {
     return {
       provider: 'google',
-      providerKey: req.query.provider, // cực quan trọng
+      providerKey: req.query.state, // cực quan trọng
       accessToken,
       refreshToken,
       profile,

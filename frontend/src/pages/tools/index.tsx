@@ -11,6 +11,8 @@ import {
   Icon,
   Center,
   Spinner,
+  Badge,
+  HStack,
 } from "@chakra-ui/react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -68,24 +70,35 @@ export default function ToolsPage() {
               onClick={() => handleOpenDrawer(tool)}
             >
               <Card.Header>
-                <Flex align="center" gap={3}>
-                  <Box
-                    w="40px"
-                    h="40px"
-                    borderRadius="md"
-                    bg="gray.100"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
+                <HStack justifyContent={"space-between"}>
+                  <Flex align="center" gap={3}>
+                    <Box
+                      w="40px"
+                      h="40px"
+                      borderRadius="md"
+                      bg="gray.100"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <Icon
+                        as={mapIcons[tool.key]}
+                        boxSize={5}
+                        color="gray.700"
+                      />
+                    </Box>
+                    <Heading size="sm">{tool.name}</Heading>
+                  </Flex>
+                  <Badge
+                    bg={tool.is_authorized === false ? "red.500" : "green.500"}
+                    color="white"
+                    fontSize="11px"
                   >
-                    <Icon
-                      as={mapIcons[tool.key]}
-                      boxSize={5}
-                      color="gray.700"
-                    />
-                  </Box>
-                  <Heading size="sm">{tool.name}</Heading>
-                </Flex>
+                    {tool.is_authorized === false
+                      ? "Not connected"
+                      : "Connected"}
+                  </Badge>
+                </HStack>
               </Card.Header>
 
               <Card.Body>

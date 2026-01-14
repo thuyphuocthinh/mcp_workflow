@@ -17,6 +17,14 @@ interface DrawerToolProps {
 }
 
 const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
+  const handleAuthorize = () => {
+    if (!tool) return;
+    const url = `http://localhost:3000/api/v1/tool-auth/google?provider=${encodeURIComponent(
+      tool.key
+    )}`;
+    window.location.href = url;
+  };
+
   return (
     <Drawer.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
       <Portal>
@@ -48,6 +56,12 @@ const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
                       Key: {tool.key}
                     </Text>
                   </Stack>
+
+                  {tool.is_authorized === false && (
+                    <Button colorScheme="green" onClick={handleAuthorize}>
+                      Authorize
+                    </Button>
+                  )}
 
                   {/* Tools accordion */}
                   {tool.tools && tool.tools.length > 0 && (

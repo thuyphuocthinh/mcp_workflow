@@ -11,5 +11,6 @@ export interface i_tool {
   key: string;
   name: string;
   description: string;
+  is_authorized?: boolean;
   tools: Array<Record<string, string>>;
 }
