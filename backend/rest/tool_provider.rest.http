@@ -1,0 +1,175 @@
+@baseUrl = http://localhost:3000/api/v1
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OTQ5NWU1N2MyZWRlYjBjMGU5NmM2ZTUiLCJlbWFpbCI6InRodXlwaHVvY3RoaW5odHB0MUBnbWFpbC5jb20iLCJpYXQiOjE3NjgyNzcwNDIsImV4cCI6MTc2ODg4MTg0Mn0.-nbpKORdk4JeQB1TPONKzWSUWtPeB97J5vT0mnXelEk
+
+### =========================
+### Create Google Docs Tool
+### =========================
+POST {{baseUrl}}/tools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "google_docs",
+  "name": "Google Docs",
+  "description": "Interact with Google Docs documents",
+  "endpoint": "https://docs.googleapis.com/v1",
+  "transport": "http",
+  "enabled": true,
+  "auth": {
+    "type": "oauth",
+    "provider": "google",
+    "scopes": [
+      "https://www.googleapis.com/auth/documents",
+      "https://www.googleapis.com/auth/drive"
+    ]
+  },
+  "tools": [
+    {
+      "name": "create_document",
+      "description": "Create a new Google Docs document"
+    },
+    {
+      "name": "read_document",
+      "description": "Read content of a Google Docs document"
+    }
+  ]
+}
+
+###
+
+### =========================
+### Create Google Sheets Tool
+### =========================
+POST {{baseUrl}}/tools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "google_sheets",
+  "name": "Google Sheets",
+  "description": "Manage spreadsheets using Google Sheets API",
+  "endpoint": "https://sheets.googleapis.com/v4",
+  "transport": "http",
+  "enabled": true,
+  "auth": {
+    "type": "oauth",
+    "provider": "google",
+    "scopes": [
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/drive"
+    ]
+  },
+  "tools": [
+    {
+      "name": "read_sheet",
+      "description": "Read values from a spreadsheet"
+    },
+    {
+      "name": "update_sheet",
+      "description": "Update values in a spreadsheet"
+    }
+  ]
+}
+
+###
+
+### =========================
+### Create Google Search Tool
+### =========================
+POST {{baseUrl}}/tools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "google_search",
+  "name": "Google Search",
+  "description": "Search the web using Google Custom Search API",
+  "endpoint": "https://www.googleapis.com/customsearch/v1",
+  "transport": "http",
+  "enabled": true,
+  "auth": {
+    "type": "api_key",
+    "provider": "google"
+  },
+  "tools": [
+    {
+      "name": "search",
+      "description": "Search the web with a query"
+    }
+  ]
+}
+
+###
+
+### =========================
+### Create Gmail Tool
+### =========================
+POST {{baseUrl}}/tools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "gmail",
+  "name": "Gmail",
+  "description": "Send and read emails via Gmail API",
+  "endpoint": "https://gmail.googleapis.com/gmail/v1",
+  "transport": "http",
+  "enabled": true,
+  "auth": {
+    "type": "oauth",
+    "provider": "google",
+    "scopes": [
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/gmail.send"
+    ]
+  },
+  "tools": [
+    {
+      "name": "send_email",
+      "description": "Send an email via Gmail"
+    },
+    {
+      "name": "read_inbox",
+      "description": "Read inbox messages"
+    }
+  ]
+}
+
+###
+
+### =========================
+### Create Calculator Tool
+### =========================
+POST {{baseUrl}}/tools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "calculator",
+  "name": "Calculator",
+  "description": "Perform basic mathematical calculations",
+  "endpoint": "internal://calculator",
+  "transport": "http",
+  "enabled": true,
+  "auth": {
+    "type": "none"
+  },
+  "tools": [
+    {
+      "name": "add",
+      "description": "Add two numbers"
+    },
+    {
+      "name": "subtract",
+      "description": "Subtract two numbers"
+    },
+    {
+      "name": "multiply",
+      "description": "Multiply two numbers"
+    },
+    {
+      "name": "divide",
+      "description": "Divide two numbers"
+    }
+  ]
+}

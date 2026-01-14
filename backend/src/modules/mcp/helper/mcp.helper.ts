@@ -6,9 +6,12 @@ export function mapToolToContract(tool: any): McpContract {
     id: tool._id.toString(),
     name: tool.name,
     description: tool.description ?? "",
-    is_authorized: false,
-    tools: Object.fromEntries(
-      (tool.tools ?? []).map((t: any) => [t.name, t.description])
-    )
+    key: tool.key,
+    tools: (tool.tools ?? []).map((t: any) => {
+      return {
+        name: t.name,
+        description: t.description
+      }
+    })
   };
 }

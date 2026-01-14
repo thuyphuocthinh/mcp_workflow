@@ -168,6 +168,7 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 ## Tuần 8
 - Thêm nhập api key model gemini để user nhập vào dùng workflow
 - Thêm Oauth cho tool cần oauth
+- Ghép Oauth FE
 ## Tuần 9
 - Ghép tools, chạy agent (T7)
 - Tích hợp AI model vào và test workflow

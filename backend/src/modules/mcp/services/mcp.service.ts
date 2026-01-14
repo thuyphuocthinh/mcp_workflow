@@ -47,10 +47,19 @@ export class McpService {
 
     // 4. Merge → contract
     return new SuccessResponse({
-      data: tools.map(tool => ({
-        ...mapToolToContract(tool),
-        is_authorized: authMap.has(tool.key),
-      })),
+      data: tools.map(tool => {
+        const contract = mapToolToContract(tool);
+
+        // chỉ google tools mới cần is_authorized
+        if ((tool.key.startsWith("google") || tool.key.startsWith("gmail")) && tool.key !== 'google_search') {
+          return {
+            ...contract,
+            is_authorized: authMap.has(tool.key),
+          };
+        }
+
+        return contract;
+      }),
     });
   }
 
