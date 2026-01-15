@@ -1,4 +1,6 @@
 import { TOKEN_KEY } from "@/constants";
+import useCustomToast from "@/hooks/useCustomToast";
+import { tool_revoke_service } from "@/services";
 import type { i_tool } from "@/types";
 import {
   Button,
@@ -10,6 +12,7 @@ import {
   Accordion,
   Box,
 } from "@chakra-ui/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface DrawerToolProps {
   open: boolean;
@@ -18,13 +21,43 @@ interface DrawerToolProps {
 }
 
 const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
+  const { showToast } = useCustomToast()
+  const queryClient = useQueryClient();
   const handleAuthorize = () => {
     if (!tool) return;
     const token = localStorage.getItem(TOKEN_KEY);
-    const url = `http://localhost:3000/api/v1/tool-auth/google?provider=${encodeURIComponent(
+    const baseUrl = import.meta.env.VITE_API_URL;
+    const url = `${baseUrl}/tool-auth/google?provider=${encodeURIComponent(
       tool.key
     )}&token=${token}`;
     window.location.href = url;
+  };
+
+  const revokeMutation = useMutation({
+    mutationFn: (toolKey: string) => tool_revoke_service(toolKey),
+    onSuccess: () => {
+      showToast(
+        "Success",
+        "Tool revoked successfully",
+        "success",
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["tools"],
+      });
+      onClose();
+    },
+    onError: () => {
+      showToast(
+        "Error",
+        "Failed to revoke tool",
+        "error",
+      );
+    },
+  });
+
+  const handleRevoke = () => {
+    if (!tool) return;
+    revokeMutation.mutate(tool.key);
   };
 
   return (
@@ -64,6 +97,14 @@ const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
                       Authorize
                     </Button>
                   )}
+
+                  {
+                    tool.is_authorized === true && (
+                      <Button colorScheme="red" onClick={handleRevoke} loading={revokeMutation.isPending}>
+                        Revoke
+                      </Button>
+                    )
+                  }
 
                   {/* Tools accordion */}
                   {tool.tools && tool.tools.length > 0 && (

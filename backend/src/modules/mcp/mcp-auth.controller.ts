@@ -72,7 +72,7 @@ export class UserToolAuthController {
     @Body() dto: AuthorizeToolDto,
   ) {
     return this.userToolAuthService.authorize({
-      userId: req.user.id,
+      userId: req.user.sub,
       toolKey: dto.toolKey,
       provider: dto.provider,
       token: dto.token,
@@ -84,11 +84,11 @@ export class UserToolAuthController {
   @Post('revoke/:toolKey')
   @UseGuards(JwtAuthGuard)
   revoke(
-    @Req() req,
+    @Req() req: any,
     @Param('toolKey') toolKey: string,
   ) {
     return this.userToolAuthService.revoke({
-      userId: req.user.id,
+      userId: req.user.sub,
       toolKey,
     });
   }
@@ -97,11 +97,11 @@ export class UserToolAuthController {
   @Get(':toolKey')
   @UseGuards(JwtAuthGuard)
   getAuth(
-    @Req() req,
+    @Req() req: any,
     @Param('toolKey') toolKey: string,
   ) {
     return this.userToolAuthService.getAuth({
-      userId: req.user.id,
+      userId: req.user.sub,
       toolKey,
     });
   }

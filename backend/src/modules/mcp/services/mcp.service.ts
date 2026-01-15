@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 
 import { SuccessResponse } from "@/shared/response/success.response";
 import { McpContract } from "../contract/mcp.contract";
@@ -34,7 +34,7 @@ export class McpService {
     // 2. Lấy auth của user
     const authList = await this.userToolAuthModel
       .find({
-        user_id: userId,
+        user_id: new Types.ObjectId(userId),
         status: 'AUTHORIZED',
       })
       .select('tool_key status')

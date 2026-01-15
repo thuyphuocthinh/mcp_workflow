@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
@@ -11,6 +11,8 @@ import {
 
 @Injectable()
 export class UserToolAuthService {
+  private readonly logger = new Logger(UserToolAuthService.name);
+
   constructor(
     @InjectModel('UserToolAuth')
     private readonly userToolAuthModel: Model<UserToolAuthDocument>,
@@ -32,12 +34,16 @@ export class UserToolAuthService {
         tool_key: toolKey,
       },
       {
-        user_id: userId,
-        tool_key: toolKey,
-        provider,
-        status: 'AUTHORIZED',
-        token,
-        raw,
+        $set: {
+          provider,
+          status: 'AUTHORIZED',
+          token,
+          raw,
+        },
+        $setOnInsert: {
+          user_id: new Types.ObjectId(userId),
+          tool_key: toolKey,
+        },
       },
       {
         upsert: true,
@@ -57,9 +63,11 @@ export class UserToolAuthService {
   }): Promise<SuccessResponse<null>> {
     const { userId, toolKey } = params;
 
+    this.logger.log(`User ${userId} revoked tool ${toolKey}`);
+
     const res = await this.userToolAuthModel.updateOne(
       {
-        user_id: userId,
+        user_id: new Types.ObjectId(userId),
         tool_key: toolKey,
       },
       {
@@ -79,12 +87,12 @@ export class UserToolAuthService {
 
   /* ================= MARK EXPIRED ================= */
   async markExpired(
-    userId: Types.ObjectId,
+    userId: string,
     toolKey: string,
   ): Promise<SuccessResponse<null>> {
     await this.userToolAuthModel.updateOne(
       {
-        user_id: userId,
+        user_id: new Types.ObjectId(userId),
         tool_key: toolKey,
         status: 'AUTHORIZED',
       },
@@ -104,7 +112,7 @@ export class UserToolAuthService {
     toolKey: string;
   }): Promise<SuccessResponse<UserToolAuth | null>> {
     const auth = await this.userToolAuthModel.findOne({
-      user_id: params.userId,
+      user_id: new Types.ObjectId(params.userId),
       tool_key: params.toolKey,
     });
 
