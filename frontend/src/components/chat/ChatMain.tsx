@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { FaRobot, FaUser } from "react-icons/fa";
-import { useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import ReactMarkdown from "react-markdown";
 
@@ -26,8 +26,11 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isStoppedRef = useRef(false); // Track if streaming was manually stopped
   const [searchParams] = useSearchParams();
-  const workflowId = searchParams.get("workflowId");
+  const { id: routeWorkflowId } = useParams<{ id: string }>();
+  // Support both query params (?workflowId=xxx) and route params (:id)
+  const workflowId = searchParams.get("workflowId") || routeWorkflowId;
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -49,6 +52,8 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
     speed = 15 // ms / ký tự
   ) => {
     for (let i = 0; i < text.length; i++) {
+      // Stop typing effect immediately when user stops streaming
+      if (isStoppedRef.current) return;
       await new Promise((r) => setTimeout(r, speed));
       setMessages((prev) =>
         prev.map((msg) =>
@@ -59,6 +64,7 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
   };
 
   const stopStreaming = () => {
+    isStoppedRef.current = true; // Signal to stop typing effect
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
     setIsStreaming(false);
@@ -72,6 +78,7 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    isStoppedRef.current = false; // Reset stop flag for new message
 
     const humanMsg: ChatMessage = {
       id: uuidv4(),
