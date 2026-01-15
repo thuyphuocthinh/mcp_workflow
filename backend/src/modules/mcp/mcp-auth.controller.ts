@@ -8,20 +8,24 @@ import {
   Req,
   UseGuards,
   Res,
+  InternalServerErrorException,
 } from '@nestjs/common';
 
 import { JwtAuthGuard } from '@/shared/guards/jwt-auth.guard';
 import { AuthorizeToolDto } from './dtos/authorize-tool.dto';
 import { GoogleAuthGuard } from './strategy/google.auth';
+import { Logger } from '@nestjs/common';
 
 @Controller('tool-auth')
 export class UserToolAuthController {
+  private readonly logger = new Logger(UserToolAuthController.name);
+
   constructor(
     private readonly userToolAuthService: UserToolAuthService,
   ) {}
 
   @Get('google')
-  @UseGuards(GoogleAuthGuard)
+  @UseGuards(JwtAuthGuard, GoogleAuthGuard)
   async googleLogin() {
     // passport tự redirect → không cần code gì ở đây
   }
@@ -29,25 +33,35 @@ export class UserToolAuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleCallback(@Req() req: any, @Res() res: any) {
-    const {
-      providerKey,
-      accessToken,
-      refreshToken,
-      profile,
-    } = req.user;
-
-    await this.userToolAuthService.authorize({
-      userId: req.user.id,
-      toolKey: providerKey,
-      provider: 'google',
-      token: accessToken,
-      raw: {
+    try {
+      const {
+        providerKey,
+        accessToken,
         refreshToken,
         profile,
-      },
-    });
+      } = req.user;
 
-    res.redirect(`${process.env.FE_URL}/tools?authorized=${providerKey}`);
+      this.logger.log(`User ${req.user.id} authorized tool ${providerKey}`);
+
+      await this.userToolAuthService.authorize({
+        userId: req.user.id,
+        toolKey: providerKey,
+        provider: 'google',
+        token: {
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          token_type: 'Bearer',
+        },
+        raw: {
+          profile,
+        },
+      });
+
+      res.redirect(`${process.env.FE_URL}/tools?authorized=${providerKey}`);
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException("Failed to authorize tool");
+    }
   }
 
   /* ================= AUTHORIZE ================= */

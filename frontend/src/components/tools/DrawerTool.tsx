@@ -1,3 +1,4 @@
+import { TOKEN_KEY } from "@/constants";
 import type { i_tool } from "@/types";
 import {
   Button,
@@ -19,9 +20,10 @@ interface DrawerToolProps {
 const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
   const handleAuthorize = () => {
     if (!tool) return;
+    const token = localStorage.getItem(TOKEN_KEY);
     const url = `http://localhost:3000/api/v1/tool-auth/google?provider=${encodeURIComponent(
       tool.key
-    )}`;
+    )}&token=${token}`;
     window.location.href = url;
   };
 
