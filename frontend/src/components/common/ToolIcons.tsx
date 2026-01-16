@@ -5,16 +5,22 @@ import {
   FaGoogle,
   FaGoogleDrive,
   FaSlack,
+  FaCalculator,
 } from "react-icons/fa";
-import { MdEmail, MdPictureAsPdf, MdWbSunny } from "react-icons/md";
+import { MdEmail, MdPictureAsPdf, MdWbSunny, MdCalendarMonth, MdSlideshow } from "react-icons/md";
 import { SiGoogledocs, SiGooglesheets, SiNotion } from "react-icons/si";
+import { FiTool } from "react-icons/fi";
 
+// Keys must match tools.ts keys (hyphen format for MCP server names)
 export type ToolKey =
-  | "google_docs"
-  | "google_sheets"
-  | "google_drive"
+  | "calculator"
   | "gmail"
-  | "google_search"
+  | "google-docs"
+  | "google-sheets"
+  | "google-drive"
+  | "google-search"
+  | "google-calendar"
+  | "google-slides"
   | "figma"
   | "github"
   | "slack"
@@ -23,15 +29,23 @@ export type ToolKey =
   | "pdf_viewer";
 
 export const toolIconMap: Record<ToolKey, Tool["icon"]> = {
-  google_docs: SiGoogledocs,
-  google_sheets: SiGooglesheets,
-  google_drive: FaGoogleDrive,
+  calculator: FaCalculator,
   gmail: MdEmail,
-  google_search: FaGoogle,
+  "google-docs": SiGoogledocs,
+  "google-sheets": SiGooglesheets,
+  "google-drive": FaGoogleDrive,
+  "google-search": FaGoogle,
+  "google-calendar": MdCalendarMonth,
+  "google-slides": MdSlideshow,
   figma: FaFigma,
   github: FaGithub,
   slack: FaSlack,
   notion: SiNotion,
   weather: MdWbSunny,
   pdf_viewer: MdPictureAsPdf,
+};
+
+// Fallback icon for unknown tools
+export const getToolIcon = (key: string): Tool["icon"] => {
+  return toolIconMap[key as ToolKey] || FiTool;
 };

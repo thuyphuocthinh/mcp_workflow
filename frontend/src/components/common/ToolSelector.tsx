@@ -14,7 +14,7 @@ import {
 import { FiPlus, FiCheck } from "react-icons/fi";
 import { useMemo, useState } from "react";
 import type { Tool } from "@/types";
-import { toolIconMap, type ToolKey } from "./ToolIcons";
+import { getToolIcon } from "./ToolIcons";
 
 type ToolSelectorProps = {
   tools: Tool[];
@@ -120,7 +120,7 @@ export default function ToolSelector({
                         <Card.Body>
                           <Flex align="center" justify="space-between">
                             <Flex align="center" gap={3}>
-                              <Icon as={tool.icon} boxSize={4} />
+                              <Icon as={getToolIcon(tool.key)} boxSize={4} />
                               <Text fontSize="sm" fontWeight="medium">
                                 {tool.name}
                               </Text>
@@ -168,8 +168,7 @@ export default function ToolSelector({
               <Card.Body py={2}>
                 <Flex align="center" justify="space-between">
                   <Flex align="center" gap={2}>
-                    {/* <Icon as={tool.icon} boxSize={4} /> */}
-                    <Icon as={toolIconMap[tool.key as ToolKey]} boxSize={4} />
+                    <Icon as={getToolIcon(tool.key)} boxSize={4} />
                     <Text fontSize="sm" fontWeight="medium">
                       {tool.name}
                     </Text>

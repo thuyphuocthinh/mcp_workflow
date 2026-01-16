@@ -13,70 +13,132 @@ import {
 import { FaRobot } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { FiChevronDown } from "react-icons/fi";
+import { SiOpenai, SiGooglegemini } from "react-icons/si";
+import { TbBrandMeta } from "react-icons/tb";
 
 /* ================== Types ================== */
+
+export type LLMProvider = "openai" | "gemini" | "anthropic";
 
 export type AIModel = {
   id: string;
   name: string;
-  provider: string;
+  provider: LLMProvider;
   description: string;
 };
 
-/* ================== Fake models ================== */
+export type ModelSelectValue = {
+  provider: LLMProvider;
+  model: string;
+};
 
-const FAKE_MODELS: AIModel[] = [
+/* ================== Available models ================== */
+
+const AVAILABLE_MODELS: AIModel[] = [
+  // OpenAI
   {
     id: "gpt-4o",
     name: "GPT-4o",
-    provider: "OpenAI",
+    provider: "openai",
     description: "Best for reasoning, coding, and chat",
   },
   {
-    id: "gpt-4.1-mini",
-    name: "GPT-4.1 Mini",
-    provider: "OpenAI",
+    id: "gpt-4o-mini",
+    name: "GPT-4o Mini",
+    provider: "openai",
     description: "Fast and cheap, good for workflows",
   },
   {
-    id: "claude-3.5-sonnet",
-    name: "Claude 3.5 Sonnet",
-    provider: "Anthropic",
-    description: "Great at long context and writing",
+    id: "gpt-4-turbo",
+    name: "GPT-4 Turbo",
+    provider: "openai",
+    description: "High performance with vision support",
+  },
+  // Gemini
+  {
+    id: "gemini-2.5-flash",
+    name: "Gemini 2.5 Flash",
+    provider: "gemini",
+    description: "Fast and efficient, great for streaming",
   },
   {
     id: "gemini-1.5-pro",
     name: "Gemini 1.5 Pro",
-    provider: "Google",
+    provider: "gemini",
     description: "Strong multimodal & large context",
   },
+  // Anthropic
   {
-    id: "llama-3-70b",
-    name: "LLaMA 3 70B",
-    provider: "Meta",
-    description: "Open-source, high quality responses",
+    id: "claude-3-5-sonnet-latest",
+    name: "Claude 3.5 Sonnet",
+    provider: "anthropic",
+    description: "Great at long context and writing",
+  },
+  {
+    id: "claude-3-opus-latest",
+    name: "Claude 3 Opus",
+    provider: "anthropic",
+    description: "Most capable, best for complex tasks",
   },
 ];
+
+const providerIcons: Record<LLMProvider, React.ElementType> = {
+  openai: SiOpenai,
+  gemini: SiGooglegemini,
+  anthropic: TbBrandMeta,
+};
+
+const providerColors: Record<LLMProvider, string> = {
+  openai: "green.500",
+  gemini: "blue.500",
+  anthropic: "orange.500",
+};
 
 /* ================== Component ================== */
 
 type ModelSelectProps = {
-  value?: AIModel;
-  onChange?: (model: AIModel) => void;
+  value?: ModelSelectValue;
+  onChange?: (value: ModelSelectValue) => void;
 };
 
+// Default model if none selected
+const DEFAULT_MODEL = AVAILABLE_MODELS[0]; // gpt-4o
+
 export function ModelSelect({ value, onChange }: ModelSelectProps) {
-  const [selected, setSelected] = useState<AIModel | undefined>(value);
+  const [selected, setSelected] = useState<AIModel | undefined>(() => {
+    if (value && value.provider && value.model) {
+      const found = AVAILABLE_MODELS.find(
+        (m) => m.provider === value.provider && m.id === value.model
+      );
+      return found || DEFAULT_MODEL;
+    }
+    return undefined;
+  });
 
   // sync controlled value
   useEffect(() => {
-    setSelected(value);
-  }, [value]);
+    if (value && value.provider && value.model) {
+      const found = AVAILABLE_MODELS.find(
+        (m) => m.provider === value.provider && m.id === value.model
+      );
+      if (found) {
+        setSelected(found);
+      } else {
+        // Model not found in list - might be custom model name
+        console.log('Model not found:', value, 'Available:', AVAILABLE_MODELS.map(m => `${m.provider}/${m.id}`));
+      }
+    }
+  }, [value?.provider, value?.model]);
 
   const handleSelect = (model: AIModel) => {
     setSelected(model);
-    onChange?.(model);
+    onChange?.({
+      provider: model.provider,
+      model: model.id,
+    });
   };
+
+  const ProviderIcon = selected ? providerIcons[selected.provider] : FaRobot;
 
   return (
     <Menu.Root positioning={{ placement: "bottom-start" }}>
@@ -108,7 +170,10 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
       >
         <HStack justify="space-between" w="full">
           <HStack>
-            <Icon as={FaRobot} color="blue.500" />
+            <Icon
+              as={ProviderIcon}
+              color={selected ? providerColors[selected.provider] : "gray.400"}
+            />
             <VStack align="start" gap={0}>
               <Text fontWeight="medium">
                 {selected?.name ?? "Select AI Model"}
@@ -124,15 +189,18 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
 
       <Portal>
         <Menu.Positioner>
-          <Menu.Content minW="360px" w={"full"} p="2">
+          <Menu.Content minW="360px" w={"full"} p="2" maxH="400px" overflowY="auto">
             <VStack align="stretch" gap="2">
-              {FAKE_MODELS.map((model) => {
-                const isSelected = selected?.id === model.id;
+              {AVAILABLE_MODELS.map((model) => {
+                const isSelected =
+                  selected?.provider === model.provider &&
+                  selected?.id === model.id;
+                const ModelIcon = providerIcons[model.provider];
 
                 return (
                   <Menu.Item
                     value={model.id}
-                    key={model.id}
+                    key={`${model.provider}-${model.id}`}
                     onClick={() => handleSelect(model)}
                     p="0"
                     borderRadius="md"
@@ -158,7 +226,10 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
                           borderRadius="md"
                           bg={isSelected ? "blue.100" : "gray.100"}
                         >
-                          <Icon as={FaRobot} />
+                          <Icon
+                            as={ModelIcon}
+                            color={providerColors[model.provider]}
+                          />
                         </Box>
 
                         <VStack align="start" gap="1">
