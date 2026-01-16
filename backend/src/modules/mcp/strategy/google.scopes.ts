@@ -17,7 +17,19 @@ export const GOOGLE_PROVIDER_SCOPES = {
   ],
   gmail: [
     ...BASE_SCOPES,
-    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail',
+  ],
+  google_calendar: [
+    ...BASE_SCOPES,
+    'https://www.googleapis.com/auth/calendar',
+  ],
+  google_slides: [
+    ...BASE_SCOPES,
+    'https://www.googleapis.com/auth/presentations',
+  ],
+  google_drive: [
+    ...BASE_SCOPES,
+    'https://www.googleapis.com/auth/drive',
   ],
 };
 
