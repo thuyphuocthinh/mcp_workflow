@@ -169,11 +169,12 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 - Thêm nhập api key model gemini để user nhập vào dùng workflow
 - Thêm Oauth cho tool cần oauth
 - Ghép Oauth FE
+- Thêm mcp google driver, google calendar, google slide
 ## Tuần 9
 - Ghép tools, chạy agent (T7)
 - Tích hợp AI model vào và test workflow
 ## Tuần 10
-- Tích hợp AI model vào và test workflow, kỹ langraph
+- Tích hợp AI model vào và test workflow, kỹ langraph & mcp inspector
 ## Tuần 11
 - Viết test cho cả FE và BE, add eslint, commitlint config
 ## Tuần 12
