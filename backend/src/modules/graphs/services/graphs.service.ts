@@ -254,7 +254,8 @@ export class GraphService {
     async streamRun(
         graph: GraphDocument,
         input: string,
+        userId?: string,
     ) {
-        return this.workflowRuntime.runStream(graph, input);
+        return this.workflowRuntime.runStream(graph, input, userId);
     }
 }

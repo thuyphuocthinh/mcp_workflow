@@ -98,7 +98,7 @@ export class GraphController {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const stream = await this.graphService.streamRun(graph, input);
+    const stream = await this.graphService.streamRun(graph, input, userId);
 
     try {
       for await (const event of stream) {

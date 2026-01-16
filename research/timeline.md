@@ -170,6 +170,7 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 - Thêm Oauth cho tool cần oauth
 - Ghép Oauth FE
 - Thêm mcp google driver, google calendar, google slide
+- Chọn tool, user prompt ở node agent
 ## Tuần 9
 - Ghép tools, chạy agent (T7)
 - Tích hợp AI model vào và test workflow

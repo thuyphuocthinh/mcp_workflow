@@ -7,6 +7,7 @@ import { UserToolAuth, UserToolAuthSchema } from './schemas/user-tool-auth.schem
 import { UserToolAuthController } from './mcp-auth.controller';
 import { UserToolAuthService } from './services/mcp-auth.service';
 import { GoogleStrategy } from './strategy/google.strategy';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -15,6 +16,8 @@ import { GoogleStrategy } from './strategy/google.strategy';
     ]),
   ],
   providers: [McpService, UserToolAuthService, GoogleStrategy],
-  controllers: [McpController, UserToolAuthController]
+  controllers: [McpController, UserToolAuthController],
+  exports: [UserToolAuthService],
 })
 export class McpModule {}
+

@@ -3,11 +3,65 @@ export type FlowNodePosition = {
   y: number;
 };
 
+// ─────────────────────────────────────────────────────────────
+// Node Data Types
+// ─────────────────────────────────────────────────────────────
+
+export type LLMProvider = 'gemini' | 'openai' | 'anthropic';
+
+export interface LLMNodeData {
+  label: string;
+  userPrompt: string;          // Prompt template, có thể chứa {{input}}
+  systemPrompt?: string;       // Optional system instruction
+  provider: LLMProvider;
+  model: string;               // 'gemini-2.5-flash', 'gpt-4o', 'claude-3-sonnet'
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface MCPToolNodeData {
+  label: string;
+  mcpServer: string;           // 'gmail', 'google-docs', 'google-sheets'
+  toolName: string;            // 'sendEmail', 'createDoc', 'appendRow'
+  toolArgs: Record<string, any>;
+}
+
+export interface AgentNodeData {
+  label: string;
+  systemPrompt: string;
+  provider: LLMProvider;
+  model: string;
+  mcpServers: string[];        // List MCP servers agent có thể dùng
+  maxIterations?: number;      // Default: 10
+}
+
+export interface StartNodeData {
+  label: string;
+}
+
+export interface EndNodeData {
+  label: string;
+}
+
+export type FlowNodeData = 
+  | LLMNodeData 
+  | MCPToolNodeData 
+  | AgentNodeData 
+  | StartNodeData 
+  | EndNodeData
+  | Record<string, any>;
+
+// ─────────────────────────────────────────────────────────────
+// Flow Node & Edge
+// ─────────────────────────────────────────────────────────────
+
+export type FlowNodeType = 'start' | 'end' | 'llm' | 'mcp-tool' | 'agent';
+
 export type FlowNode = {
   id: string;
-  type?: string;
+  type?: FlowNodeType | string;
   position: FlowNodePosition;
-  data?: Record<string, any>;
+  data?: FlowNodeData;
 };
 
 export type FlowEdge = {
