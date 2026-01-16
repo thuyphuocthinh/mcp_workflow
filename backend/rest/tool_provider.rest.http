@@ -173,3 +173,128 @@ Content-Type: application/json
     }
   ]
 }
+
+###
+
+### =========================
+### Create Google Calendar Tool
+### =========================
+POST {{baseUrl}}/tools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "google_calendar",
+  "name": "Google Calendar",
+  "description": "Manage events and schedules using Google Calendar API",
+  "endpoint": "https://www.googleapis.com/calendar/v3",
+  "transport": "http",
+  "enabled": true,
+  "auth": {
+    "type": "oauth",
+    "provider": "google",
+    "scopes": [
+      "https://www.googleapis.com/auth/calendar",
+      "https://www.googleapis.com/auth/calendar.events"
+    ]
+  },
+  "tools": [
+    {
+      "name": "list_events",
+      "description": "List upcoming calendar events"
+    },
+    {
+      "name": "create_event",
+      "description": "Create a new calendar event"
+    },
+    {
+      "name": "delete_event",
+      "description": "Delete a calendar event"
+    }
+  ]
+}
+
+###
+
+### =========================
+### Create Google Slides Tool
+### =========================
+POST {{baseUrl}}/tools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "google_slides",
+  "name": "Google Slides",
+  "description": "Create and manage presentations using Google Slides API",
+  "endpoint": "https://slides.googleapis.com/v1",
+  "transport": "http",
+  "enabled": true,
+  "auth": {
+    "type": "oauth",
+    "provider": "google",
+    "scopes": [
+      "https://www.googleapis.com/auth/presentations",
+      "https://www.googleapis.com/auth/drive"
+    ]
+  },
+  "tools": [
+    {
+      "name": "get_presentation",
+      "description": "Get presentation details"
+    },
+    {
+      "name": "create_presentation",
+      "description": "Create a new presentation"
+    },
+    {
+      "name": "add_slide",
+      "description": "Add a new slide to a presentation"
+    }
+  ]
+}
+
+###
+
+### =========================
+### Create Google Drive Tool
+### =========================
+POST {{baseUrl}}/tools
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "key": "google_drive",
+  "name": "Google Drive",
+  "description": "Manage files and folders using Google Drive API",
+  "endpoint": "https://www.googleapis.com/drive/v3",
+  "transport": "http",
+  "enabled": true,
+  "auth": {
+    "type": "oauth",
+    "provider": "google",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive",
+      "https://www.googleapis.com/auth/drive.file"
+    ]
+  },
+  "tools": [
+    {
+      "name": "list_files",
+      "description": "List files from Google Drive"
+    },
+    {
+      "name": "get_file",
+      "description": "Get file metadata"
+    },
+    {
+      "name": "delete_file",
+      "description": "Delete a file from Drive"
+    },
+    {
+      "name": "create_folder",
+      "description": "Create a new folder"
+    }
+  ]
+}
+
