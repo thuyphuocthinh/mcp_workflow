@@ -12,6 +12,7 @@ import { EncryptionService } from './services/crypto.service';
     ]),
   ],
   providers: [ModelKeyService, EncryptionService],
-  controllers: [ModelKeyController]
+  controllers: [ModelKeyController],
+  exports: [ModelKeyService, EncryptionService],
 })
 export class ModelKeyModule {}

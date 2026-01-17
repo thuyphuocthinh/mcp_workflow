@@ -181,7 +181,7 @@ export class WorkflowRuntimeService {
         if (!node.data) {
           throw new Error(`LLM node ${node.id} missing data`);
         }
-        return this.nodeRegistry.createLLMNode(node.data as LLMNodeData);
+        return this.nodeRegistry.createLLMNode(node.data as LLMNodeData, userId);
 
       case 'mcp-tool':
         if (!node.data) {
@@ -210,7 +210,7 @@ export class WorkflowRuntimeService {
         // if they have the right data structure
         if (node.data && 'userPrompt' in node.data && 'provider' in node.data) {
           this.logger.warn(`Unknown node type "${node.type}", treating as LLM node`);
-          return this.nodeRegistry.createLLMNode(node.data as LLMNodeData);
+          return this.nodeRegistry.createLLMNode(node.data as LLMNodeData, userId);
         }
         
         // Fall back to legacy llm() method

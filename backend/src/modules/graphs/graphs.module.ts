@@ -10,11 +10,13 @@ import { MCPClientService } from './services/mcp-client.service';
 import { NodeRegistry } from './registry/node.registry';
 import { WorkflowRuntimeService } from './services/workflow.service';
 import { McpModule } from '../mcp/mcp.module';
+import { ModelKeyModule } from '../models/models.module';
 
 @Module({
   imports: [
     ConfigModule,
     McpModule,
+    ModelKeyModule,
     MongooseModule.forFeature([
       { name: Graph.name, schema: GraphSchema },
     ]),

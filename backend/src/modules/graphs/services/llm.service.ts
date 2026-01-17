@@ -10,10 +10,7 @@ import {
   ToolCall,
 } from '../types/langraph.types';
 import { LLMProvider } from '../types/graph.types';
-
-// ─────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────
+import { ModelKeyService } from '../../models/services/modelKey.service';
 
 export interface LLMCallOptions {
   provider: LLMProvider;
@@ -22,6 +19,7 @@ export interface LLMCallOptions {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  userId?: string;
 }
 
 export interface LLMCallWithToolsOptions {
@@ -32,94 +30,121 @@ export interface LLMCallWithToolsOptions {
   systemPrompt?: string;
   temperature?: number;
   maxTokens?: number;
+  userId?: string;
 }
-
-// ─────────────────────────────────────────────────────────────
-// Service
-// ─────────────────────────────────────────────────────────────
 
 @Injectable()
 export class LLMService {
   private readonly logger = new Logger(LLMService.name);
-  private geminiClient: GoogleGenAI | null = null;
-  private openaiClient: OpenAI | null = null;
-  private anthropicClient: Anthropic | null = null;
 
-  constructor(private readonly configService: ConfigService) {
-    this.initializeClients();
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly modelKeyService: ModelKeyService,
+  ) {
+    this.logger.log('LLMService initialized (dynamic key loading from database)');
   }
 
-  private initializeClients() {
-    // Initialize Gemini (using GOOGLE_API_KEY or GEMINI_API_KEY)
-    const geminiKey = this.configService.get<string>('GEMINI_API_KEY') 
-      || this.configService.get<string>('GOOGLE_API_KEY');
-    if (geminiKey) {
-      this.geminiClient = new GoogleGenAI({ apiKey: geminiKey });
-      this.logger.log('Gemini client initialized');
+  private async getApiKey(provider: LLMProvider, userId?: string): Promise<string | null> {
+    // Map provider to modelType in database
+    const modelTypeMap: Record<LLMProvider, string> = {
+      gemini: 'GEMINI',
+      openai: 'OPENAI',
+      anthropic: 'ANTHROPIC',
+    };
+
+    const modelType = modelTypeMap[provider];
+
+    // Try to get key from database if userId is provided
+    if (userId) {
+      try {
+        const key = await this.modelKeyService.getDecryptedKey(userId, modelType);
+        if (key) {
+          this.logger.debug(`[${provider}] Using API key from database for user ${userId}`);
+          return key;
+        }
+      } catch (error) {
+        // Key not found in database, will fallback to env
+        this.logger.debug(`[${provider}] No database key for user ${userId}, falling back to env`);
+      }
     }
 
-    // Initialize OpenAI
-    const openaiKey = this.configService.get<string>('OPENAI_API_KEY');
-    if (openaiKey) {
-      this.openaiClient = new OpenAI({ apiKey: openaiKey });
-      this.logger.log('OpenAI client initialized');
+    // Fallback to environment variables
+    const envKeyMap: Record<LLMProvider, string[]> = {
+      gemini: ['GEMINI_API_KEY', 'GOOGLE_API_KEY'],
+      openai: ['OPENAI_API_KEY'],
+      anthropic: ['ANTHROPIC_API_KEY'],
+    };
+
+    for (const envKey of envKeyMap[provider]) {
+      const key = this.configService.get<string>(envKey);
+      if (key) {
+        this.logger.debug(`[${provider}] Using API key from environment (${envKey})`);
+        return key;
+      }
     }
 
-    // Initialize Anthropic
-    const anthropicKey = this.configService.get<string>('ANTHROPIC_API_KEY');
-    if (anthropicKey) {
-      this.anthropicClient = new Anthropic({ apiKey: anthropicKey });
-      this.logger.log('Anthropic client initialized');
-    }
+    return null;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Public: Simple call (prompt → response)
-  // ─────────────────────────────────────────────────────────────
+  private async getGeminiClient(userId?: string): Promise<GoogleGenAI> {
+    const key = await this.getApiKey('gemini', userId);
+    if (!key) {
+      throw new Error('Gemini API key not found. Add it in database or set GEMINI_API_KEY env.');
+    }
+    return new GoogleGenAI({ apiKey: key });
+  }
+
+  private async getOpenAIClient(userId?: string): Promise<OpenAI> {
+    const key = await this.getApiKey('openai', userId);
+    if (!key) {
+      throw new Error('OpenAI API key not found. Add it in database or set OPENAI_API_KEY env.');
+    }
+    return new OpenAI({ apiKey: key });
+  }
+
+  private async getAnthropicClient(userId?: string): Promise<Anthropic> {
+    const key = await this.getApiKey('anthropic', userId);
+    if (!key) {
+      throw new Error('Anthropic API key not found. Add it in database or set ANTHROPIC_API_KEY env.');
+    }
+    return new Anthropic({ apiKey: key });
+  }
 
   async call(options: LLMCallOptions): Promise<string> {
-    const { provider, model, prompt, systemPrompt, temperature, maxTokens } =
+    const { provider, model, prompt, systemPrompt, temperature, maxTokens, userId } =
       options;
 
     this.logger.debug(`LLM call: ${provider}/${model}`);
 
     switch (provider) {
       case 'gemini':
-        return this.callGemini(model, prompt, systemPrompt, temperature, maxTokens);
+        return this.callGemini(model, prompt, systemPrompt, temperature, maxTokens, userId);
       case 'openai':
-        return this.callOpenAI(model, prompt, systemPrompt, temperature, maxTokens);
+        return this.callOpenAI(model, prompt, systemPrompt, temperature, maxTokens, userId);
       case 'anthropic':
-        return this.callAnthropic(model, prompt, systemPrompt, temperature, maxTokens);
+        return this.callAnthropic(model, prompt, systemPrompt, temperature, maxTokens, userId);
       default:
         throw new Error(`Unknown provider: ${provider}`);
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Public: Call with tools (for agents)
-  // ─────────────────────────────────────────────────────────────
-
   async callWithTools(options: LLMCallWithToolsOptions): Promise<LLMToolResponse> {
-    const { provider, model, messages, tools, systemPrompt, temperature, maxTokens } =
+    const { provider, model, messages, tools, systemPrompt, temperature, maxTokens, userId } =
       options;
 
     this.logger.debug(`LLM call with tools: ${provider}/${model}, ${tools.length} tools`);
 
     switch (provider) {
       case 'gemini':
-        return this.callGeminiWithTools(model, messages, tools, systemPrompt, temperature, maxTokens);
+        return this.callGeminiWithTools(model, messages, tools, systemPrompt, temperature, maxTokens, userId);
       case 'openai':
-        return this.callOpenAIWithTools(model, messages, tools, systemPrompt, temperature, maxTokens);
+        return this.callOpenAIWithTools(model, messages, tools, systemPrompt, temperature, maxTokens, userId);
       case 'anthropic':
-        return this.callAnthropicWithTools(model, messages, tools, systemPrompt, temperature, maxTokens);
+        return this.callAnthropicWithTools(model, messages, tools, systemPrompt, temperature, maxTokens, userId);
       default:
         throw new Error(`Unknown provider: ${provider}`);
     }
   }
-
-  // ─────────────────────────────────────────────────────────────
-  // Private: Gemini
-  // ─────────────────────────────────────────────────────────────
 
   private async callGemini(
     model: string,
@@ -127,12 +152,11 @@ export class LLMService {
     systemPrompt?: string,
     temperature?: number,
     maxTokens?: number,
+    userId?: string,
   ): Promise<string> {
-    if (!this.geminiClient) {
-      throw new Error('Gemini client not initialized. Check GEMINI_API_KEY.');
-    }
+    const client = await this.getGeminiClient(userId);
 
-    const result = await this.geminiClient.models.generateContent({
+    const result = await client.models.generateContent({
       model,
       contents: prompt,
       config: {
@@ -152,10 +176,9 @@ export class LLMService {
     systemPrompt?: string,
     temperature?: number,
     maxTokens?: number,
+    userId?: string,
   ): Promise<LLMToolResponse> {
-    if (!this.geminiClient) {
-      throw new Error('Gemini client not initialized. Check GEMINI_API_KEY.');
-    }
+    const client = await this.getGeminiClient(userId);
 
     const geminiTools: any[] = tools.map((t) => ({
       name: t.name,
@@ -184,7 +207,7 @@ export class LLMService {
       requestConfig.tools = [{ functionDeclarations: geminiTools }];
     }
 
-    const result = await this.geminiClient.models.generateContent(requestConfig);
+    const result = await client.models.generateContent(requestConfig);
 
     // Parse function calls from response
     const functionCalls: ToolCall[] = [];
@@ -207,20 +230,15 @@ export class LLMService {
     };
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Private: OpenAI
-  // ─────────────────────────────────────────────────────────────
-
   private async callOpenAI(
     model: string,
     prompt: string,
     systemPrompt?: string,
     temperature?: number,
     maxTokens?: number,
+    userId?: string,
   ): Promise<string> {
-    if (!this.openaiClient) {
-      throw new Error('OpenAI client not initialized. Check OPENAI_API_KEY.');
-    }
+    const client = await this.getOpenAIClient(userId);
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [];
     if (systemPrompt) {
@@ -228,7 +246,7 @@ export class LLMService {
     }
     messages.push({ role: 'user', content: prompt });
 
-    const response = await this.openaiClient.chat.completions.create({
+    const response = await client.chat.completions.create({
       model,
       messages,
       temperature,
@@ -245,10 +263,9 @@ export class LLMService {
     systemPrompt?: string,
     temperature?: number,
     maxTokens?: number,
+    userId?: string,
   ): Promise<LLMToolResponse> {
-    if (!this.openaiClient) {
-      throw new Error('OpenAI client not initialized. Check OPENAI_API_KEY.');
-    }
+    const client = await this.getOpenAIClient(userId);
 
     const openaiMessages: OpenAI.ChatCompletionMessageParam[] = [];
     if (systemPrompt) {
@@ -278,7 +295,7 @@ export class LLMService {
       },
     }));
 
-    const response = await this.openaiClient.chat.completions.create({
+    const response = await client.chat.completions.create({
       model,
       messages: openaiMessages,
       tools: openaiTools.length > 0 ? openaiTools : undefined,
@@ -308,22 +325,17 @@ export class LLMService {
 
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Private: Anthropic
-  // ─────────────────────────────────────────────────────────────
-
   private async callAnthropic(
     model: string,
     prompt: string,
     systemPrompt?: string,
     temperature?: number,
     maxTokens?: number,
+    userId?: string,
   ): Promise<string> {
-    if (!this.anthropicClient) {
-      throw new Error('Anthropic client not initialized. Check ANTHROPIC_API_KEY.');
-    }
+    const client = await this.getAnthropicClient(userId);
 
-    const response = await this.anthropicClient.messages.create({
+    const response = await client.messages.create({
       model,
       max_tokens: maxTokens ?? 4096,
       system: systemPrompt,
@@ -342,10 +354,9 @@ export class LLMService {
     systemPrompt?: string,
     temperature?: number,
     maxTokens?: number,
+    userId?: string,
   ): Promise<LLMToolResponse> {
-    if (!this.anthropicClient) {
-      throw new Error('Anthropic client not initialized. Check ANTHROPIC_API_KEY.');
-    }
+    const client = await this.getAnthropicClient(userId);
 
     const anthropicTools: Anthropic.Tool[] = tools.map((t) => ({
       name: t.name,
@@ -360,7 +371,7 @@ export class LLMService {
         content: m.content,
       }));
 
-    const response = await this.anthropicClient.messages.create({
+    const response = await client.messages.create({
       model,
       max_tokens: maxTokens ?? 4096,
       system: systemPrompt,

@@ -21,7 +21,7 @@ export class NodeRegistry {
     private readonly userToolAuthService: UserToolAuthService,
   ) {}
 
-  createLLMNode(nodeData: LLMNodeData) {
+  createLLMNode(nodeData: LLMNodeData, userId: string) {
     return async (state: WorkflowState): Promise<Partial<WorkflowState>> => {
       this.logger.debug(`LLM Node executing: ${nodeData.provider}/${nodeData.model}`);
 
@@ -36,6 +36,7 @@ export class NodeRegistry {
           systemPrompt: nodeData.systemPrompt,
           temperature: nodeData.temperature,
           maxTokens: nodeData.maxTokens,
+          userId,
         });
 
         this.logger.debug(`LLM Node output: "${output?.substring(0, 100)}..."`);
@@ -109,8 +110,17 @@ export class NodeRegistry {
       this.logger.debug(`Agent Node starting: ${nodeData.provider}/${nodeData.model}, max ${maxIterations} iterations`);
 
       // 1. Get available tools from MCP servers
-      const tools = await this.mcpClient.getToolsFromServers(nodeData.mcpServers);
-      this.logger.debug(`Agent has access to ${tools.length} tools from ${nodeData.mcpServers.join(', ')}`);
+      let tools: ToolDefinition[] = [];
+      try {
+        tools = await this.mcpClient.getToolsFromServers(nodeData.mcpServers);
+        this.logger.debug(`Agent has access to ${tools.length} tools from ${nodeData.mcpServers.join(', ')}`);
+      } catch (error) {
+        this.logger.error(`Failed to get tools from MCP servers: ${error}`);
+        return {
+          output: `Error: Failed to connect to MCP servers. ${error}`,
+          error: `${error}`,
+        };
+      }
 
       // 2. Initialize conversation
       const messages: Message[] = [
@@ -123,13 +133,24 @@ export class NodeRegistry {
         this.logger.debug(`Agent iteration ${iteration + 1}/${maxIterations}`);
 
         // Call LLM with tools
-        const response = await this.llmService.callWithTools({
-          provider: nodeData.provider,
-          model: nodeData.model,
-          messages,
-          tools,
-          systemPrompt: nodeData.systemPrompt,
-        });
+        let response;
+        try {
+          response = await this.llmService.callWithTools({
+            provider: nodeData.provider,
+            model: nodeData.model,
+            messages,
+            tools,
+            systemPrompt: nodeData.systemPrompt,
+            userId,
+          });
+        } catch (error) {
+          this.logger.error(`Agent LLM call failed: ${error}`);
+          return {
+            output: `Error: LLM call failed. ${error}`,
+            error: `${error}`,
+            messages,
+          };
+        }
 
         // If no tool calls, we're done
         if (!response.toolCalls || response.toolCalls.length === 0) {
@@ -157,11 +178,22 @@ export class NodeRegistry {
             // Add accessToken if needed
             let toolArgs = toolCall.args;
             if (toolCall.mcpServer && this.mcpClient.requiresAuth(toolCall.mcpServer)) {
-              const accessToken = await this.userToolAuthService.getAccessToken({
-                userId,
-                toolKey: toolCall.mcpServer,
-              });
-              toolArgs = { ...toolArgs, accessToken };
+              try {
+                const accessToken = await this.userToolAuthService.getAccessToken({
+                  userId,
+                  toolKey: toolCall.mcpServer,
+                });
+                toolArgs = { ...toolArgs, accessToken };
+              } catch (authError) {
+                this.logger.warn(`Auth failed for ${toolCall.mcpServer}: ${authError}`);
+                messages.push({
+                  role: 'tool',
+                  content: `Error: Authentication required for ${toolCall.mcpServer}. Please connect your account first.`,
+                  toolCallId: toolCall.name,
+                  name: toolCall.name,
+                });
+                continue; // Skip this tool, let LLM handle the error
+              }
             }
 
             const toolResult = await this.mcpClient.callTool(
@@ -170,10 +202,24 @@ export class NodeRegistry {
               toolArgs,
             );
 
-            const resultContent =
-              typeof toolResult === 'string'
-                ? toolResult
-                : JSON.stringify(toolResult, null, 2);
+            // Handle null/undefined/empty results
+            let resultContent: string;
+            if (toolResult === null || toolResult === undefined) {
+              resultContent = 'Tool returned no result.';
+            } else if (typeof toolResult === 'string') {
+              resultContent = toolResult || 'Tool returned empty string.';
+            } else if (typeof toolResult === 'object') {
+              // Check for MCP content format
+              if (toolResult.content && Array.isArray(toolResult.content)) {
+                resultContent = toolResult.content
+                  .map((c: any) => c.text || JSON.stringify(c))
+                  .join('\n');
+              } else {
+                resultContent = JSON.stringify(toolResult, null, 2);
+              }
+            } else {
+              resultContent = String(toolResult);
+            }
 
             messages.push({
               role: 'tool',
@@ -185,7 +231,7 @@ export class NodeRegistry {
             this.logger.error(`Tool ${toolCall.name} failed: ${error}`);
             messages.push({
               role: 'tool',
-              content: `Error: ${error}`,
+              content: `Error executing tool ${toolCall.name}: ${error}`,
               toolCallId: toolCall.name,
               name: toolCall.name,
             });

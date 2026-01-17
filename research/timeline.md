@@ -178,7 +178,6 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 - Tích hợp AI model vào và test workflow, kỹ langraph & mcp inspector
 ## Tuần 11
 - Viết test cho cả FE và BE, add eslint, commitlint config
-## Tuần 12
 - Review CI-CD và viết CI-CD triển khai
-## Tuần 13
+## Tuần 12
 - Fix bugs tối ưu UI, refactor UI
