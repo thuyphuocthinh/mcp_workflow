@@ -67,16 +67,29 @@ export function VariableSelector({
     [processMention]
   );
 
+  // Debounce onChange để tránh re-render parent component liên tục
+  const debouncedOnChange = useMemo(
+    () =>
+      debounce((val: string) => {
+        onChange?.(val);
+      }, 300),
+    [onChange]
+  );
+
   // cleanup khi unmount
   useEffect(() => {
     return () => {
       debouncedProcessMention.cancel();
+      debouncedOnChange.cancel();
     };
-  }, [debouncedProcessMention]);
+  }, [debouncedProcessMention, debouncedOnChange]);
 
   const handleChange = (val: string) => {
+    // Update local state immediately for responsive UI
     setText(val);
-    onChange?.(val);
+
+    // Debounce parent callback to prevent lag
+    debouncedOnChange(val);
 
     const cursor = textareaRef.current?.selectionStart ?? 0;
 

@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { FaRobot, FaUser } from "react-icons/fa";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import ReactMarkdown from "react-markdown";
 
@@ -31,7 +31,7 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
   const { id: routeWorkflowId } = useParams<{ id: string }>();
   // Support both query params (?workflowId=xxx) and route params (:id)
   const workflowId = searchParams.get("workflowId") || routeWorkflowId;
-
+  const navigate = useNavigate();
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -164,8 +164,15 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
     <Flex flex={1} direction="column" height={"100%"}>
       {/* Header */}
       {isPlayground && (
-        <Box p={4} borderBottom="1px solid" borderColor="gray.200">
+        <Box p={4} borderBottom="1px solid" borderColor="gray.200" display="flex" justifyContent="space-between" alignItems="center">
           <Heading size="sm">{workflowName ?? "Chat"}</Heading>
+          <Button
+            size="xs"
+            colorScheme="gray"
+            onClick={() => navigate(`/workflows/${workflowId}`)}
+          >
+            Go to Workflow
+          </Button>
         </Box>
       )}
 
