@@ -40,7 +40,7 @@ export interface PasswordVisibilityProps {
 
 export interface PasswordInputProps
   extends InputProps,
-    PasswordVisibilityProps {
+  PasswordVisibilityProps {
   rootProps?: GroupProps
 }
 
@@ -103,6 +103,8 @@ const VisibilityTrigger = React.forwardRef<HTMLButtonElement, ButtonProps>(
         variant="ghost"
         height="calc(100% - {spacing.2})"
         aria-label="Toggle password visibility"
+        color="gray.300"
+        _hover={{ color: "white", bg: "rgba(255, 255, 255, 0.1)" }}
         {...props}
       />
     )

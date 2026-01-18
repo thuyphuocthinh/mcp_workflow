@@ -66,7 +66,11 @@ export default function ChatPage() {
   }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   return (
-    <Flex h="calc(100vh - 72.8px)" overflow="hidden">
+    <Flex
+      h="100%"
+      overflow="hidden"
+      bg="linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%)"
+    >
       <ChatBotList
         workflows={filteredWorkflows}
         search={search}

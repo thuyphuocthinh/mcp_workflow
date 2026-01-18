@@ -83,12 +83,12 @@ const initialEdges: Edge[] = [
     source: defaultStartNodeId,
     target: defaultEndNodeId,
     type: "custom-edge",
-    style: { stroke: "#000", strokeWidth: 2 },
+    style: { stroke: "#6366f1", strokeWidth: 2 },
     markerEnd: {
       type: MarkerType.ArrowClosed,
       width: 20,
       height: 20,
-      color: "#000",
+      color: "#6366f1",
     },
     data: { label: "Start → End" },
   },
@@ -212,7 +212,7 @@ function Flow({ graph }: FlowProps) {
           ...edge.style,
           strokeWidth: 3,
           strokeDasharray: edge.type === "smoothstep" ? "5,5" : undefined,
-          stroke: selectedEdgeClick === edge.id ? "#3182ce" : "#000",
+          stroke: selectedEdgeClick === edge.id ? "#8b5cf6" : "#6366f1",
           markerEnd: `url(#arrow-${edge.id})`,
         },
       };
@@ -231,13 +231,13 @@ function Flow({ graph }: FlowProps) {
           ...node.style,
           border:
             node.id === selectedNodeId
-              ? "3px solid #2970ff"
+              ? "3px solid #8b5cf6"
               : isActive
-              ? "4px solid #38a169"
-              : "none",
+                ? "4px solid #6366f1"
+                : "1px solid rgba(255, 255, 255, 0.1)",
           borderRadius: "14px",
-          backgroundColor: isActive ? "#e6fffa" : "white",
-          boxShadow: isActive ? "0 0 10px rgba(56, 161, 105, 0.5)" : "none",
+          backgroundColor: "rgba(20, 20, 30, 0.8)",
+          boxShadow: isActive ? "0 0 20px rgba(139, 92, 246, 0.3)" : "0 4px 20px rgba(0, 0, 0, 0.3)",
           transition: "all 0.1s ease",
         },
       };
@@ -492,12 +492,12 @@ function Flow({ graph }: FlowProps) {
             ...connection,
             id: `edge-${connection.source}-${connection.target}`,
             type: "custom-edge",
-            style: { stroke: "#000", strokeWidth: 4 },
+            style: { stroke: "#6366f1", strokeWidth: 4 },
             markerEnd: {
               type: MarkerType.ArrowClosed,
               width: 20,
               height: 20,
-              color: "#000",
+              color: "#6366f1",
             },
           },
           eds
@@ -514,6 +514,7 @@ function Flow({ graph }: FlowProps) {
     setNodeMenuPosition(null);
     setSelectedEdgeId("");
     setSelectedEdgeClick("");
+    setShowDebug(false);
     isMouseOverCanvasRef.current = false;
   }, [setSelectedNodeId]);
 
@@ -794,15 +795,23 @@ function Flow({ graph }: FlowProps) {
   }, [navigate, workflowId]);
 
   return (
-    <Box w="full" h="100%" display="flex">
+    <Box
+      w="full"
+      h="100%"
+      display="flex"
+      bg="linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%)"
+      position="relative"
+      overflow="hidden"
+    >
       <Box
         w={collapsed ? "0px" : "250px"}
         overflow="hidden"
         transition="all 0.3s ease"
-        bg="white"
+        bg="rgba(20, 20, 30, 0.95)"
+        backdropFilter="blur(20px)"
         borderRight="1px solid"
-        borderColor="gray.200"
-        boxShadow="md"
+        borderColor="rgba(255, 255, 255, 0.08)"
+        boxShadow="4px 0 20px rgba(0, 0, 0, 0.3)"
         position="relative"
         zIndex={10}
       >
@@ -818,13 +827,18 @@ function Flow({ graph }: FlowProps) {
         transition="all 0.3s ease"
         size="sm"
         zIndex={20}
-        color="gray.700"
+        color="gray.300"
         onClick={toggleSidebar}
-        bg="white"
-        boxShadow="md"
+        bg="rgba(20, 20, 30, 0.9)"
+        backdropFilter="blur(10px)"
+        boxShadow="0 4px 20px rgba(0, 0, 0, 0.4)"
         border="1px solid"
-        borderColor="gray.200"
-        _hover={{ bg: "gray.100" }}
+        borderColor="rgba(255, 255, 255, 0.1)"
+        _hover={{
+          bg: "rgba(99, 102, 241, 0.2)",
+          borderColor: "rgba(99, 102, 241, 0.4)",
+          color: "white"
+        }}
       >
         {collapsed ? <LuArrowRight /> : <LuArrowLeft />}
       </IconButton>
@@ -875,7 +889,7 @@ function Flow({ graph }: FlowProps) {
                 orient="auto"
                 markerUnits="strokeWidth"
               >
-                <path d="M0,0 L0,10 L10,5 z" fill={"#000"} />
+                <path d="M0,0 L0,10 L10,5 z" fill={"#6366f1"} />
               </marker>
 
               <marker
@@ -887,7 +901,7 @@ function Flow({ graph }: FlowProps) {
                 orient="auto"
                 markerUnits="strokeWidth"
               >
-                <path d="M0,0 L0,10 L10,5 z" fill="#3182ce" />
+                <path d="M0,0 L0,10 L10,5 z" fill="#8b5cf6" />
               </marker>
             </defs>
           </svg>
@@ -896,11 +910,14 @@ function Flow({ graph }: FlowProps) {
           <Panel
             position="top-left"
             style={{
-              background: "white",
+              background: "rgba(20, 20, 30, 0.9)",
+              backdropFilter: "blur(20px)",
               borderRadius: "12px",
               padding: "4px",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
               marginLeft: "2rem",
+              marginTop: ".5rem",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
             <HStack>
@@ -914,12 +931,13 @@ function Flow({ graph }: FlowProps) {
                   aria-label="Undo"
                   size="xs"
                   variant="ghost"
-                  colorScheme="gray"
+                  color="gray.400"
                   disabled={!canUndo()}
                   onClick={handleUndo}
                   transition="all 0.2s"
                   _hover={{
-                    bg: "gray.100",
+                    bg: "rgba(99, 102, 241, 0.2)",
+                    color: "white",
                     transform: "scale(1.1)",
                   }}
                   _active={{
@@ -942,10 +960,11 @@ function Flow({ graph }: FlowProps) {
                   disabled={!canRedo()}
                   onClick={handleRedo}
                   variant="ghost"
-                  colorScheme="gray"
+                  color="gray.400"
                   transition="all 0.2s"
                   _hover={{
-                    bg: "gray.100",
+                    bg: "rgba(99, 102, 241, 0.2)",
+                    color: "white",
                     transform: "scale(1.1)",
                   }}
                   _active={{
@@ -966,7 +985,7 @@ function Flow({ graph }: FlowProps) {
                   aria-label="Copy node"
                   size="xs"
                   variant="ghost"
-                  colorScheme="gray"
+                  color="gray.400"
                   disabled={
                     !selectedNodeId ||
                     NO_ACTION_NODES.includes(selectedNode?.type as string)
@@ -974,7 +993,8 @@ function Flow({ graph }: FlowProps) {
                   onClick={handleCopyNode}
                   transition="all 0.2s"
                   _hover={{
-                    bg: "gray.100",
+                    bg: "rgba(99, 102, 241, 0.2)",
+                    color: "white",
                     transform: "scale(1.1)",
                   }}
                   _active={{
@@ -995,7 +1015,7 @@ function Flow({ graph }: FlowProps) {
                   aria-label="Cut node"
                   size="xs"
                   variant="ghost"
-                  colorScheme="gray"
+                  color="gray.400"
                   disabled={
                     !selectedNodeId ||
                     NO_ACTION_NODES.includes(selectedNode?.type as string)
@@ -1003,7 +1023,8 @@ function Flow({ graph }: FlowProps) {
                   onClick={handleCutNode}
                   transition="all 0.2s"
                   _hover={{
-                    bg: "gray.100",
+                    bg: "rgba(99, 102, 241, 0.2)",
+                    color: "white",
                     transform: "scale(1.1)",
                   }}
                   _active={{
@@ -1024,12 +1045,13 @@ function Flow({ graph }: FlowProps) {
                   aria-label="Paste node"
                   size="xs"
                   variant="ghost"
-                  colorScheme="gray"
+                  color="gray.400"
                   disabled={!clipboard?.data}
                   onClick={handlePasteNode}
                   transition="all 0.2s"
                   _hover={{
-                    bg: "gray.100",
+                    bg: "rgba(99, 102, 241, 0.2)",
+                    color: "white",
                     transform: "scale(1.1)",
                   }}
                   _active={{
@@ -1049,12 +1071,13 @@ function Flow({ graph }: FlowProps) {
               nodeComponent={MiniMapNode}
               pannable={true}
               zoomable={true}
-              bgColor="gray"
+              bgColor="#1a1a2e"
               nodeStrokeWidth={3}
               style={{
-                backgroundColor: "white",
+                backgroundColor: "rgba(20, 20, 30, 0.9)",
                 borderRadius: "12px",
-                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
               }}
             />
           )}
@@ -1063,12 +1086,14 @@ function Flow({ graph }: FlowProps) {
           <Panel
             position="top-right"
             style={{
-              background: "white",
+              background: "rgba(20, 20, 30, 0.9)",
+              backdropFilter: "blur(20px)",
               borderRadius: "12px",
               padding: "6px",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
               marginRight: "1rem",
-              marginTop: "1rem",
+              marginTop: ".5rem",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
             <HStack gap={2}>
@@ -1077,10 +1102,14 @@ function Flow({ graph }: FlowProps) {
                 <IconButton
                   aria-label="Debug"
                   size="sm"
-                  colorScheme="orange"
                   variant="ghost"
+                  color="orange.400"
                   px={3}
                   onClick={() => setShowDebug(true)}
+                  _hover={{
+                    bg: "rgba(251, 146, 60, 0.2)",
+                    color: "orange.300",
+                  }}
                 >
                   <HStack gap={2}>
                     <FaPlay />
@@ -1096,9 +1125,13 @@ function Flow({ graph }: FlowProps) {
                 <IconButton
                   aria-label="Chat"
                   size="sm"
-                  colorScheme="blue"
                   variant="ghost"
+                  color="blue.400"
                   px={3}
+                  _hover={{
+                    bg: "rgba(59, 130, 246, 0.2)",
+                    color: "blue.300",
+                  }}
                 >
                   <HStack gap={2} onClick={onGoToChat}>
                     <FaMessage />
@@ -1114,12 +1147,21 @@ function Flow({ graph }: FlowProps) {
                 <IconButton
                   aria-label="Save"
                   size="sm"
-                  colorScheme="purple"
                   variant="ghost"
                   px={3}
                   onClick={saveFlow}
                   disabled={!isGraphModified}
                   loading={updateGraphMutation.isPending}
+                  bg="linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)"
+                  color="purple.300"
+                  _hover={{
+                    bg: "linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(139, 92, 246, 0.4) 100%)",
+                    color: "white",
+                  }}
+                  _disabled={{
+                    opacity: 0.5,
+                    cursor: "not-allowed",
+                  }}
                 >
                   <HStack gap={2}>
                     <FaSave />
@@ -1136,12 +1178,14 @@ function Flow({ graph }: FlowProps) {
           <Panel
             position="bottom-left"
             style={{
-              background: "white",
+              background: "rgba(20, 20, 30, 0.9)",
+              backdropFilter: "blur(20px)",
               borderRadius: "12px",
               padding: "2px",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
               marginLeft: "4rem",
               marginBottom: "1rem",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
             <Tooltip
@@ -1153,11 +1197,12 @@ function Flow({ graph }: FlowProps) {
                 aria-label="Auto layout"
                 size="sm"
                 variant="ghost"
-                colorScheme="gray"
+                color="gray.400"
                 onClick={handleAutoLayout}
                 transition="all 0.2s"
                 _hover={{
-                  bg: "gray.100",
+                  bg: "rgba(99, 102, 241, 0.2)",
+                  color: "white",
                   transform: "scale(1.1)",
                 }}
                 _active={{
@@ -1170,18 +1215,24 @@ function Flow({ graph }: FlowProps) {
           </Panel>
 
           {/* Dots Background */}
-          <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={12}
+            size={1}
+          />
 
           {/* Show minimap */}
           <Panel
             position="bottom-left"
             style={{
-              background: "white",
+              background: "rgba(20, 20, 30, 0.9)",
+              backdropFilter: "blur(20px)",
               borderRadius: "12px",
               padding: "2px",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
               marginLeft: "7.5rem",
               marginBottom: "1rem",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
             }}
           >
             <Tooltip
@@ -1194,8 +1245,10 @@ function Flow({ graph }: FlowProps) {
                 transition="all 0.2s"
                 borderRadius={"md"}
                 cursor={"pointer"}
+                color="gray.400"
                 _hover={{
-                  bg: "gray.100",
+                  bg: "rgba(99, 102, 241, 0.2)",
+                  color: "white",
                   transform: "scale(1.1)",
                 }}
                 _active={{
@@ -1355,8 +1408,9 @@ function Flow({ graph }: FlowProps) {
               position="absolute"
               style={{
                 left: `${nodeMenuPosition.x}px`,
-                top: `${nodeMenuPosition.y + 200}px`,
+                top: `${nodeMenuPosition.y}px`,
               }}
+              backgroundColor="rgba(20, 20, 30, 0.95)"
             >
               <NodesMenu onSelectNode={addNodeToEdge} />
             </Box>
@@ -1369,7 +1423,7 @@ function Flow({ graph }: FlowProps) {
         position="top-right"
         style={{
           marginRight: "1rem",
-          marginTop: "9.5rem",
+          marginTop: "4.5rem",
         }}
       >
         <HStack gap={"4"} zIndex={10}>

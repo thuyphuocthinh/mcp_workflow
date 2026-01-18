@@ -75,9 +75,19 @@ export default function ToolSelector({
         size="md"
       >
         <HStack w={"100%"} justify="space-between" mb={3}>
-          <Text fontWeight="600">Tools</Text>
+          <Text fontWeight="600" color="gray.300">Tools</Text>
           <Dialog.Trigger asChild>
-            <Button size="sm" variant="outline" gap={2}>
+            <Button
+              size="sm"
+              variant="outline"
+              gap={2}
+              color="gray.300"
+              borderColor="rgba(255, 255, 255, 0.1)"
+              _hover={{
+                bg: "rgba(99, 102, 241, 0.2)",
+                borderColor: "rgba(99, 102, 241, 0.4)",
+              }}
+            >
               <FiPlus />
               Add tools
             </Button>
@@ -85,11 +95,17 @@ export default function ToolSelector({
         </HStack>
 
         <Portal>
-          <Dialog.Backdrop />
+          <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" />
           <Dialog.Positioner>
-            <Dialog.Content borderRadius="xl">
-              <Dialog.Header>
-                <Dialog.Title>Select tools</Dialog.Title>
+            <Dialog.Content
+              borderRadius="xl"
+              bg="rgba(20, 20, 30, 0.98)"
+              backdropFilter="blur(20px)"
+              border="1px solid rgba(255, 255, 255, 0.1)"
+              boxShadow="0 0 60px rgba(0, 0, 0, 0.5)"
+            >
+              <Dialog.Header borderBottom="1px solid rgba(255, 255, 255, 0.08)">
+                <Dialog.Title color="white">Select tools</Dialog.Title>
               </Dialog.Header>
 
               <Dialog.Body>
@@ -99,6 +115,15 @@ export default function ToolSelector({
                   mb={3}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  bg="rgba(255, 255, 255, 0.05)"
+                  color="white"
+                  borderColor="rgba(255, 255, 255, 0.1)"
+                  _placeholder={{ color: "gray.500" }}
+                  _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
+                  _focus={{
+                    borderColor: "rgba(99, 102, 241, 0.6)",
+                    boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+                  }}
                 />
 
                 {/* Tool list */}
@@ -110,24 +135,28 @@ export default function ToolSelector({
                       <Card.Root
                         key={tool.id}
                         cursor="pointer"
-                        borderRadius="md"
+                        borderRadius="lg"
                         borderWidth="1px"
-                        bg={isSelected ? "blue.50" : "transparent"}
-                        borderColor={isSelected ? "blue.400" : "gray.200"}
-                        _hover={{ borderColor: "blue.400" }}
+                        bg={isSelected ? "rgba(99, 102, 241, 0.2)" : "rgba(255, 255, 255, 0.03)"}
+                        borderColor={isSelected ? "rgba(99, 102, 241, 0.5)" : "rgba(255, 255, 255, 0.08)"}
+                        _hover={{
+                          borderColor: "rgba(99, 102, 241, 0.4)",
+                          bg: "rgba(99, 102, 241, 0.1)",
+                        }}
+                        transition="all 0.2s"
                         onClick={() => togglePending(tool)}
                       >
                         <Card.Body>
                           <Flex align="center" justify="space-between">
                             <Flex align="center" gap={3}>
-                              <Icon as={getToolIcon(tool.key)} boxSize={4} />
-                              <Text fontSize="sm" fontWeight="medium">
+                              <Icon as={getToolIcon(tool.key)} boxSize={4} color="gray.400" />
+                              <Text fontSize="sm" fontWeight="medium" color="white">
                                 {tool.name}
                               </Text>
                             </Flex>
 
                             {isSelected && (
-                              <Icon as={FiCheck} color="blue.500" />
+                              <Icon as={FiCheck} color="purple.400" />
                             )}
                           </Flex>
                         </Card.Body>
@@ -143,14 +172,27 @@ export default function ToolSelector({
                 </VStack>
               </Dialog.Body>
 
-              <Dialog.Footer>
-                <Button variant="ghost" onClick={() => setOpen(false)}>
+              <Dialog.Footer borderTop="1px solid rgba(255, 255, 255, 0.08)">
+                <Button
+                  variant="ghost"
+                  onClick={() => setOpen(false)}
+                  color="gray.400"
+                  _hover={{ bg: "rgba(255, 255, 255, 0.1)", color: "white" }}
+                >
                   Cancel
                 </Button>
                 <Button
-                  colorScheme="blue"
                   onClick={commit}
                   disabled={pending.length === 0}
+                  bg="linear-gradient(135deg, rgba(99, 102, 241, 0.8) 0%, rgba(139, 92, 246, 0.8) 100%)"
+                  color="white"
+                  _hover={{
+                    bg: "linear-gradient(135deg, rgba(99, 102, 241, 1) 0%, rgba(139, 92, 246, 1) 100%)",
+                  }}
+                  _disabled={{
+                    opacity: 0.5,
+                    cursor: "not-allowed",
+                  }}
                 >
                   Add selected ({pending.length})
                 </Button>
@@ -164,12 +206,18 @@ export default function ToolSelector({
       {value.length > 0 && (
         <VStack align="stretch" gap={2} mt={3}>
           {value.map((tool) => (
-            <Card.Root key={tool.id} size="sm" borderRadius="md">
+            <Card.Root
+              key={tool.id}
+              size="sm"
+              borderRadius="lg"
+              bg="rgba(255, 255, 255, 0.03)"
+              borderColor="rgba(255, 255, 255, 0.08)"
+            >
               <Card.Body py={2}>
                 <Flex align="center" justify="space-between">
                   <Flex align="center" gap={2}>
-                    <Icon as={getToolIcon(tool.key)} boxSize={4} />
-                    <Text fontSize="sm" fontWeight="medium">
+                    <Icon as={getToolIcon(tool.key)} boxSize={4} color="gray.400" />
+                    <Text fontSize="sm" fontWeight="medium" color="white">
                       {tool.name}
                     </Text>
                   </Flex>
@@ -177,7 +225,10 @@ export default function ToolSelector({
                   <Button
                     size="xs"
                     variant="ghost"
-                    colorScheme="red"
+                    color="red.400"
+                    _hover={{
+                      bg: "rgba(239, 68, 68, 0.2)",
+                    }}
                     onClick={() => removeTool(tool.id)}
                   >
                     Remove

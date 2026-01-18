@@ -13,9 +13,12 @@ import {
   Portal,
   Dialog,
   VStack,
+  Icon,
+  Field,
+  Spinner,
 } from "@chakra-ui/react";
 import { FiMoreVertical, FiEdit2, FiTrash2, FiInbox } from "react-icons/fi";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { FaRobot } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,6 +29,85 @@ import {
 } from "@/services";
 import type { i_graph, i_update_graph_metadata } from "@/types/graph";
 import { PAGE_SIZE } from "@/constants";
+import { LuPlus, LuFileText, LuType } from "react-icons/lu";
+
+// Validation helpers
+const NAME_MIN_LENGTH = 2;
+const NAME_MAX_LENGTH = 100;
+const DESCRIPTION_MAX_LENGTH = 500;
+
+interface ValidationErrors {
+  name?: string;
+  description?: string;
+}
+
+const validateName = (name: string): string | undefined => {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    return "Workflow name is required";
+  }
+  if (trimmed.length < NAME_MIN_LENGTH) {
+    return `Name must be at least ${NAME_MIN_LENGTH} characters`;
+  }
+  if (trimmed.length > NAME_MAX_LENGTH) {
+    return `Name must be less than ${NAME_MAX_LENGTH} characters`;
+  }
+  return undefined;
+};
+
+const validateDescription = (description: string): string | undefined => {
+  const trimmed = description.trim();
+  if (!trimmed) {
+    return "Description is required";
+  }
+  if (trimmed.length < NAME_MIN_LENGTH) {
+    return `Description must be at least ${NAME_MIN_LENGTH} characters`;
+  }
+  if (trimmed.length > DESCRIPTION_MAX_LENGTH) {
+    return `Description must be less than ${DESCRIPTION_MAX_LENGTH} characters`;
+  }
+  return undefined;
+};
+
+// Styled input with icon
+const StyledInput = ({
+  icon,
+  ...props
+}: {
+  icon: React.ElementType;
+} & React.ComponentProps<typeof Input>) => (
+  <Flex
+    align="center"
+    w="full"
+    bg="rgba(255, 255, 255, 0.03)"
+    borderWidth={1}
+    borderColor="rgba(255, 255, 255, 0.08)"
+    rounded="xl"
+    px={4}
+    py={1}
+    transition="all 0.3s ease"
+    _focusWithin={{
+      borderColor: "rgba(99, 102, 241, 0.5)",
+      bg: "rgba(99, 102, 241, 0.05)",
+      shadow: "0 0 0 3px rgba(99, 102, 241, 0.1)",
+    }}
+    _hover={{
+      borderColor: "rgba(255, 255, 255, 0.15)",
+    }}
+  >
+    <Icon as={icon} color="gray.500" boxSize={5} mr={3} />
+    <Input
+      border="none"
+      bg="transparent"
+      color="white"
+      _placeholder={{ color: "gray.600" }}
+      _focus={{ boxShadow: "none", outline: "none" }}
+      fontSize="md"
+      py={3}
+      {...props}
+    />
+  </Flex>
+);
 
 export default function WorkflowPage() {
   const [page, setPage] = useState(1);
@@ -35,20 +117,28 @@ export default function WorkflowPage() {
     name: "",
     description: "",
   });
+  const [createTouched, setCreateTouched] = useState<{ name?: boolean; description?: boolean }>({});
 
   const [editingWorkflow, setEditingWorkflow] = useState<i_graph | null>(null);
   const [deletingWorkflow, setDeletingWorkflow] = useState<i_graph | null>(
     null
   );
 
-  const queryClient = useQueryClient();
+  const [editValue, setEditValue] = useState({
+    name: "",
+    description: "",
+  });
+  const [editTouched, setEditTouched] = useState<{ name?: boolean; description?: boolean }>({});
 
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Create mutations
   const createMutation = useMutation({
     mutationFn: create_graph_service,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflows"] });
-      setCreating(false);
-      setCreateValue({ name: "", description: "" });
+      handleCloseCreate();
     },
   });
 
@@ -57,17 +147,11 @@ export default function WorkflowPage() {
       update_graph_metadata_service(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflows"] });
-      setEditingWorkflow(null);
+      handleCloseEdit();
     },
   });
 
-  const [editValue, setEditValue] = useState({
-    name: "",
-    description: "",
-  });
-
-  const navigate = useNavigate();
-
+  // Query
   const {
     data: workflows,
     isLoading,
@@ -84,20 +168,63 @@ export default function WorkflowPage() {
   const pageData: i_graph[] = workflows?.data || [];
   const totalPages = workflows?.paging.totalPages ?? 1;
 
-  const handleSave = (id: string) => {
-    updateMutation.mutate({
-      id,
-      data: {
-        name: editValue.name,
-        description: editValue.description || undefined,
-      },
+  // Validation for Create - only show errors after user has interacted
+  const createErrors = useMemo((): ValidationErrors => {
+    return {
+      name: (createTouched.name || createValue.name.length > 0) ? validateName(createValue.name) : undefined,
+      description: (createTouched.description || createValue.description.length > 0) ? validateDescription(createValue.description) : undefined,
+    };
+  }, [createValue, createTouched]);
+
+  const isCreateValid = useMemo(() => {
+    return !validateName(createValue.name) && !validateDescription(createValue.description);
+  }, [createValue]);
+
+  // Validation for Edit - only show errors after user has modified
+  const editErrors = useMemo((): ValidationErrors => {
+    return {
+      name: editTouched.name ? validateName(editValue.name) : undefined,
+      description: editTouched.description ? validateDescription(editValue.description) : undefined,
+    };
+  }, [editValue, editTouched]);
+
+  const isEditValid = useMemo(() => {
+    return !validateName(editValue.name) && !validateDescription(editValue.description);
+  }, [editValue]);
+
+  // Handlers
+  const handleCloseCreate = useCallback(() => {
+    setCreating(false);
+    setCreateValue({ name: "", description: "" });
+    setCreateTouched({});
+  }, []);
+
+  const handleCloseEdit = useCallback(() => {
+    setEditingWorkflow(null);
+    setEditValue({ name: "", description: "" });
+    setEditTouched({});
+  }, []);
+
+  const handleCreate = () => {
+    setCreateTouched({ name: true, description: true });
+    if (!isCreateValid) return;
+
+    createMutation.mutate({
+      name: createValue.name.trim(),
+      description: createValue.description.trim() || undefined,
     });
   };
 
-  const handleCreate = () => {
-    createMutation.mutate({
-      name: createValue.name,
-      description: createValue.description || undefined,
+  const handleSave = (id: string) => {
+    setEditTouched({ name: true, description: true });
+    if (!isEditValid) return;
+
+    updateMutation.mutate({
+      id,
+      data: {
+        name: editValue.name.trim(),
+        description: editValue.description.trim() || undefined,
+      },
     });
   };
 
@@ -109,68 +236,143 @@ export default function WorkflowPage() {
     navigate(`/workflows/${id}`);
   };
 
+  const openEditDialog = (wf: i_graph) => {
+    setEditingWorkflow(wf);
+    setEditValue({
+      name: wf.name,
+      description: wf.description ?? "",
+    });
+    setEditTouched({});
+  };
+
   if (isLoading) {
     return (
-      <Box p={6}>
-        <Text>Loading...</Text>
-      </Box>
+      <Flex
+        p={6}
+        align="center"
+        justify="center"
+        minH="calc(100vh - 80px)"
+      >
+        <Spinner color="purple.400" />
+      </Flex>
     );
   }
 
   return (
     <>
-      <Box p={6}>
-        <Flex justify="space-between" align="center" mb={6}>
-          <Heading size="lg">Workflows</Heading>
-          <Button colorScheme="blue" onClick={() => setCreating(true)}>
-            Create workflow
+      <Box
+        p={{ base: 4, md: 8 }}
+        maxW="1400px"
+        mx="auto"
+        minH="calc(100vh - 80px)"
+      >
+        {/* Header */}
+        <Flex
+          justify="space-between"
+          align="center"
+          mb={8}
+          flexDir={{ base: "column", sm: "row" }}
+          gap={4}
+        >
+          <Heading
+            size="xl"
+            bgGradient="linear(to-r, white, gray.300)"
+            bgClip="text"
+            fontWeight="bold"
+          >
+            Workflows
+          </Heading>
+          <Button
+            bg="linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+            color="white"
+            fontWeight="semibold"
+            rounded="xl"
+            px={6}
+            py={5}
+            transition="all 0.3s ease"
+            _hover={{
+              bg: "linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)",
+              transform: "translateY(-2px)",
+              shadow: "0 10px 40px -10px rgba(99, 102, 241, 0.5)",
+            }}
+            onClick={() => setCreating(true)}
+          >
+            <Icon as={LuPlus} mr={2} />
+            Create Workflow
           </Button>
         </Flex>
 
+        {/* Empty State */}
         {pageData.length === 0 ? (
           <Flex
             direction="column"
             align="center"
             justify="center"
             py={20}
-            color="gray.400"
+            bg="rgba(255, 255, 255, 0.02)"
+            borderRadius="2xl"
+            borderWidth={1}
+            borderColor="rgba(255, 255, 255, 0.06)"
+            borderStyle="dashed"
+            minH="50vh"
           >
-            <FiInbox size={64} />
-            <Text mt={4} fontSize="sm">
+            <Box
+              p={4}
+              bg="rgba(99, 102, 241, 0.1)"
+              borderRadius="full"
+              mb={4}
+            >
+              <FiInbox size={48} color="#6366f1" />
+            </Box>
+            <Text color="gray.400" fontSize="lg" fontWeight="medium">
               No workflows found
+            </Text>
+            <Text color="gray.600" fontSize="sm" mt={1}>
+              Create your first workflow to get started
             </Text>
           </Flex>
         ) : (
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
+          /* Workflow Grid */
+          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={6}>
             {pageData.map((wf) => (
               <Card.Root
                 key={wf.id}
-                borderRadius="xl"
-                boxShadow="sm"
-                transition="all 0.2s ease"
+                bg="rgba(20, 20, 30, 0.6)"
+                backdropFilter="blur(10px)"
+                borderRadius="2xl"
+                borderWidth={1}
+                borderColor="rgba(255, 255, 255, 0.08)"
+                boxShadow="0 4px 20px rgba(0, 0, 0, 0.3)"
+                transition="all 0.3s ease"
                 _hover={{
-                  boxShadow: "lg",
-                  transform: "translateY(-2px)",
+                  borderColor: "rgba(99, 102, 241, 0.4)",
+                  boxShadow: "0 8px 40px rgba(99, 102, 241, 0.15)",
+                  transform: "translateY(-4px)",
                 }}
                 cursor="pointer"
                 onClick={() => goToWorkflowDetail(wf.id)}
+                overflow="hidden"
               >
-                <Card.Header>
+                <Card.Header pb={2}>
                   <Flex justify="space-between" align="center">
                     <HStack gap={3}>
                       <Box
-                        w="40px"
-                        h="40px"
-                        borderRadius="md"
-                        bg="gray.100"
+                        w="44px"
+                        h="44px"
+                        borderRadius="xl"
+                        bg="linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)"
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
+                        borderWidth={1}
+                        borderColor="rgba(99, 102, 241, 0.3)"
                       >
-                        <FaRobot size={20} color="#4A5568" />
+                        <FaRobot size={22} color="#8b5cf6" />
                       </Box>
                       <Box>
-                        <Heading size="sm">{wf.name}</Heading>
+                        <Heading size="sm" color="white" fontWeight="semibold">
+                          {wf.name}
+                        </Heading>
                       </Box>
                     </HStack>
 
@@ -183,6 +385,11 @@ export default function WorkflowPage() {
                           variant="ghost"
                           size="sm"
                           aria-label="More options"
+                          color="gray.500"
+                          _hover={{
+                            bg: "rgba(255, 255, 255, 0.1)",
+                            color: "white",
+                          }}
                         >
                           <FiMoreVertical />
                         </IconButton>
@@ -190,17 +397,24 @@ export default function WorkflowPage() {
 
                       <Portal>
                         <Menu.Positioner>
-                          <Menu.Content>
+                          <Menu.Content
+                            bg="rgba(20, 20, 30, 0.95)"
+                            backdropFilter="blur(20px)"
+                            borderColor="rgba(255, 255, 255, 0.1)"
+                            borderRadius="xl"
+                            boxShadow="0 10px 40px rgba(0, 0, 0, 0.5)"
+                          >
                             <Menu.Item
                               value="edit"
                               cursor="pointer"
+                              color="gray.300"
+                              _hover={{
+                                bg: "rgba(99, 102, 241, 0.2)",
+                                color: "white",
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setEditingWorkflow(wf);
-                                setEditValue({
-                                  name: wf.name,
-                                  description: wf.description ?? "",
-                                });
+                                openEditDialog(wf);
                               }}
                             >
                               <FiEdit2 /> Edit
@@ -208,8 +422,12 @@ export default function WorkflowPage() {
 
                             <Menu.Item
                               value="delete"
-                              color="red.500"
+                              color="red.400"
                               cursor="pointer"
+                              _hover={{
+                                bg: "rgba(239, 68, 68, 0.2)",
+                                color: "red.300",
+                              }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setDeletingWorkflow(wf);
@@ -224,16 +442,20 @@ export default function WorkflowPage() {
                   </Flex>
                 </Card.Header>
 
-                <Card.Body>
-                  <Text fontSize="sm" color="gray.600">
+                <Card.Body pt={2} pb={3}>
+                  <Text fontSize="sm" color="gray.500" lineClamp={2}>
                     {wf.description ?? "No description"}
                   </Text>
                 </Card.Body>
 
-                <Card.Footer>
+                <Card.Footer
+                  borderTop="1px solid"
+                  borderColor="rgba(255, 255, 255, 0.06)"
+                  pt={3}
+                >
                   <Flex justify="space-between" w="full">
-                    <Text fontSize="xs" color="gray.500">
-                      Created at: {new Date(wf.created_at).toLocaleDateString()}
+                    <Text fontSize="xs" color="gray.600">
+                      Created: {new Date(wf.created_at).toLocaleDateString()}
                     </Text>
                   </Flex>
                 </Card.Footer>
@@ -242,25 +464,55 @@ export default function WorkflowPage() {
           </SimpleGrid>
         )}
 
+        {/* Pagination */}
         {totalPages > 1 && (
-          <Flex justify="center" mt={6} gap={2}>
+          <Flex justify="center" mt={8} gap={3} align="center">
             <Button
               size="sm"
+              variant="ghost"
+              color="gray.400"
+              bg="rgba(255, 255, 255, 0.05)"
+              _hover={{
+                bg: "rgba(99, 102, 241, 0.2)",
+                color: "white",
+              }}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
+              borderRadius="lg"
             >
               Prev
             </Button>
 
-            <Text alignSelf="center">
-              {page} / {totalPages}
-              {isFetching && " ..."}
-            </Text>
+            <HStack
+              px={4}
+              py={2}
+              bg="rgba(255, 255, 255, 0.05)"
+              borderRadius="lg"
+            >
+              <Text color="white" fontWeight="medium">
+                {page}
+              </Text>
+              <Text color="gray.600">/</Text>
+              <Text color="gray.400">{totalPages}</Text>
+              {isFetching && (
+                <Text color="purple.400" fontSize="sm">
+                  ...
+                </Text>
+              )}
+            </HStack>
 
             <Button
               size="sm"
+              variant="ghost"
+              color="gray.400"
+              bg="rgba(255, 255, 255, 0.05)"
+              _hover={{
+                bg: "rgba(99, 102, 241, 0.2)",
+                color: "white",
+              }}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
+              borderRadius="lg"
             >
               Next
             </Button>
@@ -271,47 +523,97 @@ export default function WorkflowPage() {
       {/* Dialog Edit */}
       <Dialog.Root
         open={!!editingWorkflow}
-        onOpenChange={() => setEditingWorkflow(null)}
+        onOpenChange={() => handleCloseEdit()}
       >
-        <Dialog.Backdrop />
+        <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" />
         <Dialog.Positioner>
-          <Dialog.Content>
-            <Dialog.Header>
-              <Dialog.Title>Edit workflow</Dialog.Title>
+          <Dialog.Content
+            bg="rgba(20, 20, 30, 0.95)"
+            backdropFilter="blur(20px)"
+            borderColor="rgba(255, 255, 255, 0.1)"
+            borderRadius="2xl"
+            boxShadow="0 25px 50px rgba(0, 0, 0, 0.5)"
+            maxW="480px"
+            w="90vw"
+          >
+            <Dialog.Header borderBottom="1px solid" borderColor="rgba(255, 255, 255, 0.08)">
+              <Dialog.Title color="white" fontWeight="semibold">
+                Edit Workflow
+              </Dialog.Title>
             </Dialog.Header>
 
-            <Dialog.Body>
-              <VStack gap={4}>
-                <Input
-                  placeholder="Workflow name"
-                  value={editValue.name}
-                  onChange={(e) =>
-                    setEditValue((v) => ({ ...v, name: e.target.value }))
-                  }
-                />
-                <Input
-                  placeholder="Description"
-                  value={editValue.description}
-                  onChange={(e) =>
-                    setEditValue((v) => ({
-                      ...v,
-                      description: e.target.value,
-                    }))
-                  }
-                />
+            <Dialog.Body py={6}>
+              <VStack gap={5} align="stretch">
+                <Field.Root invalid={!!editErrors.name}>
+                  <Field.Label color="gray.300" fontSize="sm" fontWeight="medium" mb={2}>
+                    Workflow Name <Text as="span" color="red.400">*</Text>
+                  </Field.Label>
+                  <StyledInput
+                    icon={LuType}
+                    placeholder="Enter workflow name"
+                    value={editValue.name}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      setEditValue((v) => ({ ...v, name: e.target.value }));
+                      setEditTouched((t) => ({ ...t, name: true }));
+                    }}
+                  />
+                  {editErrors.name && (
+                    <Text color="red.400" fontSize="xs" mt={2} pl={1}>
+                      {editErrors.name}
+                    </Text>
+                  )}
+                </Field.Root>
+
+                <Field.Root invalid={!!editErrors.description}>
+                  <Field.Label color="gray.300" fontSize="sm" fontWeight="medium" mb={2}>
+                    Description <Text as="span" color="red.400">*</Text>
+                  </Field.Label>
+                  <StyledInput
+                    icon={LuFileText}
+                    placeholder="Enter description"
+                    value={editValue.description}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      setEditValue((v) => ({ ...v, description: e.target.value }));
+                      setEditTouched((t) => ({ ...t, description: true }));
+                    }}
+                  />
+                  {editErrors.description && (
+                    <Text color="red.400" fontSize="xs" mt={2} pl={1}>
+                      {editErrors.description}
+                    </Text>
+                  )}
+                  <Text color="gray.600" fontSize="xs" mt={1} pl={1}>
+                    {editValue.description.length}/{DESCRIPTION_MAX_LENGTH} characters
+                  </Text>
+                </Field.Root>
               </VStack>
             </Dialog.Body>
 
-            <Dialog.Footer>
-              <Button variant="ghost" onClick={() => setEditingWorkflow(null)}>
+            <Dialog.Footer borderTop="1px solid" borderColor="rgba(255, 255, 255, 0.08)">
+              <Button
+                variant="ghost"
+                color="gray.400"
+                _hover={{ bg: "rgba(255, 255, 255, 0.1)", color: "white" }}
+                onClick={handleCloseEdit}
+              >
                 Cancel
               </Button>
               <Button
-                colorScheme="blue"
+                bg="linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+                color="white"
+                _hover={{
+                  bg: "linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)",
+                }}
+                _disabled={{
+                  opacity: 0.5,
+                  cursor: "not-allowed",
+                }}
                 loading={updateMutation.isPending}
+                disabled={!isEditValid || updateMutation.isPending}
                 onClick={() => handleSave(editingWorkflow!.id)}
+                borderRadius="xl"
               >
-                Save
+                Save Changes
               </Button>
             </Dialog.Footer>
           </Dialog.Content>
@@ -323,31 +625,51 @@ export default function WorkflowPage() {
         open={!!deletingWorkflow}
         onOpenChange={() => setDeletingWorkflow(null)}
       >
-        <Dialog.Backdrop />
+        <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" />
         <Dialog.Positioner>
-          <Dialog.Content>
-            <Dialog.Header>
-              <Dialog.Title>Delete workflow</Dialog.Title>
+          <Dialog.Content
+            bg="rgba(20, 20, 30, 0.95)"
+            backdropFilter="blur(20px)"
+            borderColor="rgba(255, 255, 255, 0.1)"
+            borderRadius="2xl"
+            boxShadow="0 25px 50px rgba(0, 0, 0, 0.5)"
+            maxW="420px"
+            w="90vw"
+          >
+            <Dialog.Header borderBottom="1px solid" borderColor="rgba(255, 255, 255, 0.08)">
+              <Dialog.Title color="white" fontWeight="semibold">
+                Delete Workflow
+              </Dialog.Title>
             </Dialog.Header>
 
-            <Dialog.Body>
-              <Text>
-                Are you sure you want to delete <b>{deletingWorkflow?.name}</b>?
+            <Dialog.Body py={6}>
+              <Text color="gray.300">
+                Are you sure you want to delete{" "}
+                <Text as="span" color="white" fontWeight="semibold">
+                  "{deletingWorkflow?.name}"
+                </Text>
+                ? This action cannot be undone.
               </Text>
             </Dialog.Body>
 
-            <Dialog.Footer>
-              <Button variant="ghost" onClick={() => setDeletingWorkflow(null)}>
+            <Dialog.Footer borderTop="1px solid" borderColor="rgba(255, 255, 255, 0.08)">
+              <Button
+                variant="ghost"
+                color="gray.400"
+                _hover={{ bg: "rgba(255, 255, 255, 0.1)", color: "white" }}
+                onClick={() => setDeletingWorkflow(null)}
+              >
                 Cancel
               </Button>
               <Button
-                colorScheme="red"
                 bg="red.500"
+                color="white"
                 _hover={{ bg: "red.600" }}
                 onClick={() => {
                   handleDelete(deletingWorkflow!.id);
                   setDeletingWorkflow(null);
                 }}
+                borderRadius="xl"
               >
                 Delete
               </Button>
@@ -357,47 +679,95 @@ export default function WorkflowPage() {
       </Dialog.Root>
 
       {/* Dialog Create */}
-      <Dialog.Root open={creating} onOpenChange={() => setCreating(false)}>
-        <Dialog.Backdrop />
+      <Dialog.Root open={creating} onOpenChange={(details) => { if (!details.open) handleCloseCreate(); }}>
+        <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" />
         <Dialog.Positioner>
-          <Dialog.Content>
-            <Dialog.Header>
-              <Dialog.Title>Create workflow</Dialog.Title>
+          <Dialog.Content
+            bg="rgba(20, 20, 30, 0.95)"
+            backdropFilter="blur(20px)"
+            borderColor="rgba(255, 255, 255, 0.1)"
+            borderRadius="2xl"
+            boxShadow="0 25px 50px rgba(0, 0, 0, 0.5)"
+            maxW="480px"
+            w="90vw"
+          >
+            <Dialog.Header borderBottom="1px solid" borderColor="rgba(255, 255, 255, 0.08)">
+              <Dialog.Title color="white" fontWeight="semibold">
+                Create New Workflow
+              </Dialog.Title>
             </Dialog.Header>
 
-            <Dialog.Body>
-              <VStack gap={4}>
-                <Input
-                  placeholder="Workflow name"
-                  value={createValue.name}
-                  onChange={(e) =>
-                    setCreateValue((v) => ({ ...v, name: e.target.value }))
-                  }
-                />
-                <Input
-                  placeholder="Description"
-                  value={createValue.description}
-                  onChange={(e) =>
-                    setCreateValue((v) => ({
-                      ...v,
-                      description: e.target.value,
-                    }))
-                  }
-                />
+            <Dialog.Body py={6}>
+              <VStack gap={5} align="stretch">
+                <Field.Root invalid={!!createErrors.name}>
+                  <Field.Label color="gray.300" fontSize="sm" fontWeight="medium" mb={2}>
+                    Workflow Name <Text as="span" color="red.400">*</Text>
+                  </Field.Label>
+                  <StyledInput
+                    icon={LuType}
+                    placeholder="Enter workflow name"
+                    value={createValue.name}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setCreateValue((v) => ({ ...v, name: e.target.value }))
+                    }
+                  />
+                  {createErrors.name && (
+                    <Text color="red.400" fontSize="xs" mt={2} pl={1}>
+                      {createErrors.name}
+                    </Text>
+                  )}
+                </Field.Root>
+
+                <Field.Root invalid={!!createErrors.description}>
+                  <Field.Label color="gray.300" fontSize="sm" fontWeight="medium" mb={2}>
+                    Description <Text as="span" color="red.400">*</Text>
+                  </Field.Label>
+                  <StyledInput
+                    icon={LuFileText}
+                    placeholder="Enter description"
+                    value={createValue.description}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setCreateValue((v) => ({ ...v, description: e.target.value }))
+                    }
+                  />
+                  {createErrors.description && (
+                    <Text color="red.400" fontSize="xs" mt={2} pl={1}>
+                      {createErrors.description}
+                    </Text>
+                  )}
+                  <Text color="gray.600" fontSize="xs" mt={1} pl={1}>
+                    {createValue.description.length}/{DESCRIPTION_MAX_LENGTH} characters
+                  </Text>
+                </Field.Root>
               </VStack>
             </Dialog.Body>
 
-            <Dialog.Footer>
-              <Button variant="ghost" onClick={() => setCreating(false)}>
+            <Dialog.Footer borderTop="1px solid" borderColor="rgba(255, 255, 255, 0.08)">
+              <Button
+                variant="ghost"
+                color="gray.400"
+                _hover={{ bg: "rgba(255, 255, 255, 0.1)", color: "white" }}
+                onClick={handleCloseCreate}
+              >
                 Cancel
               </Button>
               <Button
-                colorScheme="blue"
+                bg="linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+                color="white"
+                _hover={{
+                  bg: "linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)",
+                }}
+                _disabled={{
+                  opacity: 0.5,
+                  cursor: "not-allowed",
+                }}
                 loading={createMutation.isPending}
+                disabled={!isCreateValid || createMutation.isPending}
                 onClick={handleCreate}
-                disabled={!createValue.name.trim()}
+                borderRadius="xl"
               >
-                Create
+                <Icon as={LuPlus} mr={2} />
+                Create Workflow
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

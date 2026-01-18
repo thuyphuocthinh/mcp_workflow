@@ -129,7 +129,7 @@ export function VariableSelector({
     <Box position="relative">
       <VStack align="stretch" gap="2">
         {label && (
-          <Text fontSize="sm" fontWeight="600" color="fg.default">
+          <Text fontSize="sm" fontWeight="600" color="gray.300">
             {label}
           </Text>
         )}
@@ -141,7 +141,18 @@ export function VariableSelector({
             placeholder={placeholder}
             onChange={(e) => handleChange(e.target.value)}
             resize="vertical"
-            minH="300px"
+            minH="120px"
+            bg="rgba(255, 255, 255, 0.05)"
+            color="white"
+            borderColor="rgba(255, 255, 255, 0.1)"
+            borderRadius="lg"
+            _placeholder={{ color: "gray.500" }}
+            _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
+            _focus={{
+              borderColor: "rgba(99, 102, 241, 0.6)",
+              boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+              bg: "rgba(99, 102, 241, 0.05)",
+            }}
             onKeyDown={(e) => {
               if (e.key === "Delete" || e.key === "Backspace") {
                 e.stopPropagation();
@@ -160,13 +171,14 @@ export function VariableSelector({
             top={`${position.top}px`}
             left={`${position.left}px`}
             w="320px"
-            bg="white"
+            bg="rgba(20, 20, 30, 0.98)"
+            backdropFilter="blur(20px)"
             border="1px solid"
-            borderColor="gray.200"
-            borderRadius="md"
-            boxShadow="md"
+            borderColor="rgba(255, 255, 255, 0.1)"
+            borderRadius="lg"
+            boxShadow="0 4px 20px rgba(0, 0, 0, 0.5)"
             zIndex={1000}
-            p="1"
+            p="2"
           >
             <VStack align="stretch" gap="1">
               {filtered.map((variable) => (
@@ -174,19 +186,22 @@ export function VariableSelector({
                   key={variable.nodeId}
                   px="3"
                   py="2"
-                  borderRadius="sm"
+                  borderRadius="md"
                   cursor="pointer"
-                  _hover={{ bg: "blue.50" }}
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: "rgba(99, 102, 241, 0.2)",
+                  }}
                   onMouseDown={(e) => {
                     e.preventDefault(); // tránh mất focus textarea
                     handleSelectVariable(variable);
                   }}
                 >
-                  <Text fontSize="sm" fontWeight="medium">
+                  <Text fontSize="sm" fontWeight="medium" color="white">
                     @{variable.nodeId}
                   </Text>
                   {variable.variableName && (
-                    <Text fontSize="xs" color="fg.muted">
+                    <Text fontSize="xs" color="gray.500">
                       {variable.variableName}
                     </Text>
                   )}

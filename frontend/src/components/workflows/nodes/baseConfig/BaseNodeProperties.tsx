@@ -1,7 +1,6 @@
 import {
   VStack,
   HStack,
-  IconButton,
   Input,
   Select,
   Text,
@@ -9,6 +8,7 @@ import {
   Portal,
   createListCollection,
   Box,
+  Icon,
 } from "@chakra-ui/react";
 import type { Node } from "@xyflow/react";
 import type { ReactNode, ReactElement } from "react";
@@ -51,20 +51,22 @@ export const BaseNodeProperties = ({
     <VStack gap={4} align="stretch" p={4}>
       {/* ===== Node name ===== */}
       <Field.Root invalid={!!nameError} w={"full"}>
-        <HStack gap={1} mb={1} w={"80%"}>
+        <HStack gap={2} mb={1} w={"full"}>
           <Box
             aria-label="node-icon"
-            colorScheme={colorScheme}
-            bg={`${colorScheme}.50`}
-            color={`${colorScheme}.500`}
+            bg={`${colorScheme}.500`}
+            color="white"
             transition="all 0.2s"
             _active={{ transform: "scale(0.95)" }}
             _hover={{
               transform: "scale(1.1)",
             }}
-            background={`${colorScheme}.200`}
             p={2}
-            borderRadius={"sm"}
+            borderRadius={"lg"}
+            boxShadow="0 2px 8px rgba(0, 0, 0, 0.3)"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
           >
             {icon}
           </Box>
@@ -87,23 +89,26 @@ export const BaseNodeProperties = ({
                 onNameChange(nodeName);
               }
             }}
-            placeholder="请输入节点名称"
+            placeholder="Enter node name"
             size="sm"
             fontWeight="500"
-            w="75%"
-            bg="white"
+            flex="1"
+            bg="rgba(255, 255, 255, 0.05)"
+            color="white"
             borderRadius="lg"
-            borderColor="gray.200"
+            borderColor="rgba(255, 255, 255, 0.1)"
             transition="all 0.2s"
-            _hover={{ borderColor: `${colorScheme}.200` }}
+            _placeholder={{ color: "gray.500" }}
+            _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
             _focus={{
-              borderColor: `${colorScheme}.500`,
-              boxShadow: `0 0 0 1px var(--chakra-colors-${colorScheme}-500)`,
+              borderColor: "rgba(99, 102, 241, 0.6)",
+              boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+              bg: "rgba(99, 102, 241, 0.1)",
             }}
           />
         </HStack>
 
-        <Field.ErrorText>
+        <Field.ErrorText color="red.400">
           {nameError || "Node Name is required"}
         </Field.ErrorText>
       </Field.Root>
@@ -111,7 +116,7 @@ export const BaseNodeProperties = ({
       {/* ===== Input variables ===== */}
       {inputVariables.map((varName) => (
         <Field.Root key={varName}>
-          <Text fontWeight="bold" color="gray.700" mb={1}>
+          <Text fontWeight="bold" color="gray.300" mb={1} fontSize="sm">
             {varName}:
           </Text>
 
@@ -125,31 +130,44 @@ export const BaseNodeProperties = ({
             <Select.HiddenSelect />
 
             <Select.Control
-              bg="ui.inputbgcolor"
+              bg="rgba(255, 255, 255, 0.05)"
               borderRadius="lg"
-              borderColor="gray.200"
+              borderColor="rgba(255, 255, 255, 0.1)"
               transition="all 0.2s"
-              _hover={{ borderColor: `${colorScheme}.200` }}
+              _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
               _focusWithin={{
-                borderColor: `${colorScheme}.500`,
-                boxShadow: `0 0 0 1px var(--chakra-colors-${colorScheme}-500)`,
+                borderColor: "rgba(99, 102, 241, 0.6)",
+                boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
               }}
             >
-              <Select.Trigger>
+              <Select.Trigger color="gray.300">
                 <Select.ValueText placeholder="Select a variable" />
               </Select.Trigger>
               <Select.IndicatorGroup>
-                <Select.Indicator />
+                <Select.Indicator color="gray.400" />
               </Select.IndicatorGroup>
             </Select.Control>
 
             <Portal>
               <Select.Positioner>
-                <Select.Content>
+                <Select.Content
+                  bg="rgba(20, 20, 30, 0.98)"
+                  borderColor="rgba(255, 255, 255, 0.1)"
+                  backdropFilter="blur(20px)"
+                  boxShadow="0 4px 20px rgba(0, 0, 0, 0.5)"
+                >
                   {variableCollection.items.map((item) => (
-                    <Select.Item item={item} key={item.value}>
+                    <Select.Item
+                      item={item}
+                      key={item.value}
+                      color="gray.300"
+                      _hover={{
+                        bg: "rgba(99, 102, 241, 0.2)",
+                        color: "white",
+                      }}
+                    >
                       {item.label}
-                      <Select.ItemIndicator />
+                      <Select.ItemIndicator color="purple.400" />
                     </Select.Item>
                   ))}
                 </Select.Content>

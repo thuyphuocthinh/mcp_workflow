@@ -7,6 +7,7 @@ import {
   VStack,
   Spinner,
   Center,
+  Icon,
 } from "@chakra-ui/react";
 import { FaRobot } from "react-icons/fa";
 import { type UIEvent } from "react";
@@ -46,13 +47,15 @@ export function ChatBotList({
     <Box
       w="280px"
       borderRight="1px solid"
-      borderColor="gray.200"
+      borderColor="rgba(255, 255, 255, 0.08)"
       p={4}
       pb={0}
       display="flex"
       flexDir="column"
+      bg="rgba(20, 20, 30, 0.95)"
+      backdropFilter="blur(20px)"
     >
-      <Heading size="sm" mb={3}>
+      <Heading size="sm" mb={3} color="gray.300" letterSpacing="1px">
         Workflows
       </Heading>
 
@@ -61,43 +64,80 @@ export function ChatBotList({
         mb={3}
         value={search}
         onChange={(e) => onSearch(e.target.value)}
+        bg="rgba(255, 255, 255, 0.05)"
+        color="white"
+        borderColor="rgba(255, 255, 255, 0.1)"
+        _placeholder={{ color: "gray.500" }}
+        _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
+        _focus={{
+          borderColor: "rgba(99, 102, 241, 0.6)",
+          boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+        }}
       />
 
       <VStack
         align="stretch"
-        gap={1}
+        gap={2}
         flex={1}
         overflowY="auto"
         pb="20px"
         onScroll={handleScroll}
+        css={{
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "rgba(255, 255, 255, 0.05)",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "rgba(99, 102, 241, 0.3)",
+            borderRadius: "3px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "rgba(99, 102, 241, 0.5)",
+          },
+        }}
       >
         {workflows.map((wf) => (
           <Box
             key={wf.id}
             p={3}
-            borderRadius="md"
+            borderRadius="lg"
             cursor="pointer"
-            bg={wf.id === selectedId ? "blue.50" : "transparent"} // Đổi màu xám sang xanh nhạt cho nổi bật
-            color={wf.id === selectedId ? "blue.600" : "inherit"}
-            _hover={{ bg: "gray.100" }}
+            bg={wf.id === selectedId ? "rgba(99, 102, 241, 0.2)" : "rgba(255, 255, 255, 0.03)"}
+            border="1px solid"
+            borderColor={wf.id === selectedId ? "rgba(99, 102, 241, 0.5)" : "rgba(255, 255, 255, 0.05)"}
+            _hover={{
+              bg: "rgba(99, 102, 241, 0.15)",
+              borderColor: "rgba(99, 102, 241, 0.4)",
+              transform: "translateX(4px)",
+            }}
             onClick={() => onSelect(wf.id)}
             display="flex"
-            gap="8px"
+            gap="12px"
             alignItems="center"
             transition="all 0.2s"
           >
             <Box
               w="40px"
               h="40px"
-              borderRadius="md"
-              bg={wf.id === selectedId ? "blue.100" : "gray.100"}
+              borderRadius="lg"
+              bg={wf.id === selectedId ? "rgba(99, 102, 241, 0.3)" : "rgba(255, 255, 255, 0.1)"}
               display="flex"
               alignItems="center"
               justifyContent="center"
             >
-              <FaRobot color={wf.id === selectedId ? "#3182ce" : "inherit"} />
+              <Icon
+                as={FaRobot}
+                color={wf.id === selectedId ? "purple.400" : "gray.500"}
+                boxSize={4}
+              />
             </Box>
-            <Text fontSize="sm" fontWeight="600">
+            <Text
+              fontSize="sm"
+              fontWeight="600"
+              color={wf.id === selectedId ? "white" : "gray.300"}
+            >
               {wf.name}
             </Text>
           </Box>
@@ -105,7 +145,7 @@ export function ChatBotList({
 
         {(isLoading || isFetchingNextPage) && (
           <Center p={4}>
-            <Spinner size="sm" color="blue.500" />
+            <Spinner size="sm" color="purple.400" />
           </Center>
         )}
       </VStack>

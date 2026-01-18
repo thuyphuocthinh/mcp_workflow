@@ -41,7 +41,7 @@ export const AgentNodeProperties = ({
     <VStack align="stretch" gap={4}>
       {/* Model Selection */}
       <Box>
-        <Text fontSize="sm" fontWeight="medium" mb={2}>
+        <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.300">
           AI Model
         </Text>
         <ModelSelect
@@ -64,7 +64,7 @@ export const AgentNodeProperties = ({
 
       {/* MCP Servers / Tools */}
       <Box>
-        <Text fontSize="sm" fontWeight="medium" mb={2}>
+        <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.300">
           Tools (MCP Servers)
         </Text>
         <ToolSelector
@@ -78,7 +78,7 @@ export const AgentNodeProperties = ({
       <Box>
         <Field.Root>
           <HStack justify="space-between">
-            <Field.Label fontSize="sm" fontWeight="medium">
+            <Field.Label fontSize="sm" fontWeight="medium" color="gray.300">
               Max Iterations
             </Field.Label>
             <Text fontSize="xs" color="gray.500">
@@ -94,10 +94,25 @@ export const AgentNodeProperties = ({
             }
           >
             <NumberInput.Control>
-              <NumberInput.IncrementTrigger />
-              <NumberInput.DecrementTrigger />
+              <NumberInput.IncrementTrigger
+                color="gray.400"
+                _hover={{ color: "white", bg: "rgba(99, 102, 241, 0.2)" }}
+              />
+              <NumberInput.DecrementTrigger
+                color="gray.400"
+                _hover={{ color: "white", bg: "rgba(99, 102, 241, 0.2)" }}
+              />
             </NumberInput.Control>
-            <NumberInput.Input />
+            <NumberInput.Input
+              bg="rgba(255, 255, 255, 0.05)"
+              color="white"
+              borderColor="rgba(255, 255, 255, 0.1)"
+              _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
+              _focus={{
+                borderColor: "rgba(99, 102, 241, 0.6)",
+                boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+              }}
+            />
           </NumberInput.Root>
         </Field.Root>
       </Box>

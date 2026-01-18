@@ -89,9 +89,9 @@ const providerIcons: Record<LLMProvider, React.ElementType> = {
 };
 
 const providerColors: Record<LLMProvider, string> = {
-  openai: "green.500",
-  gemini: "blue.500",
-  anthropic: "orange.500",
+  openai: "green.400",
+  gemini: "blue.400",
+  anthropic: "orange.400",
 };
 
 /* ================== Component ================== */
@@ -148,15 +148,15 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
         px={4}
         py={2}
         border="1px solid"
-        borderColor="gray.200"
-        borderRadius="md"
-        bg="white"
+        borderColor="rgba(255, 255, 255, 0.1)"
+        borderRadius="lg"
+        bg="rgba(255, 255, 255, 0.05)"
         transition="all 0.2s ease"
         _hover={{
           transform: "translateY(-1px)",
-          boxShadow: "sm",
-          borderColor: "blue.300",
-          bg: "gray.50",
+          boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)",
+          borderColor: "rgba(99, 102, 241, 0.4)",
+          bg: "rgba(99, 102, 241, 0.1)",
         }}
         _active={{
           transform: "translateY(0)",
@@ -164,32 +164,43 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
         }}
         _focusVisible={{
           outline: "none",
-          borderColor: "blue.400",
-          boxShadow: "0 0 0 1px var(--chakra-colors-blue-400)",
+          borderColor: "rgba(99, 102, 241, 0.6)",
+          boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
         }}
       >
         <HStack justify="space-between" w="full">
           <HStack>
             <Icon
               as={ProviderIcon}
-              color={selected ? providerColors[selected.provider] : "gray.400"}
+              color={selected ? providerColors[selected.provider] : "gray.500"}
             />
             <VStack align="start" gap={0}>
-              <Text fontWeight="medium">
+              <Text fontWeight="medium" color="white">
                 {selected?.name ?? "Select AI Model"}
               </Text>
-              <Text fontSize="xs" color="fg.muted">
+              <Text fontSize="xs" color="gray.500">
                 {selected?.provider ?? "Choose a model"}
               </Text>
             </VStack>
           </HStack>
-          <FiChevronDown fontSize={"16px"} />
+          <FiChevronDown fontSize={"16px"} color="#9ca3af" />
         </HStack>
       </Menu.Trigger>
 
       <Portal>
         <Menu.Positioner>
-          <Menu.Content minW="360px" w={"full"} p="2" maxH="400px" overflowY="auto">
+          <Menu.Content
+            minW="360px"
+            w={"full"}
+            p="2"
+            maxH="400px"
+            overflowY="auto"
+            bg="rgba(20, 20, 30, 0.98)"
+            backdropFilter="blur(20px)"
+            borderColor="rgba(255, 255, 255, 0.1)"
+            boxShadow="0 4px 30px rgba(0, 0, 0, 0.5)"
+            borderRadius="xl"
+          >
             <VStack align="stretch" gap="2">
               {AVAILABLE_MODELS.map((model) => {
                 const isSelected =
@@ -203,28 +214,29 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
                     key={`${model.provider}-${model.id}`}
                     onClick={() => handleSelect(model)}
                     p="0"
-                    borderRadius="md"
-                    bg={isSelected ? "blue.50" : "transparent"}
-                    _hover={{ bg: "gray.50" }}
+                    borderRadius="lg"
+                    bg={isSelected ? "rgba(99, 102, 241, 0.2)" : "transparent"}
+                    _hover={{ bg: "rgba(99, 102, 241, 0.15)" }}
                     cursor={"pointer"}
                   >
                     <Card.Root
                       variant="subtle"
                       w="full"
                       borderWidth="1px"
-                      borderColor={isSelected ? "blue.400" : "border"}
+                      borderColor={isSelected ? "rgba(99, 102, 241, 0.5)" : "rgba(255, 255, 255, 0.05)"}
+                      bg="transparent"
                       _hover={{
                         transform: "translateY(-1px)",
-                        boxShadow: "sm",
-                        borderColor: "blue.300",
+                        boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)",
+                        borderColor: "rgba(99, 102, 241, 0.4)",
                       }}
                       transition="all 0.1s ease-in-out"
                     >
-                      <HStack align="start" gap="3">
+                      <HStack align="start" gap="3" p={2}>
                         <Box
                           p="2"
-                          borderRadius="md"
-                          bg={isSelected ? "blue.100" : "gray.100"}
+                          borderRadius="lg"
+                          bg={isSelected ? "rgba(99, 102, 241, 0.3)" : "rgba(255, 255, 255, 0.1)"}
                         >
                           <Icon
                             as={ModelIcon}
@@ -232,14 +244,14 @@ export function ModelSelect({ value, onChange }: ModelSelectProps) {
                           />
                         </Box>
 
-                        <VStack align="start" gap="1">
+                        <VStack align="start" gap="0">
                           <HStack>
-                            <Text fontWeight="semibold">{model.name}</Text>
-                            <Text fontSize="xs" color="fg.muted">
+                            <Text fontWeight="semibold" color="white">{model.name}</Text>
+                            <Text fontSize="xs" color="gray.500">
                               · {model.provider}
                             </Text>
                           </HStack>
-                          <Text fontSize="sm" color="fg.muted">
+                          <Text fontSize="sm" color="gray.400">
                             {model.description}
                           </Text>
                         </VStack>

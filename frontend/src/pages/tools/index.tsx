@@ -37,15 +37,20 @@ export default function ToolsPage() {
     setOpen(false);
     setSelectedTool(null);
   };
+
   return (
-    <Box p={6}>
-      <Heading size="lg" mb={6}>
+    <Box
+      p={6}
+      minH="100%"
+      bg="linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%)"
+    >
+      <Heading size="lg" mb={6} color="white">
         Tools
       </Heading>
 
       {isLoading ? (
         <Center>
-          <Spinner />
+          <Spinner color="purple.400" />
         </Center>
       ) : tools?.data?.length === 0 ? (
         <Center py={20} flexDir="column" color="gray.500">
@@ -53,7 +58,7 @@ export default function ToolsPage() {
           <Text fontSize="md" fontWeight="medium">
             No tools available
           </Text>
-          <Text fontSize="sm" color="gray.400">
+          <Text fontSize="sm" color="gray.600">
             Tools will appear here when they are added
           </Text>
         </Center>
@@ -63,9 +68,17 @@ export default function ToolsPage() {
             <Card.Root
               key={tool.id}
               borderRadius="xl"
-              boxShadow="sm"
+              bg="rgba(20, 20, 30, 0.8)"
+              backdropFilter="blur(20px)"
+              border="1px solid"
+              borderColor="rgba(255, 255, 255, 0.08)"
+              boxShadow="0 4px 20px rgba(0, 0, 0, 0.3)"
               transition="all 0.2s ease"
-              _hover={{ boxShadow: "lg", transform: "translateY(-2px)" }}
+              _hover={{
+                boxShadow: "0 8px 32px rgba(99, 102, 241, 0.3)",
+                transform: "translateY(-4px)",
+                borderColor: "rgba(99, 102, 241, 0.4)",
+              }}
               cursor="pointer"
               onClick={() => handleOpenDrawer(tool)}
             >
@@ -75,8 +88,8 @@ export default function ToolsPage() {
                     <Box
                       w="40px"
                       h="40px"
-                      borderRadius="md"
-                      bg="gray.100"
+                      borderRadius="lg"
+                      bg="rgba(99, 102, 241, 0.2)"
                       display="flex"
                       alignItems="center"
                       justifyContent="center"
@@ -84,15 +97,17 @@ export default function ToolsPage() {
                       <Icon
                         as={mapIcons[tool.key]}
                         boxSize={5}
-                        color="gray.700"
+                        color="purple.400"
                       />
                     </Box>
-                    <Heading size="sm">{tool.name}</Heading>
+                    <Heading size="sm" color="white">{tool.name}</Heading>
                   </Flex>
                   <Badge
-                    bg={tool.is_authorized === false ? "red.500" : "green.500"}
+                    bg={tool.is_authorized === false ? "rgba(239, 68, 68, 0.8)" : "rgba(34, 197, 94, 0.8)"}
                     color="white"
                     fontSize="11px"
+                    borderRadius="full"
+                    px={2}
                   >
                     {tool.is_authorized === false
                       ? "Not connected"
@@ -102,7 +117,7 @@ export default function ToolsPage() {
               </Card.Header>
 
               <Card.Body>
-                <Text fontSize="sm" color="gray.600">
+                <Text fontSize="sm" color="gray.400">
                   {tool.description}
                 </Text>
               </Card.Body>

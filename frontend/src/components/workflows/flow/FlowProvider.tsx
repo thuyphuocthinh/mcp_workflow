@@ -20,8 +20,8 @@ const FlowProvider = () => {
 
   if (isLoading) {
     return (
-      <Center h="calc(100vh - 60px)">
-        <Spinner size="lg" />
+      <Center h="100%">
+        <Spinner color="purple.400" />
       </Center>
     );
   }

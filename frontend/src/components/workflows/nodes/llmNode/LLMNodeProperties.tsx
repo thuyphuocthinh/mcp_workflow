@@ -24,7 +24,7 @@ export const LLMNodeProperties = ({
     <VStack align="stretch" gap={4}>
       {/* Model Selection */}
       <Box>
-        <Text fontSize="sm" fontWeight="medium" mb={2}>
+        <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.300">
           AI Model
         </Text>
         <ModelSelect
@@ -57,10 +57,10 @@ export const LLMNodeProperties = ({
       {/* Temperature */}
       <Box>
         <HStack justify="space-between" mb={2}>
-          <Text fontSize="sm" fontWeight="medium">
+          <Text fontSize="sm" fontWeight="medium" color="gray.300">
             Temperature
           </Text>
-          <Text fontSize="sm" color="gray.500">
+          <Text fontSize="sm" color="purple.400" fontWeight="medium">
             {node.data.temperature ?? 0.7}
           </Text>
         </HStack>
@@ -74,10 +74,15 @@ export const LLMNodeProperties = ({
           }
         >
           <Slider.Control>
-            <Slider.Track>
-              <Slider.Range />
+            <Slider.Track bg="rgba(255, 255, 255, 0.1)" h="6px" borderRadius="full">
+              <Slider.Range bg="linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)" />
             </Slider.Track>
-            <Slider.Thumb index={0} />
+            <Slider.Thumb
+              index={0}
+              bg="white"
+              boxShadow="0 2px 8px rgba(0, 0, 0, 0.3)"
+              _hover={{ transform: "scale(1.1)" }}
+            />
           </Slider.Control>
         </Slider.Root>
       </Box>

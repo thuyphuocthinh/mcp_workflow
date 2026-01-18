@@ -10,8 +10,11 @@ import {
   HStack,
   Tabs,
   IconButton,
+  Portal,
+  Box,
+  Icon,
 } from "@chakra-ui/react";
-import { Eye, EyeOff, Trash } from "lucide-react";
+import { Eye, EyeOff, Trash, Key, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -22,6 +25,7 @@ import {
 } from "@/services/modelKey";
 import type { i_model } from "@/constants";
 import useCustomToast from "@/hooks/useCustomToast";
+import { SiOpenai, SiGooglegemini } from "react-icons/si";
 
 interface Props {
   isOpen: boolean;
@@ -29,9 +33,9 @@ interface Props {
 }
 
 /* ===== Models ===== */
-const MODELS: { label: string; value: i_model }[] = [
-  { label: "OpenAI (GPT)", value: "GPT" },
-  { label: "Gemini", value: "GEMINI" },
+const MODELS: { label: string; value: i_model; icon: any; color: string }[] = [
+  { label: "OpenAI (GPT)", value: "GPT", icon: SiOpenai, color: "green.400" },
+  { label: "Gemini", value: "GEMINI", icon: SiGooglegemini, color: "blue.400" },
 ];
 
 export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
@@ -129,111 +133,218 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
     <>
       {/* ================= MAIN MODAL ================= */}
       <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()}>
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW="720px" w="100%">
-            <Dialog.Header>
-              <Dialog.Title>Model API Keys</Dialog.Title>
-            </Dialog.Header>
+        <Portal>
+          <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" />
+          <Dialog.Positioner>
+            <Dialog.Content
+              maxW="720px"
+              w="100%"
+              bg="rgba(20, 20, 30, 0.98)"
+              backdropFilter="blur(20px)"
+              border="1px solid rgba(255, 255, 255, 0.1)"
+              borderRadius="2xl"
+              boxShadow="0 0 60px rgba(0, 0, 0, 0.5)"
+            >
+              <Dialog.Header borderBottom="1px solid rgba(255, 255, 255, 0.08)">
+                <HStack gap={3}>
+                  <Box
+                    p={2}
+                    borderRadius="lg"
+                    bg="linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)"
+                  >
+                    <Icon as={Key} boxSize={5} color="purple.400" />
+                  </Box>
+                  <VStack align="start" gap={0}>
+                    <Dialog.Title color="white">Model API Keys</Dialog.Title>
+                    <Text fontSize="xs" color="gray.500">
+                      Configure your AI provider credentials
+                    </Text>
+                  </VStack>
+                </HStack>
+              </Dialog.Header>
 
-            <Dialog.Body>
-              <Tabs.Root
-                value={activeModel}
-                onValueChange={(e) => setActiveModel(e.value as i_model)}
-                variant="outline"
-              >
-                <Tabs.List>
-                  {MODELS.map((m) => (
-                    <Tabs.Trigger key={m.value} value={m.value} flex="1">
-                      {m.label}
-                    </Tabs.Trigger>
-                  ))}
-                </Tabs.List>
-
-                {MODELS.map((m) => {
-                  const exists = hasKeyMap.get(m.value);
-
-                  return (
-                    <Tabs.Content key={m.value} value={m.value}>
-                      <VStack pt={6} gap={4} align="stretch">
-                        <Field.Root>
-                          <Field.Label>
-                            API Key{" "}
+              <Dialog.Body py={6}>
+                <Tabs.Root
+                  value={activeModel}
+                  onValueChange={(e) => setActiveModel(e.value as i_model)}
+                  variant="outline"
+                >
+                  <Tabs.List
+                    bg="rgba(255, 255, 255, 0.03)"
+                    borderRadius="xl"
+                    p={1}
+                    borderColor="rgba(255, 255, 255, 0.08)"
+                  >
+                    {MODELS.map((m) => {
+                      const isActive = activeModel === m.value;
+                      const exists = hasKeyMap.get(m.value);
+                      return (
+                        <Tabs.Trigger
+                          key={m.value}
+                          value={m.value}
+                          flex="1"
+                          borderRadius="lg"
+                          color={isActive ? "white" : "gray.400"}
+                          bg={isActive ? "rgba(99, 102, 241, 0.2)" : "transparent"}
+                          _hover={{
+                            bg: isActive ? "rgba(99, 102, 241, 0.25)" : "rgba(255, 255, 255, 0.05)",
+                          }}
+                          transition="all 0.2s"
+                        >
+                          <HStack gap={2}>
+                            <Icon as={m.icon} boxSize={4} color={m.color} />
+                            <Text>{m.label}</Text>
                             {exists && (
-                              <Text as="span" fontSize="xs" color="green.500">
-                                (saved)
-                              </Text>
-                            )}
-                          </Field.Label>
-
-                          <HStack width={"100%"}>
-                            <Input
-                              ref={m.value === activeModel ? inputRef : null}
-                              type={visibleMap[m.value] ? "text" : "password"}
-                              value={getDisplayValue(m.value)}
-                              placeholder="sk-xxxx"
-                              onChange={(e) =>
-                                setKeyInputs((p) => ({
-                                  ...p,
-                                  [m.value]: e.target.value,
-                                }))
-                              }
-                            />
-
-                            {exists && (
-                              <HStack gap={2}>
-                                <IconButton
-                                  aria-label="toggle visibility"
-                                  variant="ghost"
-                                  onClick={() =>
-                                    setVisibleMap((p) => ({
-                                      ...p,
-                                      [m.value]: !p[m.value],
-                                    }))
-                                  }
-                                >
-                                  {visibleMap[m.value] ? (
-                                    <EyeOff size={18} />
-                                  ) : (
-                                    <Eye size={18} />
-                                  )}
-                                </IconButton>
-                                <IconButton
-                                  variant={"ghost"}
-                                  onClick={() => setConfirmDeleteOpen(true)}
-                                >
-                                  <Trash size={18} color="red" />
-                                </IconButton>
-                              </HStack>
+                              <Box w={2} h={2} borderRadius="full" bg="green.400" />
                             )}
                           </HStack>
-                        </Field.Root>
-                      </VStack>
-                    </Tabs.Content>
-                  );
-                })}
-              </Tabs.Root>
-            </Dialog.Body>
+                        </Tabs.Trigger>
+                      );
+                    })}
+                  </Tabs.List>
 
-            <Dialog.Footer>
-              <HStack w="full" justify="flex-end">
-                <HStack>
-                  <Button variant="ghost" onClick={onClose}>
-                    Cancel
-                  </Button>
-                  <Button
-                    colorScheme="blue"
-                    onClick={handleSave}
-                    loading={upsertMutation.isPending}
-                    disabled={!keyInputs[activeModel]}
-                  >
-                    Save
-                  </Button>
+                  {MODELS.map((m) => {
+                    const exists = hasKeyMap.get(m.value);
+
+                    return (
+                      <Tabs.Content key={m.value} value={m.value}>
+                        <VStack pt={6} gap={4} align="stretch">
+                          <Field.Root>
+                            <Field.Label color="gray.300">
+                              <HStack gap={2}>
+                                <Text>API Key</Text>
+                                {exists && (
+                                  <HStack
+                                    px={2}
+                                    py={0.5}
+                                    borderRadius="full"
+                                    bg="rgba(34, 197, 94, 0.2)"
+                                  >
+                                    <Icon as={Sparkles} boxSize={3} color="green.400" />
+                                    <Text fontSize="xs" color="green.400">
+                                      Connected
+                                    </Text>
+                                  </HStack>
+                                )}
+                              </HStack>
+                            </Field.Label>
+
+                            <HStack width={"100%"} gap={2}>
+                              <Input
+                                ref={m.value === activeModel ? inputRef : null}
+                                type={visibleMap[m.value] ? "text" : "password"}
+                                value={getDisplayValue(m.value)}
+                                placeholder="sk-xxxx or AIza..."
+                                onChange={(e) =>
+                                  setKeyInputs((p) => ({
+                                    ...p,
+                                    [m.value]: e.target.value,
+                                  }))
+                                }
+                                bg="rgba(255, 255, 255, 0.05)"
+                                color="white"
+                                borderColor="rgba(255, 255, 255, 0.1)"
+                                borderRadius="lg"
+                                _placeholder={{ color: "gray.500" }}
+                                _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
+                                _focus={{
+                                  borderColor: "rgba(99, 102, 241, 0.6)",
+                                  boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+                                }}
+                              />
+
+                              {exists && (
+                                <HStack gap={1}>
+                                  <IconButton
+                                    aria-label="toggle visibility"
+                                    variant="ghost"
+                                    size="sm"
+                                    color="gray.400"
+                                    borderRadius="lg"
+                                    onClick={() =>
+                                      setVisibleMap((p) => ({
+                                        ...p,
+                                        [m.value]: !p[m.value],
+                                      }))
+                                    }
+                                    _hover={{
+                                      bg: "rgba(255, 255, 255, 0.1)",
+                                      color: "white",
+                                    }}
+                                  >
+                                    {visibleMap[m.value] ? (
+                                      <EyeOff size={18} />
+                                    ) : (
+                                      <Eye size={18} />
+                                    )}
+                                  </IconButton>
+                                  <IconButton
+                                    aria-label="delete key"
+                                    variant={"ghost"}
+                                    size="sm"
+                                    color="red.400"
+                                    borderRadius="lg"
+                                    onClick={() => setConfirmDeleteOpen(true)}
+                                    _hover={{
+                                      bg: "rgba(239, 68, 68, 0.2)",
+                                      color: "red.300",
+                                    }}
+                                  >
+                                    <Trash size={18} />
+                                  </IconButton>
+                                </HStack>
+                              )}
+                            </HStack>
+
+                            <Text fontSize="xs" color="gray.500" mt={2}>
+                              {m.value === "GPT"
+                                ? "Get your API key from platform.openai.com"
+                                : "Get your API key from makersuite.google.com"}
+                            </Text>
+                          </Field.Root>
+                        </VStack>
+                      </Tabs.Content>
+                    );
+                  })}
+                </Tabs.Root>
+              </Dialog.Body>
+
+              <Dialog.Footer borderTop="1px solid rgba(255, 255, 255, 0.08)">
+                <HStack w="full" justify="flex-end">
+                  <HStack gap={2}>
+                    <Button
+                      variant="ghost"
+                      onClick={onClose}
+                      color="gray.400"
+                      _hover={{
+                        bg: "rgba(255, 255, 255, 0.1)",
+                        color: "white",
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      loading={upsertMutation.isPending}
+                      disabled={!keyInputs[activeModel]}
+                      bg="linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%)"
+                      color="white"
+                      _hover={{
+                        bg: "linear-gradient(135deg, rgba(99, 102, 241, 1) 0%, rgba(139, 92, 246, 1) 100%)",
+                      }}
+                      _disabled={{
+                        opacity: 0.5,
+                        cursor: "not-allowed",
+                      }}
+                    >
+                      Save Key
+                    </Button>
+                  </HStack>
                 </HStack>
-              </HStack>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
       </Dialog.Root>
 
       {/* ================= CONFIRM DELETE ================= */}
@@ -241,36 +352,52 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
         open={confirmDeleteOpen}
         onOpenChange={(e) => !e.open && setConfirmDeleteOpen(false)}
       >
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW="400px">
-            <Dialog.Header>
-              <Dialog.Title>Delete API Key</Dialog.Title>
-            </Dialog.Header>
-            <Dialog.Body>
-              Are you sure? This action cannot be undone.
-            </Dialog.Body>
-            <Dialog.Footer>
-              <HStack>
-                <Button
-                  variant="ghost"
-                  onClick={() => setConfirmDeleteOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  colorScheme="red"
-                  onClick={handleDelete}
-                  loading={deleteMutation.isPending}
-                  bg="red.500"
-                  _hover={{ bg: "red.600" }}
-                >
-                  Delete
-                </Button>
-              </HStack>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
+        <Portal>
+          <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" />
+          <Dialog.Positioner>
+            <Dialog.Content
+              maxW="400px"
+              bg="rgba(20, 20, 30, 0.98)"
+              backdropFilter="blur(20px)"
+              border="1px solid rgba(255, 255, 255, 0.1)"
+              borderRadius="xl"
+              boxShadow="0 0 60px rgba(0, 0, 0, 0.5)"
+            >
+              <Dialog.Header borderBottom="1px solid rgba(255, 255, 255, 0.08)">
+                <Dialog.Title color="white">Delete API Key</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <Text color="gray.400">
+                  Are you sure? This action cannot be undone.
+                </Text>
+              </Dialog.Body>
+              <Dialog.Footer borderTop="1px solid rgba(255, 255, 255, 0.08)">
+                <HStack gap={2}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setConfirmDeleteOpen(false)}
+                    color="gray.400"
+                    _hover={{
+                      bg: "rgba(255, 255, 255, 0.1)",
+                      color: "white",
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleDelete}
+                    loading={deleteMutation.isPending}
+                    bg="rgba(239, 68, 68, 0.8)"
+                    color="white"
+                    _hover={{ bg: "rgba(239, 68, 68, 1)" }}
+                  >
+                    Delete
+                  </Button>
+                </HStack>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
       </Dialog.Root>
     </>
   );

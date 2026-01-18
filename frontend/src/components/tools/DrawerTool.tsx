@@ -63,23 +63,35 @@ const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
   return (
     <Drawer.Root open={open} onOpenChange={(e) => !e.open && onClose()}>
       <Portal>
-        <Drawer.Backdrop />
+        <Drawer.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" />
         <Drawer.Positioner>
-          <Drawer.Content>
-            <Drawer.Header>
-              <Drawer.Title>{tool?.name || "Tool detail"}</Drawer.Title>
+          <Drawer.Content
+            bg="rgba(20, 20, 30, 0.98)"
+            backdropFilter="blur(20px)"
+            borderLeft="1px solid"
+            borderColor="rgba(255, 255, 255, 0.1)"
+          >
+            <Drawer.Header borderBottom="1px solid rgba(255, 255, 255, 0.08)">
+              <Drawer.Title color="white">{tool?.name || "Tool detail"}</Drawer.Title>
               <Drawer.CloseTrigger asChild>
-                <CloseButton size="sm" />
+                <CloseButton
+                  size="sm"
+                  color="gray.400"
+                  _hover={{
+                    bg: "rgba(255, 255, 255, 0.1)",
+                    color: "white",
+                  }}
+                />
               </Drawer.CloseTrigger>
             </Drawer.Header>
 
             <Drawer.Body>
               {!tool ? (
-                <Text>No tool selected</Text>
+                <Text color="gray.400">No tool selected</Text>
               ) : (
                 <Stack gap={4}>
                   {/* Tool info */}
-                  <Text fontSize="sm" color="gray.600">
+                  <Text fontSize="sm" color="gray.400">
                     {tool.description}
                   </Text>
 
@@ -93,14 +105,29 @@ const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
                   </Stack>
 
                   {tool.is_authorized === false && (
-                    <Button colorScheme="green" onClick={handleAuthorize}>
+                    <Button
+                      bg="linear-gradient(135deg, rgba(34, 197, 94, 0.8) 0%, rgba(16, 185, 129, 0.8) 100%)"
+                      color="white"
+                      onClick={handleAuthorize}
+                      _hover={{
+                        bg: "linear-gradient(135deg, rgba(34, 197, 94, 1) 0%, rgba(16, 185, 129, 1) 100%)",
+                      }}
+                    >
                       Authorize
                     </Button>
                   )}
 
                   {
                     tool.is_authorized === true && (
-                      <Button colorScheme="red" onClick={handleRevoke} loading={revokeMutation.isPending}>
+                      <Button
+                        bg="rgba(239, 68, 68, 0.8)"
+                        color="white"
+                        onClick={handleRevoke}
+                        loading={revokeMutation.isPending}
+                        _hover={{
+                          bg: "rgba(239, 68, 68, 1)",
+                        }}
+                      >
                         Revoke
                       </Button>
                     )
@@ -113,7 +140,7 @@ const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
                         fontSize="sm"
                         fontWeight="medium"
                         mb={2}
-                        color="gray.700"
+                        color="gray.300"
                       >
                         Available actions
                       </Text>
@@ -124,16 +151,22 @@ const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
                             key={t.name}
                             value={t.name}
                             cursor={"pointer"}
+                            borderColor="rgba(255, 255, 255, 0.08)"
                           >
-                            <Accordion.ItemTrigger cursor={"pointer"}>
-                              <Text flex="1" fontSize="sm" fontWeight="medium">
+                            <Accordion.ItemTrigger
+                              cursor={"pointer"}
+                              _hover={{
+                                bg: "rgba(99, 102, 241, 0.1)",
+                              }}
+                            >
+                              <Text flex="1" fontSize="sm" fontWeight="medium" color="white">
                                 {t.name}
                               </Text>
-                              <Accordion.ItemIndicator />
+                              <Accordion.ItemIndicator color="gray.400" />
                             </Accordion.ItemTrigger>
 
                             <Accordion.ItemContent>
-                              <Text fontSize="sm" color="gray.600">
+                              <Text fontSize="sm" color="gray.400">
                                 {t.description}
                               </Text>
                             </Accordion.ItemContent>
@@ -146,11 +179,19 @@ const DrawerTool = ({ open, onClose, tool }: DrawerToolProps) => {
               )}
             </Drawer.Body>
 
-            <Drawer.Footer>
-              <Button variant="outline" onClick={onClose}>
+            <Drawer.Footer borderTop="1px solid rgba(255, 255, 255, 0.08)">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                color="gray.400"
+                borderColor="rgba(255, 255, 255, 0.1)"
+                _hover={{
+                  bg: "rgba(255, 255, 255, 0.1)",
+                  color: "white",
+                }}
+              >
                 Close
               </Button>
-              <Button>Save</Button>
             </Drawer.Footer>
           </Drawer.Content>
         </Drawer.Positioner>

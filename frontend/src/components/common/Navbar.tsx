@@ -39,10 +39,16 @@ export const NavButton = ({ to, children }: NavButtonProps) => {
       {({ isActive }) => (
         <Button
           variant="ghost"
-          bg={isActive ? "gray.200" : "transparent"}
+          bg={isActive ? "rgba(99, 102, 241, 0.2)" : "transparent"}
+          color={isActive ? "white" : "gray.400"}
           fontWeight={isActive ? "semibold" : "normal"}
-          _hover={{ bg: "gray.100" }}
-          transition="all 0.15s ease"
+          _hover={{
+            bg: "rgba(99, 102, 241, 0.15)",
+            color: "white",
+          }}
+          transition="all 0.2s ease"
+          borderRadius="lg"
+          px={4}
         >
           {children}
         </Button>
@@ -73,30 +79,38 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
 
   return (
     <Box
-      bg="gray.50"
-      px={4}
+      bg="rgba(10, 10, 15, 0.85)"
+      backdropFilter="blur(20px)"
+      px={6}
       py={isWorkflowDetail ? 5 : 4}
       borderBottom="1px solid"
-      borderColor="gray.300"
-      boxShadow="sm"
+      borderColor="rgba(255, 255, 255, 0.08)"
+      boxShadow="0 4px 30px rgba(0, 0, 0, 0.3)"
       width="full"
     >
       <Flex align="center" justify="space-between">
         {/* LEFT */}
         {isWorkflowDetail ? (
           // ===== Workflow detail: breadcrumb =====
-          <Breadcrumb.Root gap="8px" fontSize="sm" color="gray.600">
+          <Breadcrumb.Root gap="8px" fontSize="sm" color="gray.400">
             <Breadcrumb.List>
               <Breadcrumb.Item>
-                <Breadcrumb.Link as={RouterLink} to="/workflows">
+                <Breadcrumb.Link
+                  as={RouterLink}
+                  to="/workflows"
+                  color="gray.400"
+                  _hover={{ color: "purple.400" }}
+                  transition="color 0.2s"
+                >
                   Home
                 </Breadcrumb.Link>
               </Breadcrumb.Item>
-              <Breadcrumb.Separator />
+              <Breadcrumb.Separator color="gray.600" />
               <Breadcrumb.Item>
                 <Breadcrumb.Link
                   as={RouterLink}
                   to={`/workflows/${workflowId}`}
+                  color="white"
                 >
                   Workflow Detail
                 </Breadcrumb.Link>
@@ -105,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
           </Breadcrumb.Root>
         ) : (
           // ===== Other pages: menu =====
-          <HStack gap={6}>
+          <HStack gap={2}>
             <NavButton to="/workflows">Workflow</NavButton>
             <NavButton to="/chat">Chat</NavButton>
             <NavButton to="/tools">Tools</NavButton>
@@ -116,16 +130,22 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
         {isWorkflowDetail ? (
           // ===== Workflow detail: balance =====
           <HStack
-            px={3}
-            py={1}
-            bg="gray.200"
-            borderRadius="md"
+            px={4}
+            py={2}
+            bg="rgba(99, 102, 241, 0.15)"
+            borderRadius="xl"
             gap={2}
             cursor="pointer"
-            _hover={{ bg: "gray.300" }}
+            borderWidth={1}
+            borderColor="rgba(99, 102, 241, 0.3)"
+            _hover={{
+              bg: "rgba(99, 102, 241, 0.25)",
+              borderColor: "rgba(99, 102, 241, 0.5)",
+            }}
+            transition="all 0.2s"
           >
-            <WalletIcon w={5} h={5} color="gray.700" />
-            <Text fontWeight="semibold" color="gray.700">
+            <WalletIcon w={5} h={5} color="purple.400" />
+            <Text fontWeight="semibold" color="white">
               ${balance.toLocaleString()}
             </Text>
           </HStack>

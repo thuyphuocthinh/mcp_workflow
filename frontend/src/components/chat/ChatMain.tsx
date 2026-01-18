@@ -9,6 +9,7 @@ import {
   Input,
   Text,
   VStack,
+  Icon,
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { FaRobot, FaUser } from "react-icons/fa";
@@ -161,15 +162,30 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
   };
 
   return (
-    <Flex flex={1} direction="column" height={"100%"}>
+    <Flex flex={1} direction="column" height={"100%"} bg="transparent">
       {/* Header */}
       {isPlayground && (
-        <Box p={4} borderBottom="1px solid" borderColor="gray.200" display="flex" justifyContent="space-between" alignItems="center">
-          <Heading size="sm">{workflowName ?? "Chat"}</Heading>
+        <Box
+          p={4}
+          borderBottom="1px solid"
+          borderColor="rgba(255, 255, 255, 0.08)"
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          bg="rgba(20, 20, 30, 0.6)"
+          backdropFilter="blur(10px)"
+        >
+          <Heading size="sm" color="white">{workflowName ?? "Chat"}</Heading>
           <Button
             size="xs"
-            colorScheme="gray"
+            variant="outline"
+            color="gray.300"
+            borderColor="rgba(255, 255, 255, 0.1)"
             onClick={() => navigate(`/workflows/${workflowId}`)}
+            _hover={{
+              bg: "rgba(99, 102, 241, 0.2)",
+              borderColor: "rgba(99, 102, 241, 0.4)",
+            }}
           >
             Go to Workflow
           </Button>
@@ -177,7 +193,27 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
       )}
 
       {/* Messages */}
-      <Box flex={1} p={4} overflowY="auto" position="relative">
+      <Box
+        flex={1}
+        p={4}
+        overflowY="auto"
+        position="relative"
+        css={{
+          "&::-webkit-scrollbar": {
+            width: "6px",
+          },
+          "&::-webkit-scrollbar-track": {
+            background: "rgba(255, 255, 255, 0.05)",
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: "rgba(99, 102, 241, 0.3)",
+            borderRadius: "3px",
+          },
+          "&::-webkit-scrollbar-thumb:hover": {
+            background: "rgba(99, 102, 241, 0.5)",
+          },
+        }}
+      >
         <VStack align="stretch" gap={4}>
           {messages.map((msg) => {
             const isHuman = msg.role === "HUMAN";
@@ -185,22 +221,51 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
               <Flex key={msg.id} justify={isHuman ? "flex-end" : "flex-start"}>
                 <HStack
                   maxW="70%"
-                  bg={isHuman ? "blue.500" : "gray.100"}
-                  color={isHuman ? "white" : "gray.800"}
-                  px={3}
-                  py={2}
-                  borderRadius="lg"
+                  bg={isHuman
+                    ? "linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%)"
+                    : "rgba(255, 255, 255, 0.08)"
+                  }
+                  color={isHuman ? "white" : "gray.200"}
+                  px={4}
+                  py={3}
+                  borderRadius="xl"
                   alignItems={isHuman ? "center" : "flex-start"}
+                  border="1px solid"
+                  borderColor={isHuman ? "rgba(139, 92, 246, 0.5)" : "rgba(255, 255, 255, 0.1)"}
+                  boxShadow={isHuman
+                    ? "0 4px 20px rgba(99, 102, 241, 0.3)"
+                    : "0 4px 20px rgba(0, 0, 0, 0.2)"
+                  }
                 >
                   <Box>
-                    {isHuman ? <FaUser size={16} /> : <FaRobot size={20} />}
+                    {isHuman ? (
+                      <Icon as={FaUser} boxSize={4} color="white" />
+                    ) : (
+                      <Icon as={FaRobot} boxSize={5} color="purple.400" />
+                    )}
                   </Box>
                   {isHuman ? (
                     <Text fontSize="sm" whiteSpace="pre-wrap">
                       {msg.content}
                     </Text>
                   ) : (
-                    <Box>
+                    <Box
+                      css={{
+                        "& p": { margin: 0 },
+                        "& code": {
+                          background: "rgba(99, 102, 241, 0.2)",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          fontSize: "0.85em",
+                        },
+                        "& pre": {
+                          background: "rgba(0, 0, 0, 0.3)",
+                          padding: "12px",
+                          borderRadius: "8px",
+                          overflowX: "auto",
+                        },
+                      }}
+                    >
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </Box>
                   )}
@@ -217,26 +282,55 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
         {isStreaming && (
           <Button
             size="sm"
-            colorScheme="red"
+            bg="rgba(239, 68, 68, 0.8)"
+            color="white"
             zIndex={10}
             onClick={stopStreaming}
-            boxShadow="lg"
+            boxShadow="0 4px 20px rgba(239, 68, 68, 0.3)"
+            _hover={{
+              bg: "rgba(239, 68, 68, 1)",
+            }}
           >
             Stop generating
           </Button>
         )}
         {/* Input */}
-        <HStack p={4} borderTop="1px solid" borderColor="gray.200" w={"100%"}>
+        <HStack
+          p={4}
+          borderTop="1px solid"
+          borderColor="rgba(255, 255, 255, 0.08)"
+          w={"100%"}
+          bg="rgba(20, 20, 30, 0.6)"
+          backdropFilter="blur(10px)"
+        >
           <Input
             placeholder="Type a message..."
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            bg="rgba(255, 255, 255, 0.05)"
+            color="white"
+            borderColor="rgba(255, 255, 255, 0.1)"
+            _placeholder={{ color: "gray.500" }}
+            _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
+            _focus={{
+              borderColor: "rgba(99, 102, 241, 0.6)",
+              boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+            }}
           />
           <Button
-            colorScheme={isStreaming ? "red" : "blue"}
+            bg={isStreaming
+              ? "rgba(239, 68, 68, 0.8)"
+              : "linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%)"
+            }
+            color="white"
             onClick={handleSend}
             loading={isStreaming}
+            _hover={{
+              bg: isStreaming
+                ? "rgba(239, 68, 68, 1)"
+                : "linear-gradient(135deg, rgba(99, 102, 241, 1) 0%, rgba(139, 92, 246, 1) 100%)",
+            }}
           >
             Send
           </Button>

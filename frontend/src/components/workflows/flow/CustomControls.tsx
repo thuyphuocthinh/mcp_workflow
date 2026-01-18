@@ -23,10 +23,12 @@ export default function CustomControls({
         showInteractive={false}
         className="react-flow__controls-custom"
         style={{
-          backgroundColor: "white",
+          backgroundColor: "rgba(20, 20, 30, 0.9)",
+          backdropFilter: "blur(20px)",
           borderRadius: "12px",
           padding: "4px",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.4)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
         }}
       >
         <Tooltip
@@ -34,7 +36,15 @@ export default function CustomControls({
           showArrow={true}
           positioning={{ placement: "right" }}
         >
-          <ControlButton onClick={() => zoomIn()}>
+          <ControlButton
+            onClick={() => zoomIn()}
+            style={{
+              backgroundColor: "transparent",
+              color: "#9ca3af",
+              border: "none",
+            }}
+            className="custom-control-btn"
+          >
             <FaPlus size={14} />
           </ControlButton>
         </Tooltip>
@@ -44,7 +54,15 @@ export default function CustomControls({
           showArrow={true}
           positioning={{ placement: "right" }}
         >
-          <ControlButton onClick={() => zoomOut()}>
+          <ControlButton
+            onClick={() => zoomOut()}
+            style={{
+              backgroundColor: "transparent",
+              color: "#9ca3af",
+              border: "none",
+            }}
+            className="custom-control-btn"
+          >
             <FaMinus size={14} />
           </ControlButton>
         </Tooltip>
@@ -54,7 +72,15 @@ export default function CustomControls({
           showArrow={true}
           positioning={{ placement: "right" }}
         >
-          <ControlButton onClick={() => fitView()}>
+          <ControlButton
+            onClick={() => fitView()}
+            style={{
+              backgroundColor: "transparent",
+              color: "#9ca3af",
+              border: "none",
+            }}
+            className="custom-control-btn"
+          >
             <FaExpand size={14} />
           </ControlButton>
         </Tooltip>
@@ -64,11 +90,35 @@ export default function CustomControls({
           showArrow={true}
           positioning={{ placement: "right" }}
         >
-          <ControlButton onClick={toggleLock}>
+          <ControlButton
+            onClick={toggleLock}
+            style={{
+              backgroundColor: locked ? "rgba(99, 102, 241, 0.2)" : "transparent",
+              color: locked ? "#a78bfa" : "#9ca3af",
+              border: "none",
+            }}
+            className="custom-control-btn"
+          >
             {locked ? <FaLock size={14} /> : <FaUnlock size={14} />}
           </ControlButton>
         </Tooltip>
       </Controls>
+
+      <style>{`
+        .custom-control-btn:hover {
+          background-color: rgba(99, 102, 241, 0.2) !important;
+          color: white !important;
+        }
+        .react-flow__controls-custom button {
+          background-color: transparent;
+          border: none;
+          color: #9ca3af;
+        }
+        .react-flow__controls-custom button:hover {
+          background-color: rgba(99, 102, 241, 0.2);
+          color: white;
+        }
+      `}</style>
     </div>
   );
 }

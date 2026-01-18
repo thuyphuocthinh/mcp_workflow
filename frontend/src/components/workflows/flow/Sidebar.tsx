@@ -12,13 +12,28 @@ const onDragStart = (
   const target = event.currentTarget as HTMLDivElement;
   const clone = target.cloneNode(true) as HTMLElement;
 
-  clone.style.background = "white";
-  clone.style.boxShadow = "0 4px 8px rgba(0,0,0,0.5)";
-  clone.style.border = "1px solid #CBD5E0";
-  clone.style.borderRadius = "6px";
-  clone.style.width = "200px";
+  // Dark theme drag ghost with visible text
+  clone.style.background = "rgba(30, 30, 45, 0.98)";
+  clone.style.boxShadow = "0 8px 32px rgba(99, 102, 241, 0.4)";
+  clone.style.border = "2px solid rgba(99, 102, 241, 0.6)";
+  clone.style.borderRadius = "12px";
+  clone.style.width = "180px";
+  clone.style.padding = "8px 12px";
   clone.style.position = "absolute";
   clone.style.top = "-1000px";
+  clone.style.color = "white";
+
+  // Make text visible in clone
+  const textElements = clone.querySelectorAll("p, span");
+  textElements.forEach((el) => {
+    (el as HTMLElement).style.color = "#e5e7eb";
+  });
+
+  // Make icons visible
+  const svgElements = clone.querySelectorAll("svg");
+  svgElements.forEach((el) => {
+    el.style.color = "white";
+  });
 
   document.body.appendChild(clone);
 
@@ -33,20 +48,24 @@ const onDragStart = (
 
 export const NodesSidebar = () => {
   return (
-    <VStack height="full">
+    <VStack
+      height="full"
+      bg="linear-gradient(180deg, rgba(20, 20, 30, 0.98) 0%, rgba(15, 15, 25, 0.98) 100%)"
+    >
       <Box
         p={4}
+        pt={3}
         borderBottom="1px solid"
-        borderColor="gray.200"
-        bg="gray.50"
+        borderColor="rgba(255, 255, 255, 0.08)"
+        bg="rgba(99, 102, 241, 0.1)"
         width="100%"
       >
         <Text
           fontSize="sm"
           fontWeight="bold"
-          color="gray.600"
+          color="gray.300"
           textTransform="uppercase"
-          letterSpacing="0.8px"
+          letterSpacing="1px"
         >
           Nodes
         </Text>
