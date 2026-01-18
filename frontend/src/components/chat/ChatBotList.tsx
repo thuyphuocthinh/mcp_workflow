@@ -80,6 +80,7 @@ export function ChatBotList({
         gap={2}
         flex={1}
         overflowY="auto"
+        overflowX={"hidden"}
         pb="20px"
         onScroll={handleScroll}
         css={{
@@ -110,7 +111,6 @@ export function ChatBotList({
             _hover={{
               bg: "rgba(99, 102, 241, 0.15)",
               borderColor: "rgba(99, 102, 241, 0.4)",
-              transform: "translateX(4px)",
             }}
             onClick={() => onSelect(wf.id)}
             display="flex"

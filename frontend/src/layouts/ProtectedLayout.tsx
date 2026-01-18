@@ -48,7 +48,7 @@ export function ProtectedLayout() {
         top="0"
         left="0"
         right="0"
-        zIndex="1000"
+        zIndex={50}
         h={NAVBAR_HEIGHT}
       >
         <Navbar balance={30} />

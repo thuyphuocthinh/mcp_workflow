@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Avatar,
   Box,
   Flex,
   Text,
@@ -10,6 +9,7 @@ import {
   chakra,
   Button,
   useDisclosure,
+  Image,
 } from "@chakra-ui/react";
 import { useLocation, Link as RouterLink } from "react-router-dom";
 import { LuWallet } from "react-icons/lu";
@@ -90,41 +90,57 @@ export const Navbar: React.FC<NavbarProps> = ({ balance }) => {
     >
       <Flex align="center" justify="space-between">
         {/* LEFT */}
-        {isWorkflowDetail ? (
-          // ===== Workflow detail: breadcrumb =====
-          <Breadcrumb.Root gap="8px" fontSize="sm" color="gray.400">
-            <Breadcrumb.List>
-              <Breadcrumb.Item>
-                <Breadcrumb.Link
-                  as={RouterLink}
-                  to="/workflows"
-                  color="gray.400"
-                  _hover={{ color: "purple.400" }}
-                  transition="color 0.2s"
-                >
-                  Home
-                </Breadcrumb.Link>
-              </Breadcrumb.Item>
-              <Breadcrumb.Separator color="gray.600" />
-              <Breadcrumb.Item>
-                <Breadcrumb.Link
-                  as={RouterLink}
-                  to={`/workflows/${workflowId}`}
-                  color="white"
-                >
-                  Workflow Detail
-                </Breadcrumb.Link>
-              </Breadcrumb.Item>
-            </Breadcrumb.List>
-          </Breadcrumb.Root>
-        ) : (
-          // ===== Other pages: menu =====
-          <HStack gap={2}>
-            <NavButton to="/workflows">Workflow</NavButton>
-            <NavButton to="/chat">Chat</NavButton>
-            <NavButton to="/tools">Tools</NavButton>
-          </HStack>
-        )}
+        <HStack gap={4}>
+          {/* Logo */}
+          <RouterLink to="/workflows">
+            <Image
+              src="/doara-logo.png"
+              alt="Doara Logo"
+              h="36px"
+              w="auto"
+              objectFit="contain"
+              cursor="pointer"
+              transition="opacity 0.2s ease"
+              _hover={{ opacity: 0.8 }}
+            />
+          </RouterLink>
+
+          {isWorkflowDetail ? (
+            // ===== Workflow detail: breadcrumb =====
+            <Breadcrumb.Root gap="8px" fontSize="sm" color="gray.400">
+              <Breadcrumb.List>
+                <Breadcrumb.Item>
+                  <Breadcrumb.Link
+                    as={RouterLink}
+                    to="/workflows"
+                    color="gray.400"
+                    _hover={{ color: "purple.400" }}
+                    transition="color 0.2s"
+                  >
+                    Home
+                  </Breadcrumb.Link>
+                </Breadcrumb.Item>
+                <Breadcrumb.Separator color="gray.600" />
+                <Breadcrumb.Item>
+                  <Breadcrumb.Link
+                    as={RouterLink}
+                    to={`/workflows/${workflowId}`}
+                    color="white"
+                  >
+                    Workflow Detail
+                  </Breadcrumb.Link>
+                </Breadcrumb.Item>
+              </Breadcrumb.List>
+            </Breadcrumb.Root>
+          ) : (
+            // ===== Other pages: menu =====
+            <HStack gap={2}>
+              <NavButton to="/workflows">Workflow</NavButton>
+              <NavButton to="/chat">Chat</NavButton>
+              <NavButton to="/tools">Tools</NavButton>
+            </HStack>
+          )}
+        </HStack>
 
         {/* RIGHT */}
         {isWorkflowDetail ? (

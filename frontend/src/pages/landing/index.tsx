@@ -9,9 +9,10 @@ import {
     HStack,
     Icon,
     SimpleGrid,
+    Image,
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { FaPlay, FaRobot, FaCogs, FaBolt, FaArrowRight } from "react-icons/fa";
+import { FaRobot, FaCogs, FaBolt, FaArrowRight } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { get_profile_service } from "@/services/user";
@@ -99,18 +100,17 @@ export default function LandingPage() {
                 justify="space-between"
                 align="center"
             >
-                <HStack gap={3}>
-                    <Box
-                        p={2}
-                        borderRadius="lg"
-                        bg="linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)"
-                    >
-                        <Icon as={FaPlay} boxSize={5} color="purple.400" />
-                    </Box>
-                    <Text fontSize="xl" fontWeight="bold" color="white" letterSpacing="tight">
-                        Doara Workflow
-                    </Text>
-                </HStack>
+                <Image
+                    src="/doara-logo.png"
+                    alt="Doara Logo"
+                    h="40px"
+                    w="auto"
+                    objectFit="contain"
+                    cursor="pointer"
+                    onClick={() => navigate("/")}
+                    transition="opacity 0.2s ease"
+                    _hover={{ opacity: 0.8 }}
+                />
 
                 <HStack gap={3}>
                     {isLoggedIn ? (

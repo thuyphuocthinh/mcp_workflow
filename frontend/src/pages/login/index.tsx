@@ -11,6 +11,7 @@ import {
   Input,
   Field,
   Icon,
+  Image,
 } from "@chakra-ui/react";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { useMutation } from "@tanstack/react-query";
@@ -163,18 +164,13 @@ export default function LoginPage() {
           _hover={{ transform: "scale(1.05)" }}
           transition="all 0.2s"
         >
-          <Flex align="center" gap={3}>
-            <Box
-              p={2}
-              borderRadius="lg"
-              bg="linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)"
-            >
-              <Icon as={LuLogIn} boxSize={6} color="purple.400" />
-            </Box>
-            <Text fontSize="xl" fontWeight="bold" color="white" letterSpacing="tight">
-              Doara Workflow
-            </Text>
-          </Flex>
+          <Image
+            src="/doara-logo.png"
+            alt="Doara Logo"
+            h="48px"
+            w="auto"
+            objectFit="contain"
+          />
         </Flex>
 
         {/* Header */}
