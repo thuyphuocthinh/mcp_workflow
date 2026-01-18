@@ -100,7 +100,7 @@ export default function LoginPage() {
       const token = res.data?.token;
       localStorage.setItem(TOKEN_KEY, token as string);
       showToast("Success", "Welcome back! Login successful.", "success");
-      navigate("/");
+      navigate("/workflows");
     },
 
     onError: (err) => {
@@ -155,6 +155,28 @@ export default function LoginPage() {
   return (
     <AuthLayout>
       <VStack gap={8} align="stretch">
+        {/* Logo - Link to Landing */}
+        <Flex
+          justify="center"
+          cursor="pointer"
+          onClick={() => navigate("/")}
+          _hover={{ transform: "scale(1.05)" }}
+          transition="all 0.2s"
+        >
+          <Flex align="center" gap={3}>
+            <Box
+              p={2}
+              borderRadius="lg"
+              bg="linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%)"
+            >
+              <Icon as={LuLogIn} boxSize={6} color="purple.400" />
+            </Box>
+            <Text fontSize="xl" fontWeight="bold" color="white" letterSpacing="tight">
+              Doara Workflow
+            </Text>
+          </Flex>
+        </Flex>
+
         {/* Header */}
         <VStack gap={2} align="center">
           <Heading

@@ -6,11 +6,18 @@ import NotFoundPage from "@/pages/notfound";
 import WorkflowPage from "@/pages/workflow";
 import ToolsPage from "@/pages/tools";
 import FlowProvider from "@/components/workflows/flow/FlowProvider";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import ChatPage from "@/pages/chat";
 import RegisterPage from "@/pages/register";
+import LandingPage from "@/pages/landing";
 
 export const router = createBrowserRouter([
+  // Landing page for guests
+  {
+    path: "/",
+    element: <LandingPage />,
+  },
+  // Protected routes
   {
     element: (
       <ProtectedRoute>
@@ -18,10 +25,6 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      {
-        index: true,
-        element: <Navigate to="workflows" replace />,
-      },
       {
         path: "workflows",
         children: [
@@ -45,6 +48,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // Guest routes (login, register)
   {
     element: <GuestRoute />,
     children: [
