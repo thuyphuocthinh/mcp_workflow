@@ -5,7 +5,7 @@ import ToolSelector from "@/components/common/ToolSelector";
 import { tools as availableTools } from "@/constants/tools";
 import type { Tool } from "@/types";
 import { useCallback } from "react";
-import { VStack, Text, Box, HStack, NumberInput, Field } from "@chakra-ui/react";
+import { VStack, Text, Box } from "@chakra-ui/react";
 
 interface AgentNodePropertiesProps {
   node: any;
@@ -72,49 +72,6 @@ export const AgentNodeProperties = ({
           value={selectedTools}
           onChange={onToolsChange}
         />
-      </Box>
-
-      {/* Max Iterations */}
-      <Box>
-        <Field.Root>
-          <HStack justify="space-between">
-            <Field.Label fontSize="sm" fontWeight="medium" color="gray.300">
-              Max Iterations
-            </Field.Label>
-            <Text fontSize="xs" color="gray.500">
-              (ReAct loop limit)
-            </Text>
-          </HStack>
-          <NumberInput.Root
-            min={1}
-            max={50}
-            value={String(node.data.maxIterations ?? 10)}
-            onValueChange={(details) =>
-              onNodeDataChange(node.id, "maxIterations", details.valueAsNumber)
-            }
-          >
-            <NumberInput.Control>
-              <NumberInput.IncrementTrigger
-                color="gray.400"
-                _hover={{ color: "white", bg: "rgba(99, 102, 241, 0.2)" }}
-              />
-              <NumberInput.DecrementTrigger
-                color="gray.400"
-                _hover={{ color: "white", bg: "rgba(99, 102, 241, 0.2)" }}
-              />
-            </NumberInput.Control>
-            <NumberInput.Input
-              bg="rgba(255, 255, 255, 0.05)"
-              color="white"
-              borderColor="rgba(255, 255, 255, 0.1)"
-              _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
-              _focus={{
-                borderColor: "rgba(99, 102, 241, 0.6)",
-                boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
-              }}
-            />
-          </NumberInput.Root>
-        </Field.Root>
       </Box>
     </VStack>
   );

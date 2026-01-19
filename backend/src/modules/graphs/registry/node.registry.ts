@@ -11,6 +11,14 @@ import {
 
 const MAX_AGENT_ITERATIONS = 10;
 
+/**
+ * Normalize MCP server name to database key format
+ * e.g., 'google-docs' → 'google_docs'
+ */
+const normalizeToolKey = (serverName: string): string => {
+  return serverName.replace(/-/g, '_');
+};
+
 @Injectable()
 export class NodeRegistry {
   private readonly logger = new Logger(NodeRegistry.name);
@@ -71,7 +79,7 @@ export class NodeRegistry {
         try {
           const accessToken = await this.userToolAuthService.getAccessToken({
             userId,
-            toolKey: nodeData.mcpServer,
+            toolKey: normalizeToolKey(nodeData.mcpServer),
           });
           finalArgs = { ...args, accessToken };
         } catch (error) {
@@ -189,8 +197,11 @@ export class NodeRegistry {
               try {
                 const accessToken = await this.userToolAuthService.getAccessToken({
                   userId,
-                  toolKey: toolCall.mcpServer,
+                  toolKey: normalizeToolKey(toolCall.mcpServer),
                 });
+
+                this.logger.debug(`Access token for ${toolCall.mcpServer}: ${accessToken}`)
+
                 toolArgs = { ...toolArgs, accessToken };
               } catch (authError) {
                 this.logger.warn(`Auth failed for ${toolCall.mcpServer}: ${authError}`);

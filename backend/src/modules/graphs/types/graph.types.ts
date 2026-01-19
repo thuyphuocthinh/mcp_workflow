@@ -51,10 +51,6 @@ export type FlowNodeData =
   | EndNodeData
   | Record<string, any>;
 
-// ─────────────────────────────────────────────────────────────
-// Flow Node & Edge
-// ─────────────────────────────────────────────────────────────
-
 export type FlowNodeType = 'start' | 'end' | 'llm' | 'mcp-tool' | 'agent';
 
 export type FlowNode = {

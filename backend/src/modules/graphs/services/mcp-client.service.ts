@@ -2,9 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ToolDefinition } from '../types/langraph.types';
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
-
 export interface MCPServerConfig {
   name: string;
   url: string;
@@ -33,7 +30,7 @@ export class MCPClientService {
   }
 
   /**
-   * Call an MCP tool with retry logic (3 attempts)
+   * Call an MCP tool (single call, no retry - retry handled at workflow level)
    */
   async callTool(
     server: string,
@@ -45,58 +42,39 @@ export class MCPClientService {
       throw new Error(`Unknown MCP server: ${server}`);
     }
 
-    let lastError: Error | null = null;
+    this.logger.debug(`[${server}/${toolName}] Calling tool...`);
 
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        this.logger.debug(`[${server}/${toolName}] Attempt ${attempt}/${MAX_RETRIES}`);
+    const response = await fetch(`${config.url}/mcp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/event-stream',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'tools/call',
+        id: Date.now(),
+        params: {
+          name: toolName,
+          arguments: args,
+        },
+      }),
+    });
 
-        const response = await fetch(`${config.url}/mcp`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/event-stream',
-          },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            method: 'tools/call',
-            id: Date.now(),
-            params: {
-              name: toolName,
-              arguments: args,
-            },
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-
-        if (result.error) {
-          throw new Error(result.error.message || 'Unknown MCP error');
-        }
-
-        this.logger.debug(`[${server}/${toolName}] Success on attempt ${attempt}`);
-        return result.result;
-      } catch (error) {
-        lastError = error as Error;
-        this.logger.warn(
-          `[${server}/${toolName}] Attempt ${attempt} failed: ${lastError.message}`,
-        );
-
-        if (attempt < MAX_RETRIES) {
-          await this.delay(RETRY_DELAY_MS * attempt); // Exponential backoff
-        }
-      }
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    this.logger.error(`[${server}/${toolName}] All ${MAX_RETRIES} attempts failed`);
-    throw new Error(
-      `MCP tool call failed after ${MAX_RETRIES} retries: ${lastError?.message}`,
-    );
+    const result = await response.json();
+
+    if (result.error) {
+      throw new Error(result.error.message || 'Unknown MCP error');
+    }
+
+    this.logger.debug(`[${server}/${toolName}] Success`);
+    return result.result;
   }
+
 
   /**
    * Call tool with accessToken (for Google services)

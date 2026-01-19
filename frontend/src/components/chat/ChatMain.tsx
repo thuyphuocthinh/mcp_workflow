@@ -265,6 +265,7 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
                           overflowX: "auto",
                         },
                       }}
+                      overflowX="auto"
                     >
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </Box>
