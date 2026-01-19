@@ -34,7 +34,7 @@ interface Props {
 
 /* ===== Models ===== */
 const MODELS: { label: string; value: i_model; icon: any; color: string }[] = [
-  { label: "OpenAI (GPT)", value: "GPT", icon: SiOpenai, color: "green.400" },
+  { label: "OpenAI (GPT)", value: "OPENAI", icon: SiOpenai, color: "green.400" },
   { label: "Gemini", value: "GEMINI", icon: SiGooglegemini, color: "blue.400" },
 ];
 
@@ -42,16 +42,16 @@ export const ModelKeySettingModal = ({ isOpen, onClose }: Props) => {
   const { showToast } = useCustomToast();
   const queryClient = useQueryClient();
 
-  const [activeModel, setActiveModel] = useState<i_model>("GPT");
+  const [activeModel, setActiveModel] = useState<i_model>("OPENAI");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const [keyInputs, setKeyInputs] = useState<Record<i_model, string>>({
-    GPT: "",
+    OPENAI: "",
     GEMINI: "",
   });
 
   const [visibleMap, setVisibleMap] = useState<Record<i_model, boolean>>({
-    GPT: false,
+    OPENAI: false,
     GEMINI: false,
   });
 

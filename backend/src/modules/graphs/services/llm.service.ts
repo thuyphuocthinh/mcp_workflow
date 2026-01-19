@@ -180,11 +180,19 @@ export class LLMService {
   ): Promise<LLMToolResponse> {
     const client = await this.getGeminiClient(userId);
 
-    const geminiTools: any[] = tools.map((t) => ({
-      name: t.name,
-      description: t.description,
-      parameters: t.parameters,
-    }));
+
+    const geminiTools: any[] = tools.map((t) => {
+      // Convert Zod/MCP schema to OpenAPI schema format for Gemini
+      const openApiParams = this.convertToOpenAPISchema(t.parameters);
+      
+      return {
+        name: t.name,
+        description: t.description || `Function ${t.name}`,
+        parameters: openApiParams,
+      };
+    });
+
+    this.logger.debug(`Gemini tools: ${JSON.stringify(geminiTools)}`);
 
     const contents = messages.map((m) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
@@ -202,16 +210,25 @@ export class LLMService {
       },
     };
 
-    // Only add tools if we have any
+    // Only add tools if we have any - both tools and toolConfig must be in config for @google/genai SDK
     if (geminiTools.length > 0) {
-      requestConfig.tools = [{ functionDeclarations: geminiTools }];
+      requestConfig.config.tools = [{ functionDeclarations: geminiTools }];
+      requestConfig.config.toolConfig = {
+        functionCallingConfig: {
+          mode: 'AUTO',  // AUTO allows model to respond with text after tool execution
+        },
+      };
     }
 
     const result = await client.models.generateContent(requestConfig);
 
+    this.logger.debug(`Gemini response: ${JSON.stringify(result)}`);
+
     // Parse function calls from response
     const functionCalls: ToolCall[] = [];
     const parts = result.candidates?.[0]?.content?.parts || [];
+
+    this.logger.debug(`Gemini parts: ${JSON.stringify(parts)}`);
     
     for (const part of parts) {
       if (part.functionCall && part.functionCall.name) {
@@ -286,14 +303,19 @@ export class LLMService {
       }
     }
 
-    const openaiTools: OpenAI.ChatCompletionTool[] = tools.map((t) => ({
-      type: 'function',
-      function: {
-        name: t.name,
-        description: t.description,
-        parameters: t.parameters,
-      },
-    }));
+    const openaiTools: OpenAI.ChatCompletionTool[] = tools.map((t) => {
+      // Convert Zod/MCP schema to OpenAPI schema format for OpenAI
+      const openApiParams = this.convertToOpenAPISchema(t.parameters);
+      
+      return {
+        type: 'function' as const,
+        function: {
+          name: t.name,
+          description: t.description || `Function ${t.name}`,
+          parameters: openApiParams,
+        },
+      };
+    });
 
     const response = await client.chat.completions.create({
       model,
@@ -358,11 +380,16 @@ export class LLMService {
   ): Promise<LLMToolResponse> {
     const client = await this.getAnthropicClient(userId);
 
-    const anthropicTools: Anthropic.Tool[] = tools.map((t) => ({
-      name: t.name,
-      description: t.description,
-      input_schema: t.parameters as Anthropic.Tool.InputSchema,
-    }));
+    const anthropicTools: Anthropic.Tool[] = tools.map((t) => {
+      // Convert Zod/MCP schema to OpenAPI schema format for Anthropic
+      const openApiParams = this.convertToOpenAPISchema(t.parameters);
+      
+      return {
+        name: t.name,
+        description: t.description || `Function ${t.name}`,
+        input_schema: openApiParams as Anthropic.Tool.InputSchema,
+      };
+    });
 
     const anthropicMessages: Anthropic.MessageParam[] = messages
       .filter((m) => m.role === 'user' || m.role === 'assistant')
@@ -398,6 +425,117 @@ export class LLMService {
     return {
       content,
       toolCalls,
+    };
+  }
+
+  /**
+   * Convert Zod/MCP schema to OpenAPI schema format for Gemini
+   * MCP returns format like: { expression: { type: "string", def: {...} } }
+   * Gemini needs: { type: "object", properties: { expression: { type: "string" } } }
+   */
+  private convertToOpenAPISchema(mcpParams: any): any {
+    if (!mcpParams || typeof mcpParams !== 'object') {
+      return { type: 'object', properties: {} };
+    }
+
+    // If already in OpenAPI format (has 'properties' key), return as is
+    if (mcpParams.properties && mcpParams.type === 'object') {
+      return mcpParams;
+    }
+
+    const properties: Record<string, any> = {};
+    const required: string[] = [];
+
+    for (const [key, value] of Object.entries(mcpParams)) {
+      if (key === 'type' && value === 'object') continue;
+      
+      const propSchema = this.convertPropertySchema(value);
+      if (propSchema) {
+        properties[key] = propSchema.schema;
+        if (propSchema.required) {
+          required.push(key);
+        }
+      }
+    }
+
+    return {
+      type: 'object',
+      properties,
+      ...(required.length > 0 ? { required } : {}),
+    };
+  }
+
+  /**
+   * Convert a single property schema from Zod/MCP format to OpenAPI format
+   */
+  private convertPropertySchema(prop: any): { schema: any; required: boolean } | null {
+    if (!prop || typeof prop !== 'object') {
+      return null;
+    }
+
+    // Get the actual type - could be in 'type' or 'def.type'
+    let zodType = prop.type;
+    const def = prop.def;
+
+    // Handle optional type
+    if (zodType === 'optional' || def?.type === 'optional') {
+      const innerType = prop.innerType || def?.innerType;
+      const inner = this.convertPropertySchema(innerType);
+      return inner ? { schema: inner.schema, required: false } : null;
+    }
+
+    // Handle default type (treat as optional)
+    if (zodType === 'default' || def?.type === 'default') {
+      const innerType = prop.innerType || def?.innerType;
+      const inner = this.convertPropertySchema(innerType);
+      return inner ? { schema: inner.schema, required: false } : null;
+    }
+
+    // Handle record type (object with dynamic keys)
+    if (zodType === 'record' || def?.type === 'record') {
+      return {
+        schema: {
+          type: 'object',
+          additionalProperties: { type: 'number' },
+        },
+        required: true,
+      };
+    }
+
+    // Handle array type
+    if (zodType === 'array' || def?.type === 'array') {
+      const itemType = prop.items || prop.innerType || def?.innerType;
+      const itemSchema = itemType ? this.convertPropertySchema(itemType) : null;
+      return {
+        schema: {
+          type: 'array',
+          items: itemSchema?.schema || { type: 'string' },
+        },
+        required: true,
+      };
+    }
+
+    // Handle primitive types
+    const primitiveType = def?.type || zodType;
+    if (['string', 'number', 'integer', 'boolean'].includes(primitiveType)) {
+      return {
+        schema: { type: primitiveType },
+        required: true,
+      };
+    }
+
+    // Fallback: try to infer type from structure
+    if (typeof prop === 'object' && prop.type) {
+      return {
+        schema: { type: prop.type },
+        required: true,
+      };
+    }
+
+    // Default to string if unknown
+    return {
+      schema: { type: 'string' },
+      required: true,
     };
   }
 }

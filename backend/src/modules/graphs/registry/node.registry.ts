@@ -114,6 +114,7 @@ export class NodeRegistry {
       try {
         tools = await this.mcpClient.getToolsFromServers(nodeData.mcpServers);
         this.logger.debug(`Agent has access to ${tools.length} tools from ${nodeData.mcpServers.join(', ')}`);
+        this.logger.debug(`Tools: ${JSON.stringify(tools)}`);
       } catch (error) {
         this.logger.error(`Failed to get tools from MCP servers: ${error}`);
         return {
@@ -143,6 +144,9 @@ export class NodeRegistry {
             systemPrompt: nodeData.systemPrompt,
             userId,
           });
+
+          this.logger.debug(`Agent LLM response: ${JSON.stringify(response)}`);
+
         } catch (error) {
           this.logger.error(`Agent LLM call failed: ${error}`);
           return {
@@ -177,6 +181,9 @@ export class NodeRegistry {
           try {
             // Add accessToken if needed
             let toolArgs = toolCall.args;
+
+            this.logger.debug(`Tool args: ${JSON.stringify(toolArgs)}`);
+
             if (toolCall.mcpServer && this.mcpClient.requiresAuth(toolCall.mcpServer)) {
               try {
                 const accessToken = await this.userToolAuthService.getAccessToken({
@@ -201,6 +208,8 @@ export class NodeRegistry {
               toolCall.name,
               toolArgs,
             );
+
+            this.logger.debug(`Tool result: ${JSON.stringify(toolResult)}`);
 
             // Handle null/undefined/empty results
             let resultContent: string;
