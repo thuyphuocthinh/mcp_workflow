@@ -194,10 +194,46 @@ export class LLMService {
 
     this.logger.debug(`Gemini tools: ${JSON.stringify(geminiTools)}`);
 
-    const contents = messages.map((m) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    }));
+    // Convert messages to Gemini format with proper function call/response handling
+    const contents: any[] = [];
+    
+    for (const m of messages) {
+      if (m.role === 'user') {
+        contents.push({
+          role: 'user',
+          parts: [{ text: m.content }],
+        });
+      } else if (m.role === 'assistant') {
+        // Check if this is a tool call message (contains tool call info)
+        if (m.toolCalls && m.toolCalls.length > 0) {
+          // Add function call parts
+          const parts = m.toolCalls.map((tc: any) => ({
+            functionCall: {
+              name: tc.name,
+              args: tc.args || {},
+            },
+          }));
+          contents.push({ role: 'model', parts });
+        } else {
+          // Regular text response
+          contents.push({
+            role: 'model',
+            parts: [{ text: m.content }],
+          });
+        }
+      } else if (m.role === 'tool') {
+        // Tool result - must be formatted as functionResponse for Gemini
+        contents.push({
+          role: 'user',
+          parts: [{
+            functionResponse: {
+              name: m.name || m.toolCallId || 'unknown',
+              response: { result: m.content },
+            },
+          }],
+        });
+      }
+    }
 
     // Build request config
     const requestConfig: any = {

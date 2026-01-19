@@ -172,6 +172,7 @@ export class NodeRegistry {
         messages.push({
           role: 'assistant',
           content: response.content || `Calling ${response.toolCalls.length} tool(s)...`,
+          toolCalls: response.toolCalls,  // Store tool calls for proper Gemini formatting
         });
 
         // Execute each tool call

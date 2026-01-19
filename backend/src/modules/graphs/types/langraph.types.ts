@@ -1,6 +1,9 @@
-// ─────────────────────────────────────────────────────────────
-// Message types for LLM conversations
-// ─────────────────────────────────────────────────────────────
+
+export interface ToolCall {
+  name: string;
+  args: Record<string, any>;
+  mcpServer?: string;
+}
 
 export type MessageRole = 'user' | 'assistant' | 'tool' | 'system';
 
@@ -9,11 +12,8 @@ export interface Message {
   content: string;
   toolCallId?: string;
   name?: string;  // Tool name for tool messages
+  toolCalls?: ToolCall[];  // For assistant messages that make tool calls
 }
-
-// ─────────────────────────────────────────────────────────────
-// Tool definitions (from MCP servers)
-// ─────────────────────────────────────────────────────────────
 
 export interface ToolDefinition {
   name: string;
@@ -21,26 +21,10 @@ export interface ToolDefinition {
   parameters: Record<string, any>;  // JSON Schema
   mcpServer: string;                // Which MCP server owns this tool
 }
-
-export interface ToolCall {
-  name: string;
-  args: Record<string, any>;
-  mcpServer?: string;
-}
-
-// ─────────────────────────────────────────────────────────────
-// LLM Response types
-// ─────────────────────────────────────────────────────────────
-
 export interface LLMToolResponse {
   content: string;
   toolCalls: ToolCall[];
 }
-
-// ─────────────────────────────────────────────────────────────
-// Workflow State
-// ─────────────────────────────────────────────────────────────
-
 export interface WorkflowState {
   input: string;
   output?: string;

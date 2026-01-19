@@ -172,12 +172,15 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 - Thêm mcp google driver, google calendar, google slide
 - Chọn tool, user prompt ở node agent
 ## Tuần 9
-- Ghép tools, chạy agent (T7)
-- Tích hợp AI model vào và test workflow
-## Tuần 10
 - Tích hợp AI model vào và test workflow, kỹ langraph & mcp inspector
-## Tuần 11
++ Đã call mcp calculator được nhưng bị loop max_iteration
++ Call mcp cần auth thì chưa truyền access token cho model
+=> T2: Research kĩ lại langraph
+=> T4: Fix các vấn đề trên
+=> T6: Fix các vấn đề trên
+=> T7: Test mcp inspector
+## Tuần 10
 - Viết test cho cả FE và BE, add eslint, commitlint config
 - Review CI-CD và viết CI-CD triển khai
-## Tuần 12
+## Tuần 11
 - Fix bugs tối ưu UI, refactor UI
