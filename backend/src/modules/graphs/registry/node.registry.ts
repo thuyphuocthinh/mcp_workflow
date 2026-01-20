@@ -114,9 +114,8 @@ export class NodeRegistry {
 
   createAgentNode(nodeData: AgentNodeData, userId: string) {
     return async (state: WorkflowState): Promise<Partial<WorkflowState>> => {
-      const maxIterations = nodeData.maxIterations ?? MAX_AGENT_ITERATIONS;
       this.logger.debug(
-        `Agent Node starting: ${nodeData.provider}/${nodeData.model}, max ${maxIterations} iterations`,
+        `Agent Node starting: ${nodeData.provider}/${nodeData.model}`,
       );
 
       /**
@@ -190,127 +189,133 @@ export class NodeRegistry {
         ${authStatus}
 
         Rules:
-        - Only call tools that are authenticated.
-        - Do NOT attempt to call tools marked as NOT authenticated.
-        `.trim();
+          - Some tools require authentication (especially tools starting with google (except for google search), slack, trello, github...), some do not. 
+          - Only call authenticated tools if they require authentication.
+          - You may freely call tools that do NOT require authentication.
+          - Never attempt to call a tool that requires authentication but is marked as NOT authenticated.
+      `.trim();
 
       /**
-       * 4. ReAct loop
+       * 4. Call LLM with tools
        */
-      for (let iteration = 0; iteration < maxIterations; iteration++) {
-        this.logger.debug(`Agent iteration ${iteration + 1}/${maxIterations}`);
+      this.logger.debug('Agent calling LLM');
 
-        let response;
-        try {
-          response = await this.llmService.callWithTools({
-            provider: nodeData.provider,
-            model: nodeData.model,
-            messages,
-            tools,
-            systemPrompt,
-            userId,
-          });
-
-          this.logger.debug(`Agent LLM response: ${JSON.stringify(response)}`);
-        } catch (error) {
-          this.logger.error(`Agent LLM call failed: ${error}`);
-          return {
-            output: `Error: LLM call failed. ${error}`,
-            error: `${error}`,
-            messages,
-          };
-        }
-
-        /**
-         * 5. Stop if no tool calls
-         */
-        if (!response.toolCalls || response.toolCalls.length === 0) {
-          this.logger.debug('Agent finished - no more tool calls');
-          messages.push({ role: 'assistant', content: response.content });
-          return {
-            output: response.content,
-            messages,
-          };
-        }
-
-        /**
-         * 6. Add assistant message (tool intent)
-         */
-        messages.push({
-          role: 'assistant',
-          content:
-            response.content ||
-            `Calling ${response.toolCalls.length} tool(s)...`,
-          toolCalls: response.toolCalls,
+      let response;
+      try {
+        response = await this.llmService.callWithTools({
+          provider: nodeData.provider,
+          model: nodeData.model,
+          messages,
+          tools,
+          systemPrompt,
+          userId,
         });
 
-        /**
-         * 7. Execute tools
-         */
-        for (const toolCall of response.toolCalls) {
-          this.logger.debug(
-            `Agent executing tool: ${toolCall.mcpServer}/${toolCall.name}`,
+        this.logger.debug(`Agent LLM response: ${JSON.stringify(response)}`);
+      } catch (error) {
+        this.logger.error(`Agent LLM call failed: ${error}`);
+        return {
+          output: `Error: LLM call failed. ${error}`,
+          error: `${error}`,
+          messages,
+        };
+      }
+
+      /**
+       * 5. If no tool calls, return the response directly
+       */
+      if (!response.toolCalls || response.toolCalls.length === 0) {
+        this.logger.debug('Agent finished - no tool calls requested');
+        messages.push({ role: 'assistant', content: response.content });
+        return {
+          output: response.content,
+          messages,
+        };
+      }
+
+      /**
+       * 6. Add assistant message (tool intent)
+       */
+      messages.push({
+        role: 'assistant',
+        content:
+          response.content ||
+          `Calling ${response.toolCalls.length} tool(s)...`,
+        toolCalls: response.toolCalls,
+      });
+
+      /**
+       * 7. Execute all requested tools
+       */
+      const toolResults: string[] = [];
+
+      for (const toolCall of response.toolCalls) {
+        this.logger.debug(
+          `Agent executing tool: ${toolCall.mcpServer}/${toolCall.name}`,
+        );
+
+        try {
+          let toolArgs = toolCall.args;
+
+          const auth = toolAuthContext[toolCall.mcpServer!];
+          if (auth?.accessToken) {
+            toolArgs = { ...toolArgs, accessToken: auth.accessToken };
+          }
+
+          this.logger.debug(`Tool args: ${JSON.stringify(toolArgs)}`);
+
+          const toolResult = await this.mcpClient.callTool(
+            toolCall.mcpServer!,
+            toolCall.name,
+            toolArgs,
           );
 
-          try {
-            let toolArgs = toolCall.args;
+          this.logger.debug(`Tool result: ${JSON.stringify(toolResult)}`);
 
-            const auth = toolAuthContext[toolCall.mcpServer!];
-            if (auth?.accessToken) {
-              toolArgs = { ...toolArgs, accessToken: auth.accessToken };
-            }
-
-            this.logger.debug(`Tool args: ${JSON.stringify(toolArgs)}`);
-
-            const toolResult = await this.mcpClient.callTool(
-              toolCall.mcpServer!,
-              toolCall.name,
-              toolArgs,
-            );
-
-            this.logger.debug(`Tool result: ${JSON.stringify(toolResult)}`);
-
-            let resultContent: string;
-            if (toolResult == null) {
-              resultContent = 'Tool returned no result.';
-            } else if (typeof toolResult === 'string') {
-              resultContent = toolResult || 'Tool returned empty string.';
-            } else if (
-              typeof toolResult === 'object' &&
-              Array.isArray((toolResult as any).content)
-            ) {
-              resultContent = (toolResult as any).content
-                .map((c: any) => c.text || JSON.stringify(c))
-                .join('\n');
-            } else {
-              resultContent = JSON.stringify(toolResult, null, 2);
-            }
-
-            messages.push({
-              role: 'tool',
-              content: resultContent,
-              toolCallId: toolCall.name,
-              name: toolCall.name,
-            });
-          } catch (error) {
-            this.logger.error(`Tool ${toolCall.name} failed: ${error}`);
-            messages.push({
-              role: 'tool',
-              content: `Error executing tool ${toolCall.name}: ${error}`,
-              toolCallId: toolCall.name,
-              name: toolCall.name,
-            });
+          let resultContent: string;
+          if (toolResult == null) {
+            resultContent = 'Tool returned no result.';
+          } else if (typeof toolResult === 'string') {
+            resultContent = toolResult || 'Tool returned empty string.';
+          } else if (
+            typeof toolResult === 'object' &&
+            Array.isArray((toolResult as any).content)
+          ) {
+            resultContent = (toolResult as any).content
+              .map((c: any) => c.text || JSON.stringify(c))
+              .join('\n');
+          } else {
+            resultContent = JSON.stringify(toolResult, null, 2);
           }
+
+          messages.push({
+            role: 'tool',
+            content: resultContent,
+            toolCallId: toolCall.name,
+            name: toolCall.name,
+          });
+
+          toolResults.push(`[${toolCall.name}]: ${resultContent}`);
+        } catch (error) {
+          this.logger.error(`Tool ${toolCall.name} failed: ${error}`);
+          const errorContent = `Error executing tool ${toolCall.name}: ${error}`;
+          messages.push({
+            role: 'tool',
+            content: errorContent,
+            toolCallId: toolCall.name,
+            name: toolCall.name,
+          });
+          toolResults.push(`[${toolCall.name}]: ${errorContent}`);
         }
       }
 
       /**
-       * 8. Max iterations reached
+       * 8. Return combined tool results as output
        */
-      this.logger.warn('Agent reached max iterations');
+      this.logger.debug('Agent finished - tools executed');
+      const output = toolResults.join('\n\n');
       return {
-        output: 'Agent reached maximum iterations without completing.',
-        error: 'MAX_ITERATIONS_REACHED',
+        output,
         messages,
       };
     };

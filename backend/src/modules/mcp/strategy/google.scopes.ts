@@ -17,7 +17,8 @@ export const GOOGLE_PROVIDER_SCOPES = {
   ],
   gmail: [
     ...BASE_SCOPES,
-    'https://www.googleapis.com/auth/gmail',
+    'https://www.googleapis.com/auth/gmail.readonly',
+    'https://www.googleapis.com/auth/gmail.send',
   ],
   google_calendar: [
     ...BASE_SCOPES,
