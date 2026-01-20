@@ -173,12 +173,12 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 - Chọn tool, user prompt ở node agent
 ## Tuần 9
 - Tích hợp AI model vào và test workflow, kỹ langraph & mcp inspector
-+ Đã call mcp calculator được nhưng bị loop max_iteration
++ Đã call mcp calculator được nhưng bị loop max_iteration (checked)
 + Call mcp cần auth thì chưa truyền access token cho model
++ 1 node nhiều > 1 tool => chưa được
 => T2: Research kĩ lại langraph
 => T4: Fix các vấn đề trên
-=> T6: Fix các vấn đề trên
-=> T7: Test mcp inspector
+=> T6, T7: Thêm tự refresh token cho provider và check scopes
 ## Tuần 10
 - Viết test cho cả FE và BE, add eslint, commitlint config
 - Review CI-CD và viết CI-CD triển khai

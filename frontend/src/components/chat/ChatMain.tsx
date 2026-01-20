@@ -7,7 +7,6 @@ import {
   Heading,
   HStack,
   Input,
-  Text,
   VStack,
   Icon,
 } from "@chakra-ui/react";
@@ -16,11 +15,68 @@ import { FaRobot, FaUser } from "react-icons/fa";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type Props = {
   isPlayground: boolean;
   workflowName?: string;
 };
+
+function MarkdownMessage({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        a: ({ href, children }) => (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: "#818CF8",
+              textDecoration: "underline",
+              wordBreak: "break-all",
+            }}
+          >
+            {children}
+          </a>
+        ),
+        p: ({ children }) => (
+          <p style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {children}
+          </p>
+        ),
+        code: ({ inline, children }: any) =>
+          inline ? (
+            <code
+              style={{
+                background: "rgba(99, 102, 241, 0.2)",
+                padding: "2px 6px",
+                borderRadius: "4px",
+                fontSize: "0.85em",
+              }}
+            >
+              {children}
+            </code>
+          ) : (
+            <pre
+              style={{
+                background: "rgba(0, 0, 0, 0.3)",
+                padding: "12px",
+                borderRadius: "8px",
+                overflowX: "auto",
+              }}
+            >
+              <code>{children}</code>
+            </pre>
+          ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+}
+
 
 export function ChatMain({ workflowName, isPlayground = true }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -229,7 +285,7 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
                   px={4}
                   py={3}
                   borderRadius="xl"
-                  alignItems={isHuman ? "center" : "flex-start"}
+                  alignItems={"flex-start"}
                   border="1px solid"
                   borderColor={isHuman ? "rgba(139, 92, 246, 0.5)" : "rgba(255, 255, 255, 0.1)"}
                   boxShadow={isHuman
@@ -244,32 +300,14 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
                       <Icon as={FaRobot} boxSize={5} color="purple.400" />
                     )}
                   </Box>
-                  {isHuman ? (
-                    <Text fontSize="sm" whiteSpace="pre-wrap">
-                      {msg.content}
-                    </Text>
-                  ) : (
-                    <Box
-                      css={{
-                        "& p": { margin: 0 },
-                        "& code": {
-                          background: "rgba(99, 102, 241, 0.2)",
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          fontSize: "0.85em",
-                        },
-                        "& pre": {
-                          background: "rgba(0, 0, 0, 0.3)",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          overflowX: "auto",
-                        },
-                      }}
-                      overflowX="auto"
-                    >
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </Box>
-                  )}
+                  <Box
+                    overflowX="auto"
+                    css={{
+                      "& p": { margin: 0 },
+                    }}
+                  >
+                    <MarkdownMessage content={msg.content} />
+                  </Box>
                 </HStack>
               </Flex>
             );

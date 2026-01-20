@@ -115,14 +115,47 @@ export class NodeRegistry {
   createAgentNode(nodeData: AgentNodeData, userId: string) {
     return async (state: WorkflowState): Promise<Partial<WorkflowState>> => {
       const maxIterations = nodeData.maxIterations ?? MAX_AGENT_ITERATIONS;
-      this.logger.debug(`Agent Node starting: ${nodeData.provider}/${nodeData.model}, max ${maxIterations} iterations`);
+      this.logger.debug(
+        `Agent Node starting: ${nodeData.provider}/${nodeData.model}, max ${maxIterations} iterations`,
+      );
 
-      // 1. Get available tools from MCP servers
+      /**
+       * 1. Get tools + preload auth
+       */
       let tools: ToolDefinition[] = [];
+      const toolAuthContext: Record<string, { accessToken?: string }> = {};
+
       try {
-        tools = await this.mcpClient.getToolsFromServers(nodeData.mcpServers);
-        this.logger.debug(`Agent has access to ${tools.length} tools from ${nodeData.mcpServers.join(', ')}`);
-        this.logger.debug(`Tools: ${JSON.stringify(tools)}`);
+        const rawTools = await this.mcpClient.getToolsFromServers(nodeData.mcpServers);
+
+        // Preload access token for auth-required MCP servers
+        for (const server of nodeData.mcpServers) {
+          if (this.mcpClient.requiresAuth(server)) {
+            try {
+              const accessToken = await this.userToolAuthService.getAccessToken({
+                userId,
+                toolKey: normalizeToolKey(server),
+              });
+
+              toolAuthContext[server] = { accessToken };
+              this.logger.debug(`Preloaded access token for ${server}`);
+            } catch (e) {
+              this.logger.warn(`Auth missing for ${server}, its tools will be disabled`);
+              toolAuthContext[server] = {};
+            }
+          }
+        }
+
+        // Filter tools: only allow authenticated tools
+        tools = rawTools.filter(tool => {
+          if (!tool.mcpServer) return true;
+          if (!this.mcpClient.requiresAuth(tool.mcpServer)) return true;
+          return Boolean(toolAuthContext[tool.mcpServer]?.accessToken);
+        });
+
+        this.logger.debug(
+          `Agent has access to ${tools.length} tools after auth filtering`,
+        );
       } catch (error) {
         this.logger.error(`Failed to get tools from MCP servers: ${error}`);
         return {
@@ -131,17 +164,42 @@ export class NodeRegistry {
         };
       }
 
-      // 2. Initialize conversation
+      /**
+       * 2. Init messages
+       */
       const messages: Message[] = [
         ...state.messages,
         { role: 'user', content: state.input },
       ];
 
-      // 3. ReAct loop
+      /**
+       * 3. Build system prompt with auth context
+       */
+      const authStatus = Object.entries(toolAuthContext)
+        .map(([server, ctx]) =>
+          ctx.accessToken
+            ? `- ${server}: authenticated`
+            : `- ${server}: NOT authenticated`,
+        )
+        .join('\n');
+
+      const systemPrompt = `
+        ${nodeData.systemPrompt ?? ''}
+
+        Tool authentication status:
+        ${authStatus}
+
+        Rules:
+        - Only call tools that are authenticated.
+        - Do NOT attempt to call tools marked as NOT authenticated.
+        `.trim();
+
+      /**
+       * 4. ReAct loop
+       */
       for (let iteration = 0; iteration < maxIterations; iteration++) {
         this.logger.debug(`Agent iteration ${iteration + 1}/${maxIterations}`);
 
-        // Call LLM with tools
         let response;
         try {
           response = await this.llmService.callWithTools({
@@ -149,12 +207,11 @@ export class NodeRegistry {
             model: nodeData.model,
             messages,
             tools,
-            systemPrompt: nodeData.systemPrompt,
+            systemPrompt,
             userId,
           });
 
           this.logger.debug(`Agent LLM response: ${JSON.stringify(response)}`);
-
         } catch (error) {
           this.logger.error(`Agent LLM call failed: ${error}`);
           return {
@@ -164,56 +221,46 @@ export class NodeRegistry {
           };
         }
 
-        // If no tool calls, we're done
+        /**
+         * 5. Stop if no tool calls
+         */
         if (!response.toolCalls || response.toolCalls.length === 0) {
           this.logger.debug('Agent finished - no more tool calls');
-          
           messages.push({ role: 'assistant', content: response.content });
-
           return {
             output: response.content,
             messages,
           };
         }
 
-        // Add assistant message (with tool call intent)
+        /**
+         * 6. Add assistant message (tool intent)
+         */
         messages.push({
           role: 'assistant',
-          content: response.content || `Calling ${response.toolCalls.length} tool(s)...`,
-          toolCalls: response.toolCalls,  // Store tool calls for proper Gemini formatting
+          content:
+            response.content ||
+            `Calling ${response.toolCalls.length} tool(s)...`,
+          toolCalls: response.toolCalls,
         });
 
-        // Execute each tool call
+        /**
+         * 7. Execute tools
+         */
         for (const toolCall of response.toolCalls) {
-          this.logger.debug(`Agent executing tool: ${toolCall.mcpServer}/${toolCall.name}`);
+          this.logger.debug(
+            `Agent executing tool: ${toolCall.mcpServer}/${toolCall.name}`,
+          );
 
           try {
-            // Add accessToken if needed
             let toolArgs = toolCall.args;
 
-            this.logger.debug(`Tool args: ${JSON.stringify(toolArgs)}`);
-
-            if (toolCall.mcpServer && this.mcpClient.requiresAuth(toolCall.mcpServer)) {
-              try {
-                const accessToken = await this.userToolAuthService.getAccessToken({
-                  userId,
-                  toolKey: normalizeToolKey(toolCall.mcpServer),
-                });
-
-                this.logger.debug(`Access token for ${toolCall.mcpServer}: ${accessToken}`)
-
-                toolArgs = { ...toolArgs, accessToken };
-              } catch (authError) {
-                this.logger.warn(`Auth failed for ${toolCall.mcpServer}: ${authError}`);
-                messages.push({
-                  role: 'tool',
-                  content: `Error: Authentication required for ${toolCall.mcpServer}. Please connect your account first.`,
-                  toolCallId: toolCall.name,
-                  name: toolCall.name,
-                });
-                continue; // Skip this tool, let LLM handle the error
-              }
+            const auth = toolAuthContext[toolCall.mcpServer!];
+            if (auth?.accessToken) {
+              toolArgs = { ...toolArgs, accessToken: auth.accessToken };
             }
+
+            this.logger.debug(`Tool args: ${JSON.stringify(toolArgs)}`);
 
             const toolResult = await this.mcpClient.callTool(
               toolCall.mcpServer!,
@@ -223,23 +270,20 @@ export class NodeRegistry {
 
             this.logger.debug(`Tool result: ${JSON.stringify(toolResult)}`);
 
-            // Handle null/undefined/empty results
             let resultContent: string;
-            if (toolResult === null || toolResult === undefined) {
+            if (toolResult == null) {
               resultContent = 'Tool returned no result.';
             } else if (typeof toolResult === 'string') {
               resultContent = toolResult || 'Tool returned empty string.';
-            } else if (typeof toolResult === 'object') {
-              // Check for MCP content format
-              if (toolResult.content && Array.isArray(toolResult.content)) {
-                resultContent = toolResult.content
-                  .map((c: any) => c.text || JSON.stringify(c))
-                  .join('\n');
-              } else {
-                resultContent = JSON.stringify(toolResult, null, 2);
-              }
+            } else if (
+              typeof toolResult === 'object' &&
+              Array.isArray((toolResult as any).content)
+            ) {
+              resultContent = (toolResult as any).content
+                .map((c: any) => c.text || JSON.stringify(c))
+                .join('\n');
             } else {
-              resultContent = String(toolResult);
+              resultContent = JSON.stringify(toolResult, null, 2);
             }
 
             messages.push({
@@ -260,7 +304,9 @@ export class NodeRegistry {
         }
       }
 
-      // Max iterations reached
+      /**
+       * 8. Max iterations reached
+       */
       this.logger.warn('Agent reached max iterations');
       return {
         output: 'Agent reached maximum iterations without completing.',
