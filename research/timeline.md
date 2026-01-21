@@ -177,10 +177,11 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 + Call mcp cần auth thì chưa truyền access token cho model (checked)
 => T2: Research kĩ lại langraph
 => T4: Fix các vấn đề trên
-+ call google search chưa được
++ call google search chưa được (checked => billing account => flow oke)
 + 1 node nhiều > 1 tool
+=> T6, T7: 
 + kêu gửi link chỉ gửi id => chưa đúng yêu cầu
-=> T6, T7: Thêm tự refresh token cho provider và check scopes
++ Thêm tự refresh token cho provider và check scopes
 ## Tuần 10
 - Viết test cho cả FE và BE, add eslint, commitlint config
 - Review CI-CD và viết CI-CD triển khai

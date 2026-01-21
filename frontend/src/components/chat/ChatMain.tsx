@@ -6,7 +6,8 @@ import {
   Flex,
   Heading,
   HStack,
-  Input,
+  Textarea,
+  Text,
   VStack,
   Icon,
 } from "@chakra-ui/react";
@@ -81,6 +82,7 @@ function MarkdownMessage({ content }: { content: string }) {
 export function ChatMain({ workflowName, isPlayground = true }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [isEnterToSend, setIsEnterToSend] = useState(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isStoppedRef = useRef(false); // Track if streaming was manually stopped
@@ -334,46 +336,102 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
           </Button>
         )}
         {/* Input */}
-        <HStack
+        <VStack
           p={4}
           borderTop="1px solid"
           borderColor="rgba(255, 255, 255, 0.08)"
           w={"100%"}
           bg="rgba(20, 20, 30, 0.6)"
           backdropFilter="blur(10px)"
+          gap={3}
         >
-          <Input
-            placeholder="Type a message..."
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          <Flex
+            direction="column"
+            w="100%"
             bg="rgba(255, 255, 255, 0.05)"
-            color="white"
+            borderRadius="xl"
+            border="1px solid"
             borderColor="rgba(255, 255, 255, 0.1)"
-            _placeholder={{ color: "gray.500" }}
+            transition="all 0.2s"
             _hover={{ borderColor: "rgba(99, 102, 241, 0.4)" }}
-            _focus={{
+            _focusWithin={{
               borderColor: "rgba(99, 102, 241, 0.6)",
               boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
             }}
-          />
-          <Button
-            bg={isStreaming
-              ? "rgba(239, 68, 68, 0.8)"
-              : "linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%)"
-            }
-            color="white"
-            onClick={handleSend}
-            loading={isStreaming}
-            _hover={{
-              bg: isStreaming
-                ? "rgba(239, 68, 68, 1)"
-                : "linear-gradient(135deg, rgba(99, 102, 241, 1) 0%, rgba(139, 92, 246, 1) 100%)",
-            }}
           >
-            Send
-          </Button>
-        </HStack>
+            <Textarea
+              placeholder="Type a message..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && isEnterToSend) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              minH="100px"
+              maxH="300px"
+              resize="none"
+              rows={1}
+              border="none"
+              _focus={{ boxShadow: "none" }}
+              p={3}
+              color="white"
+              _placeholder={{ color: "gray.500" }}
+              css={{
+                "&::-webkit-scrollbar": {
+                  width: "4px",
+                },
+                "&::-webkit-scrollbar-track": {
+                  width: "6px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "rgba(255, 255, 255, 0.1)",
+                  borderRadius: "24px",
+                }
+              }}
+            />
+
+            <Flex
+              justify="space-between"
+              align="center"
+              p={2}
+              borderTop="1px solid"
+              borderColor="rgba(255, 255, 255, 0.1)"
+            >
+              <Box as="label" display="flex" alignItems="center" cursor="pointer" gap={2} px={1}>
+                <input
+                  type="checkbox"
+                  checked={isEnterToSend}
+                  onChange={(e) => setIsEnterToSend(e.target.checked)}
+                  style={{ accentColor: "#805ad5", cursor: "pointer" }}
+                />
+                <Text fontSize="xs" color="gray.400">
+                  Press Enter to send
+                </Text>
+              </Box>
+
+              <Button
+                size="sm"
+                bg={isStreaming
+                  ? "rgba(239, 68, 68, 0.8)"
+                  : "linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(139, 92, 246, 0.9) 100%)"
+                }
+                color="white"
+                onClick={handleSend}
+                loading={isStreaming}
+                _hover={{
+                  bg: isStreaming
+                    ? "rgba(239, 68, 68, 1)"
+                    : "linear-gradient(135deg, rgba(99, 102, 241, 1) 0%, rgba(139, 92, 246, 1) 100%)",
+                }}
+                disabled={isStreaming || chatInput.trim() === ""}
+              >
+                Send
+              </Button>
+            </Flex>
+          </Flex>
+        </VStack>
       </VStack>
     </Flex>
   );
