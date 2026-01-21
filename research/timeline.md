@@ -174,10 +174,12 @@ https://www.youtube.com/watch?v=ZoZxQwp1PiM
 ## Tuần 9
 - Tích hợp AI model vào và test workflow, kỹ langraph & mcp inspector
 + Đã call mcp calculator được nhưng bị loop max_iteration (checked)
-+ Call mcp cần auth thì chưa truyền access token cho model
-+ 1 node nhiều > 1 tool => chưa được
++ Call mcp cần auth thì chưa truyền access token cho model (checked)
 => T2: Research kĩ lại langraph
 => T4: Fix các vấn đề trên
++ call google search chưa được
++ 1 node nhiều > 1 tool
++ kêu gửi link chỉ gửi id => chưa đúng yêu cầu
 => T6, T7: Thêm tự refresh token cho provider và check scopes
 ## Tuần 10
 - Viết test cho cả FE và BE, add eslint, commitlint config

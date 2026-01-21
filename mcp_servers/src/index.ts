@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { providers } from "./providers/index.js";
 
 /**
