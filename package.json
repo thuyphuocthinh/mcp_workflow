@@ -1,0 +1,14 @@
+{
+    "name": "mcp-workflow",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "concurrently -n \"MCP,BACKEND,FRONTEND\" -c \"blue,green,magenta\" \"npm run dev:mcp\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+        "dev:mcp": "cd mcp_servers && npm run dev",
+        "dev:backend": "cd backend && npm start",
+        "dev:frontend": "cd frontend && npm run dev"
+    },
+    "devDependencies": {
+        "concurrently": "^9.0.0"
+    }
+}

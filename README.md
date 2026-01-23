@@ -104,7 +104,23 @@ GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
 ```
 
-### 4. Chạy ứng dụng
+### 4. Cài đặt root dependencies
+
+```bash
+npm install
+```
+
+### 5. Chạy ứng dụng
+
+**🚀 Quick Start (một lệnh duy nhất):**
+
+```bash
+npm run dev
+```
+
+Lệnh này sẽ chạy đồng thời cả 3 services: MCP Servers, Backend, và Frontend.
+
+**Hoặc chạy riêng từng service:**
 
 ```bash
 # Terminal 1 - Backend
