@@ -22,7 +22,7 @@ export class UserToolAuthController {
 
   constructor(
     private readonly userToolAuthService: UserToolAuthService,
-  ) {}
+  ) { }
 
   @Get('google')
   @UseGuards(JwtAuthGuard, GoogleAuthGuard)
@@ -44,6 +44,7 @@ export class UserToolAuthController {
       this.logger.log(`User ${req.user.id} authorized tool ${providerKey}`);
 
       // Google access token expires in 1 hour (3600 seconds)
+      // Store in UTC (Date.now() returns UTC milliseconds)
       const expiresAt = new Date(Date.now() + 3600 * 1000);
 
       await this.userToolAuthService.authorize({

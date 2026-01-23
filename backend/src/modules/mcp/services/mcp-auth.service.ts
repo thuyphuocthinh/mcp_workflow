@@ -16,7 +16,7 @@ export class UserToolAuthService {
   constructor(
     @InjectModel('UserToolAuth')
     private readonly userToolAuthModel: Model<UserToolAuthDocument>,
-  ) {}
+  ) { }
 
   /* ================= AUTHORIZE ================= */
   async authorize(params: {
@@ -144,10 +144,13 @@ export class UserToolAuthService {
       );
     }
 
-    // Check if token is expired (with 5 min buffer)
+    // Check if token is expired (with 1 hour buffer)
+    // expiresAt is stored in UTC, compare with current UTC time
     const expiresAt = auth.token.expires_at;
-    const bufferMs = 5 * 60 * 1000;
-    const isExpired = expiresAt && new Date() >= new Date(expiresAt.getTime() - bufferMs);
+    const bufferMs = 60 * 60 * 1000;
+    // Date.now() returns UTC milliseconds, so comparison is UTC vs UTC
+    const nowUtc = Date.now();
+    const isExpired = expiresAt && nowUtc >= expiresAt.getTime() - bufferMs;
 
     if (isExpired && auth.token.refresh_token) {
       this.logger.debug(`Token expired for user ${userId}, tool ${toolKey}. Refreshing...`);
@@ -192,6 +195,7 @@ export class UserToolAuthService {
       }
 
       // Update the token in database
+      // Store expires_at in UTC (Date.now() returns UTC milliseconds)
       const expiresAt = new Date(Date.now() + data.expires_in * 1000);
 
       await this.userToolAuthModel.updateOne(

@@ -371,6 +371,7 @@ export function ChatMain({ workflowName, isPlayground = true }: Props) {
               }}
               minH="100px"
               maxH="300px"
+              outline="none"
               resize="none"
               rows={1}
               border="none"
