@@ -43,6 +43,9 @@ export class UserToolAuthController {
 
       this.logger.log(`User ${req.user.id} authorized tool ${providerKey}`);
 
+      // Google access token expires in 1 hour (3600 seconds)
+      const expiresAt = new Date(Date.now() + 3600 * 1000);
+
       await this.userToolAuthService.authorize({
         userId: req.user.id,
         toolKey: providerKey,
@@ -51,6 +54,7 @@ export class UserToolAuthController {
           access_token: accessToken,
           refresh_token: refreshToken,
           token_type: 'Bearer',
+          expires_at: expiresAt,
         },
         raw: {
           profile,

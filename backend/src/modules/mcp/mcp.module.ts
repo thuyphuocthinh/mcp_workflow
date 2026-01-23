@@ -6,6 +6,7 @@ import { Tool, ToolSchema } from './schemas/tool.schema';
 import { UserToolAuth, UserToolAuthSchema } from './schemas/user-tool-auth.schema';
 import { UserToolAuthController } from './mcp-auth.controller';
 import { UserToolAuthService } from './services/mcp-auth.service';
+import { TokenRefreshScheduler } from './services/token-refresh.scheduler';
 import { GoogleStrategy } from './strategy/google.strategy';
 
 @Module({
@@ -15,7 +16,7 @@ import { GoogleStrategy } from './strategy/google.strategy';
       { name: UserToolAuth.name, schema: UserToolAuthSchema },
     ]),
   ],
-  providers: [McpService, UserToolAuthService, GoogleStrategy],
+  providers: [McpService, UserToolAuthService, TokenRefreshScheduler, GoogleStrategy],
   controllers: [McpController, UserToolAuthController],
   exports: [UserToolAuthService],
 })
