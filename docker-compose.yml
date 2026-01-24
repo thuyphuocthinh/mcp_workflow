@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - mcp-network
+
+  frontend:
+    build: 
+      context: ./frontend
+    ports:
+      - "80:80"
+    networks:
+      - mcp-network
+    depends_on:
+      - backend
+
+  mcp_servers:
+    build: 
+      context: ./mcp_servers
+    ports:
+      - "3001:3000" # Mapping to 3001 on host to avoid conflict with backend if it also uses 3000, adjusted internal port if needed or based on env
+    environment:
+      - PORT=3000
+    networks:
+      - mcp-network
+
+networks:
+  mcp-network:
+    driver: bridge
