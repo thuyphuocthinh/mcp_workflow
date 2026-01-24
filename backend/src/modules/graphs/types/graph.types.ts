@@ -11,28 +11,29 @@ export type LLMProvider = 'gemini' | 'openai' | 'anthropic';
 
 export interface LLMNodeData {
   label: string;
-  userPrompt: string;          // Prompt template, có thể chứa {{input}}
-  systemPrompt?: string;       // Optional system instruction
+  userPrompt: string; // Prompt template, có thể chứa {{input}}
+  systemPrompt?: string; // Optional system instruction
   provider: LLMProvider;
-  model: string;               // 'gemini-2.5-flash', 'gpt-4o', 'claude-3-sonnet'
+  model: string; // 'gemini-2.5-flash', 'gpt-4o', 'claude-3-sonnet'
   temperature?: number;
   maxTokens?: number;
 }
 
 export interface MCPToolNodeData {
   label: string;
-  mcpServer: string;           // 'gmail', 'google-docs', 'google-sheets'
-  toolName: string;            // 'sendEmail', 'createDoc', 'appendRow'
+  mcpServer: string; // 'gmail', 'google-docs', 'google-sheets'
+  toolName: string; // 'sendEmail', 'createDoc', 'appendRow'
   toolArgs: Record<string, any>;
 }
 
 export interface AgentNodeData {
   label: string;
+  userPrompt?: string; // Optional user instruction
   systemPrompt: string;
   provider: LLMProvider;
   model: string;
-  mcpServers: string[];        // List MCP servers agent có thể dùng
-  maxIterations?: number;      // Default: 10
+  mcpServers: string[]; // List MCP servers agent có thể dùng
+  maxIterations?: number; // Default: 10
 }
 
 export interface StartNodeData {
@@ -43,11 +44,11 @@ export interface EndNodeData {
   label: string;
 }
 
-export type FlowNodeData = 
-  | LLMNodeData 
-  | MCPToolNodeData 
-  | AgentNodeData 
-  | StartNodeData 
+export type FlowNodeData =
+  | LLMNodeData
+  | MCPToolNodeData
+  | AgentNodeData
+  | StartNodeData
   | EndNodeData
   | Record<string, any>;
 

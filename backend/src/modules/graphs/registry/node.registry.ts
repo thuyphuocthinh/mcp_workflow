@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { LLMService } from '../services/llm.service';
 import { MCPClientService } from '../services/mcp-client.service';
 import { UserToolAuthService } from '@/modules/mcp/services/mcp-auth.service';
-import { WorkflowState, Message, ToolDefinition } from '../types/langraph.types';
+import {
+  WorkflowState,
+  Message,
+  ToolDefinition,
+} from '../types/langraph.types';
 import {
   LLMNodeData,
   MCPToolNodeData,
@@ -23,7 +27,7 @@ const normalizeToolKey = (serverName: string): string => {
 export class NodeRegistry {
   private readonly logger = new Logger(NodeRegistry.name);
 
-  constructor(  
+  constructor(
     private readonly llmService: LLMService,
     private readonly mcpClient: MCPClientService,
     private readonly userToolAuthService: UserToolAuthService,
@@ -31,10 +35,14 @@ export class NodeRegistry {
 
   createLLMNode(nodeData: LLMNodeData, userId: string) {
     return async (state: WorkflowState): Promise<Partial<WorkflowState>> => {
-      this.logger.debug(`LLM Node executing: ${nodeData.provider}/${nodeData.model}`);
+      this.logger.debug(
+        `LLM Node executing: ${nodeData.provider}/${nodeData.model}`,
+      );
 
       const finalPrompt = this.interpolateTemplate(nodeData.userPrompt, state);
-      this.logger.debug(`LLM Node prompt: "${finalPrompt.substring(0, 100)}..."`);
+      this.logger.debug(
+        `LLM Node prompt: "${finalPrompt.substring(0, 100)}..."`,
+      );
 
       try {
         const output = await this.llmService.call({
@@ -69,7 +77,9 @@ export class NodeRegistry {
 
   createMCPToolNode(nodeData: MCPToolNodeData, userId: string) {
     return async (state: WorkflowState): Promise<Partial<WorkflowState>> => {
-      this.logger.debug(`MCP Tool Node: ${nodeData.mcpServer}/${nodeData.toolName}`);
+      this.logger.debug(
+        `MCP Tool Node: ${nodeData.mcpServer}/${nodeData.toolName}`,
+      );
 
       const args = this.interpolateArgs(nodeData.toolArgs, state);
 
@@ -97,7 +107,8 @@ export class NodeRegistry {
           finalArgs,
         );
 
-        const output = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+        const output =
+          typeof result === 'string' ? result : JSON.stringify(result, null, 2);
 
         return {
           output,
@@ -127,28 +138,34 @@ export class NodeRegistry {
       const toolAuthContext: Record<string, { accessToken?: string }> = {};
 
       try {
-        const rawTools = await this.mcpClient.getToolsFromServers(nodeData.mcpServers);
+        const rawTools = await this.mcpClient.getToolsFromServers(
+          nodeData.mcpServers,
+        );
 
         // Preload access token for auth-required MCP servers
         for (const server of nodeData.mcpServers) {
           if (this.mcpClient.requiresAuth(server)) {
             try {
-              const accessToken = await this.userToolAuthService.getAccessToken({
-                userId,
-                toolKey: normalizeToolKey(server),
-              });
+              const accessToken = await this.userToolAuthService.getAccessToken(
+                {
+                  userId,
+                  toolKey: normalizeToolKey(server),
+                },
+              );
 
               toolAuthContext[server] = { accessToken };
               this.logger.debug(`Preloaded access token for ${server}`);
             } catch (e) {
-              this.logger.warn(`Auth missing for ${server}, its tools will be disabled`);
+              this.logger.warn(
+                `Auth missing for ${server}, its tools will be disabled`,
+              );
               toolAuthContext[server] = {};
             }
           }
         }
 
         // Filter tools: only allow authenticated tools
-        tools = rawTools.filter(tool => {
+        tools = rawTools.filter((tool) => {
           if (!tool.mcpServer) return true;
           if (!this.mcpClient.requiresAuth(tool.mcpServer)) return true;
           return Boolean(toolAuthContext[tool.mcpServer]?.accessToken);
@@ -168,10 +185,40 @@ export class NodeRegistry {
       /**
        * 2. Init messages
        */
-      const messages: Message[] = [
-        ...state.messages,
-        { role: 'user', content: state.input },
-      ];
+      const messages: Message[] = [...state.messages];
+
+      // Determine the prompt to use
+      if (nodeData.userPrompt) {
+        // Option A: Specific user prompt configured
+        let promptTemplate = nodeData.userPrompt;
+
+        if (
+          state.messages.length === 0 &&
+          !promptTemplate.includes('{{input}}')
+        ) {
+          promptTemplate += '\n\ninput: {{input}}';
+        }
+
+        const prompt = this.interpolateTemplate(promptTemplate, state);
+        messages.push({ role: 'user', content: prompt });
+        this.logger.debug(
+          `Agent Node userPrompt: "${prompt.substring(0, 50)}..."`,
+        );
+      } else {
+        // Option B: No specific prompt, use existing state input (backward compatibility)
+        // Only add state.input if it's the start of a conversation (messages empty)
+
+        if (state.messages.length === 0) {
+          // First node, or no history. Must rely on input.
+          messages.push({ role: 'user', content: state.input });
+        } else {
+          // Chain mode: Rely on conversation history (e.g. previous agent's output).
+          // Do not re-inject state.input unless necessary.
+          this.logger.debug(
+            'Agent Node reusing conversation history (no new user prompt)',
+          );
+        }
+      }
 
       /**
        * 3. Build system prompt with auth context
@@ -232,7 +279,9 @@ export class NodeRegistry {
          * If no tool calls, LLM is done - return the final response
          */
         if (!response.toolCalls || response.toolCalls.length === 0) {
-          this.logger.debug(`Agent finished after ${iteration} iteration(s) - no more tool calls`);
+          this.logger.debug(
+            `Agent finished after ${iteration} iteration(s) - no more tool calls`,
+          );
           messages.push({ role: 'assistant', content: response.content });
           return {
             output: response.content,
@@ -327,7 +376,9 @@ export class NodeRegistry {
       });
 
       return {
-        output: finalOutput.trim() || `Agent stopped after ${maxIterations} iterations.`,
+        output:
+          finalOutput.trim() ||
+          `Agent stopped after ${maxIterations} iterations.`,
         messages,
       };
     };

@@ -89,10 +89,7 @@ export class GraphController {
   ) {
     const userId = req.user.sub;
 
-    const graph = await this.graphService.getGraphRaw(
-      graphId,
-      userId,
-    );
+    const graph = await this.graphService.getGraphRaw(graphId, userId);
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -102,21 +99,20 @@ export class GraphController {
 
     try {
       for await (const event of stream) {
-      const [nodeType, nodeData] = Object.entries(event)[0];
+        const [nodeType, nodeData] = Object.entries(event)[0];
 
-      const standardizedEvent: StreamEvent = {
-        nodeType,
-        input: (nodeData as any).input,
-        output: (nodeData as any).output,
-        ok: (nodeData as any).ok,
-        retryCount: (nodeData as any).retryCount,
-        meta: (nodeData as any).meta,
-      };
+        const standardizedEvent: StreamEvent = {
+          nodeType,
+          input: (nodeData as any).input,
+          output: this.summarizeOutput((nodeData as any).output),
+          ok: (nodeData as any).ok,
+          retryCount: (nodeData as any).retryCount,
+          meta: (nodeData as any).meta,
+        };
 
-      res.write(`data: ${JSON.stringify(standardizedEvent)}\n\n`);
-      this.logger.log(`event:: ${JSON.stringify(standardizedEvent)}`);
-    }
-
+        res.write(`data: ${JSON.stringify(standardizedEvent)}\n\n`);
+        this.logger.log(`event:: ${JSON.stringify(standardizedEvent)}`);
+      }
 
       res.write(`event: end\ndata: done\n\n`);
       res.end();
@@ -128,5 +124,35 @@ export class GraphController {
       );
       res.end();
     }
+  }
+
+  private summarizeOutput(output: any): any {
+    if (!output) return output;
+
+    // If output is a string (common for tool results), truncate if too long
+    if (typeof output === 'string') {
+      if (output.length > 500) {
+        return (
+          output.substring(0, 500) +
+          `\n... [Truncated. Total size: ${output.length} chars]`
+        );
+      }
+      return output;
+    }
+
+    // If output is an object (common for JSON results), try to stringify and check size
+    // Or just return a summary "Object keys: ..."
+    if (typeof output === 'object') {
+      try {
+        const str = JSON.stringify(output);
+        if (str.length > 500) {
+          return `[Object] Keys: ${Object.keys(output).join(', ')}. Content size: ${str.length} chars.`;
+        }
+      } catch (e) {
+        return '[Object] (Circular or non-serializable)';
+      }
+    }
+
+    return output;
   }
 }
