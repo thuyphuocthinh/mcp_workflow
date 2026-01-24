@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Lint
+      run: npm run lint
+      
+    - name: Test
+      run: npm run test
+
+    - name: Build
+      run: npm run build
+
+  frontend-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install dependencies
+      run: npm install # frontend might not have package-lock.json or it might be out of sync, using install for safety if ci fails, but ci is better. Assuming package-lock exists.
+      
+    - name: Lint
+      run: npm run lint
+      
+    - name: Build
+      run: npm run build
+
+  mcp-servers-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./mcp_servers
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: mcp_servers/package-lock.json
+
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Test
+      run: npm run test
+
+    - name: Build
+      run: npm run build

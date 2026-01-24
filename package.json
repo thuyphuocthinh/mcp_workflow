@@ -1,30 +1,33 @@
 {
-  "name": "mcp",
+  "name": "mcp-workflow",
   "version": "1.0.0",
-  "main": "index.js",
-  "workspaces": [
-    "frontend",
-    "mcp-client",
-    "mcp-server"
-  ],
+  "private": true,
   "scripts": {
-    "start:frontend": "npm --workspace frontend start",
-    "start:client": "npm --workspace mcp-client dev",
-    "start:server": "npm --workspace mcp-server dev",
-    "start:all": "concurrently \"npm run start:frontend\" \"npm run start:server\"",
-    "prepare": "husky install"
+    "dev": "concurrently -n \"MCP,BACKEND,FRONTEND\" -c \"blue,green,magenta\" \"npm run dev:mcp\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:mcp": "cd mcp_servers && npm run dev",
+    "dev:backend": "cd backend && npm start",
+    "dev:frontend": "cd frontend && npm run dev",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.1.0",
-    "@commitlint/config-conventional": "^20.0.0",
-    "@types/node": "^20.5.0",
-    "concurrently": "^8.0.0",
+    "@commitlint/cli": "^20.3.1",
+    "@commitlint/config-conventional": "^20.3.1",
+    "@eslint/js": "^9.39.2",
+    "concurrently": "^9.0.0",
+    "eslint": "^9.39.2",
+    "globals": "^17.1.0",
     "husky": "^9.1.7",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
+    "typescript-eslint": "^8.53.1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "lint-staged": {
+    "*.{js,ts,tsx,jsx,mjs,cjs}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md,css,html}": [
+      "prettier --write"
+    ]
+  }
 }
