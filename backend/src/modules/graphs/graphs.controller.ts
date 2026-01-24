@@ -11,7 +11,8 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { type Response } from 'express';
+import { type Request, type Response } from 'express';
+
 import { GraphService } from './services/graphs.service';
 import { CreateGraphDto } from './dtos/create-graph.dto';
 import { UpdateGraphDto } from './dtos/update-graph.dto';
@@ -20,6 +21,12 @@ import { SuccessResponse } from '@/shared/response/success.response';
 import { PagingResponse } from '@/shared/response/paging.response';
 import { UpdateMetadata } from './dtos/update-metadata.dto';
 import { StreamEvent } from './contracts/stream.contract';
+
+interface RequestWithUser extends Request {
+  user: {
+    sub: string;
+  };
+}
 
 @Controller('graphs')
 @UseGuards(JwtAuthGuard)
@@ -30,7 +37,8 @@ export class GraphController {
 
   @Post()
   async createGraph(
-    @Req() req: any,
+    @Req() req: RequestWithUser,
+
     @Body() dto: CreateGraphDto,
   ): Promise<SuccessResponse> {
     const userId = req.user.sub;
@@ -39,8 +47,9 @@ export class GraphController {
 
   @Patch(':id/update-metadata')
   async updateGraphMetadata(
-    @Req() req: any,
+    @Req() req: RequestWithUser,
     @Param('id') graphId: string,
+
     @Body() dto: UpdateMetadata,
   ): Promise<SuccessResponse> {
     const userId = req.user.sub;
@@ -49,17 +58,27 @@ export class GraphController {
 
   @Patch(':id')
   async updateGraph(
-    @Req() req: any,
+    @Req() req: RequestWithUser,
     @Param('id') graphId: string,
+
     @Body() dto: UpdateGraphDto,
   ): Promise<SuccessResponse> {
     const userId = req.user.sub;
     return this.graphService.updateGraph(graphId, userId, dto);
   }
 
+  @Post(':id/clone')
+  async cloneGraph(
+    @Req() req: RequestWithUser,
+    @Param('id') graphId: string,
+  ): Promise<SuccessResponse> {
+    const userId = req.user.sub;
+    return this.graphService.cloneGraph(graphId, userId);
+  }
+
   @Get(':id')
   async getGraphDetail(
-    @Req() req: any,
+    @Req() req: RequestWithUser,
     @Param('id') graphId: string,
   ): Promise<SuccessResponse> {
     const userId = req.user.sub;
@@ -68,8 +87,9 @@ export class GraphController {
 
   @Get()
   async getGraphs(
-    @Req() req: any,
+    @Req() req: RequestWithUser,
     @Query('page') page = '1',
+
     @Query('limit') limit = '10',
   ): Promise<PagingResponse> {
     const userId = req.user.sub;
@@ -82,7 +102,8 @@ export class GraphController {
 
   @Post(':id/run/stream')
   async runGraphStream(
-    @Req() req: any,
+    @Req() req: RequestWithUser,
+
     @Param('id') graphId: string,
     @Body('input') input: string,
     @Res() res: Response,
@@ -100,14 +121,24 @@ export class GraphController {
     try {
       for await (const event of stream) {
         const [nodeType, nodeData] = Object.entries(event)[0];
+        const data = nodeData as {
+          input: unknown;
+          output: unknown;
+          ok: boolean;
+          retryCount: number;
+          meta: unknown;
+        };
 
         const standardizedEvent: StreamEvent = {
           nodeType,
-          input: (nodeData as any).input,
-          output: this.summarizeOutput((nodeData as any).output),
-          ok: (nodeData as any).ok,
-          retryCount: (nodeData as any).retryCount,
-          meta: (nodeData as any).meta,
+          input:
+            typeof data.input === 'string'
+              ? data.input
+              : JSON.stringify(data.input),
+          output: this.summarizeOutput(data.output),
+          ok: data.ok,
+          retryCount: data.retryCount,
+          meta: data.meta as Record<string, unknown>,
         };
 
         res.write(`data: ${JSON.stringify(standardizedEvent)}\n\n`);
@@ -126,8 +157,8 @@ export class GraphController {
     }
   }
 
-  private summarizeOutput(output: any): any {
-    if (!output) return output;
+  private summarizeOutput(output: unknown): string | undefined {
+    if (output === null || output === undefined) return undefined;
 
     // If output is a string (common for tool results), truncate if too long
     if (typeof output === 'string') {
@@ -146,13 +177,15 @@ export class GraphController {
       try {
         const str = JSON.stringify(output);
         if (str.length > 500) {
-          return `[Object] Keys: ${Object.keys(output).join(', ')}. Content size: ${str.length} chars.`;
+          return `[Object] Keys: ${Object.keys(output as object).join(', ')}. Content size: ${str.length} chars.`;
         }
+        return str;
       } catch (e) {
+        this.logger.error(e);
         return '[Object] (Circular or non-serializable)';
       }
     }
 
-    return output;
+    return String(output);
   }
 }

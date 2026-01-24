@@ -16,20 +16,21 @@ import {
   Icon,
   Field,
   Spinner,
-} from "@chakra-ui/react";
-import { FiMoreVertical, FiEdit2, FiTrash2, FiInbox } from "react-icons/fi";
-import { useState, useMemo, useCallback } from "react";
-import { FaRobot } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+} from '@chakra-ui/react';
+import { FiMoreVertical, FiEdit2, FiTrash2, FiInbox, FiCopy } from 'react-icons/fi';
+import { useState, useMemo, useCallback } from 'react';
+import { FaRobot } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   create_graph_service,
   get_list_graphs,
   update_graph_metadata_service,
-} from "@/services";
-import type { i_graph, i_update_graph_metadata } from "@/types/graph";
-import { PAGE_SIZE } from "@/constants";
-import { LuPlus, LuFileText, LuType } from "react-icons/lu";
+  clone_graph_service,
+} from '@/services';
+import type { i_graph, i_update_graph_metadata } from '@/types/graph';
+import { PAGE_SIZE } from '@/constants';
+import { LuPlus, LuFileText, LuType } from 'react-icons/lu';
 
 // Validation helpers
 const NAME_MIN_LENGTH = 2;
@@ -44,7 +45,7 @@ interface ValidationErrors {
 const validateName = (name: string): string | undefined => {
   const trimmed = name.trim();
   if (!trimmed) {
-    return "Workflow name is required";
+    return 'Workflow name is required';
   }
   if (trimmed.length < NAME_MIN_LENGTH) {
     return `Name must be at least ${NAME_MIN_LENGTH} characters`;
@@ -58,7 +59,7 @@ const validateName = (name: string): string | undefined => {
 const validateDescription = (description: string): string | undefined => {
   const trimmed = description.trim();
   if (!trimmed) {
-    return "Description is required";
+    return 'Description is required';
   }
   if (trimmed.length < NAME_MIN_LENGTH) {
     return `Description must be at least ${NAME_MIN_LENGTH} characters`;
@@ -87,12 +88,12 @@ const StyledInput = ({
     py={1}
     transition="all 0.3s ease"
     _focusWithin={{
-      borderColor: "rgba(99, 102, 241, 0.5)",
-      bg: "rgba(99, 102, 241, 0.05)",
-      shadow: "0 0 0 3px rgba(99, 102, 241, 0.1)",
+      borderColor: 'rgba(99, 102, 241, 0.5)',
+      bg: 'rgba(99, 102, 241, 0.05)',
+      shadow: '0 0 0 3px rgba(99, 102, 241, 0.1)',
     }}
     _hover={{
-      borderColor: "rgba(255, 255, 255, 0.15)",
+      borderColor: 'rgba(255, 255, 255, 0.15)',
     }}
   >
     <Icon as={icon} color="gray.500" boxSize={5} mr={3} />
@@ -100,8 +101,8 @@ const StyledInput = ({
       border="none"
       bg="transparent"
       color="white"
-      _placeholder={{ color: "gray.600" }}
-      _focus={{ boxShadow: "none", outline: "none" }}
+      _placeholder={{ color: 'gray.600' }}
+      _focus={{ boxShadow: 'none', outline: 'none' }}
       fontSize="md"
       py={3}
       {...props}
@@ -114,19 +115,17 @@ export default function WorkflowPage() {
   const [creating, setCreating] = useState(false);
 
   const [createValue, setCreateValue] = useState({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
   });
   const [createTouched, setCreateTouched] = useState<{ name?: boolean; description?: boolean }>({});
 
   const [editingWorkflow, setEditingWorkflow] = useState<i_graph | null>(null);
-  const [deletingWorkflow, setDeletingWorkflow] = useState<i_graph | null>(
-    null
-  );
+  const [deletingWorkflow, setDeletingWorkflow] = useState<i_graph | null>(null);
 
   const [editValue, setEditValue] = useState({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
   });
   const [editTouched, setEditTouched] = useState<{ name?: boolean; description?: boolean }>({});
 
@@ -137,7 +136,7 @@ export default function WorkflowPage() {
   const createMutation = useMutation({
     mutationFn: create_graph_service,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      queryClient.invalidateQueries({ queryKey: ['workflows'] });
       handleCloseCreate();
     },
   });
@@ -146,8 +145,15 @@ export default function WorkflowPage() {
     mutationFn: ({ id, data }: { id: string; data: i_update_graph_metadata }) =>
       update_graph_metadata_service(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      queryClient.invalidateQueries({ queryKey: ['workflows'] });
       handleCloseEdit();
+    },
+  });
+
+  const cloneMutation = useMutation({
+    mutationFn: clone_graph_service,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflows'] });
     },
   });
 
@@ -157,7 +163,7 @@ export default function WorkflowPage() {
     isLoading,
     isFetching,
   } = useQuery({
-    queryKey: ["workflows", page],
+    queryKey: ['workflows', page],
     queryFn: () =>
       get_list_graphs({
         page,
@@ -171,8 +177,14 @@ export default function WorkflowPage() {
   // Validation for Create - only show errors after user has interacted
   const createErrors = useMemo((): ValidationErrors => {
     return {
-      name: (createTouched.name || createValue.name.length > 0) ? validateName(createValue.name) : undefined,
-      description: (createTouched.description || createValue.description.length > 0) ? validateDescription(createValue.description) : undefined,
+      name:
+        createTouched.name || createValue.name.length > 0
+          ? validateName(createValue.name)
+          : undefined,
+      description:
+        createTouched.description || createValue.description.length > 0
+          ? validateDescription(createValue.description)
+          : undefined,
     };
   }, [createValue, createTouched]);
 
@@ -195,13 +207,13 @@ export default function WorkflowPage() {
   // Handlers
   const handleCloseCreate = useCallback(() => {
     setCreating(false);
-    setCreateValue({ name: "", description: "" });
+    setCreateValue({ name: '', description: '' });
     setCreateTouched({});
   }, []);
 
   const handleCloseEdit = useCallback(() => {
     setEditingWorkflow(null);
-    setEditValue({ name: "", description: "" });
+    setEditValue({ name: '', description: '' });
     setEditTouched({});
   }, []);
 
@@ -229,7 +241,7 @@ export default function WorkflowPage() {
   };
 
   const handleDelete = (id: string) => {
-    console.log("delete", id);
+    console.log('delete', id);
   };
 
   const goToWorkflowDetail = (id: string) => {
@@ -240,19 +252,14 @@ export default function WorkflowPage() {
     setEditingWorkflow(wf);
     setEditValue({
       name: wf.name,
-      description: wf.description ?? "",
+      description: wf.description ?? '',
     });
     setEditTouched({});
   };
 
   if (isLoading) {
     return (
-      <Flex
-        p={6}
-        align="center"
-        justify="center"
-        minH="calc(100vh - 80px)"
-      >
+      <Flex p={6} align="center" justify="center" minH="calc(100vh - 80px)">
         <Spinner color="purple.400" />
       </Flex>
     );
@@ -260,18 +267,13 @@ export default function WorkflowPage() {
 
   return (
     <>
-      <Box
-        p={{ base: 4, md: 8 }}
-        maxW="1400px"
-        mx="auto"
-        minH="calc(100vh - 80px)"
-      >
+      <Box p={{ base: 4, md: 8 }} maxW="1400px" mx="auto" minH="calc(100vh - 80px)">
         {/* Header */}
         <Flex
           justify="space-between"
           align="center"
           mb={8}
-          flexDir={{ base: "column", sm: "row" }}
+          flexDir={{ base: 'column', sm: 'row' }}
           gap={4}
         >
           <Heading
@@ -291,9 +293,9 @@ export default function WorkflowPage() {
             py={5}
             transition="all 0.3s ease"
             _hover={{
-              bg: "linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)",
-              transform: "translateY(-2px)",
-              shadow: "0 10px 40px -10px rgba(99, 102, 241, 0.5)",
+              bg: 'linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)',
+              transform: 'translateY(-2px)',
+              shadow: '0 10px 40px -10px rgba(99, 102, 241, 0.5)',
             }}
             onClick={() => setCreating(true)}
           >
@@ -316,12 +318,7 @@ export default function WorkflowPage() {
             borderStyle="dashed"
             minH="50vh"
           >
-            <Box
-              p={4}
-              bg="rgba(99, 102, 241, 0.1)"
-              borderRadius="full"
-              mb={4}
-            >
+            <Box p={4} bg="rgba(99, 102, 241, 0.1)" borderRadius="full" mb={4}>
               <FiInbox size={48} color="#6366f1" />
             </Box>
             <Text color="gray.400" fontSize="lg" fontWeight="medium">
@@ -345,9 +342,9 @@ export default function WorkflowPage() {
                 boxShadow="0 4px 20px rgba(0, 0, 0, 0.3)"
                 transition="all 0.3s ease"
                 _hover={{
-                  borderColor: "rgba(99, 102, 241, 0.4)",
-                  boxShadow: "0 8px 40px rgba(99, 102, 241, 0.15)",
-                  transform: "translateY(-4px)",
+                  borderColor: 'rgba(99, 102, 241, 0.4)',
+                  boxShadow: '0 8px 40px rgba(99, 102, 241, 0.15)',
+                  transform: 'translateY(-4px)',
                 }}
                 cursor="pointer"
                 onClick={() => goToWorkflowDetail(wf.id)}
@@ -376,19 +373,16 @@ export default function WorkflowPage() {
                       </Box>
                     </HStack>
 
-                    <Menu.Root positioning={{ placement: "left-start" }}>
-                      <Menu.Trigger
-                        asChild
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                    <Menu.Root positioning={{ placement: 'left-start' }}>
+                      <Menu.Trigger asChild onClick={(e) => e.stopPropagation()}>
                         <IconButton
                           variant="ghost"
                           size="sm"
                           aria-label="More options"
                           color="gray.500"
                           _hover={{
-                            bg: "rgba(255, 255, 255, 0.1)",
-                            color: "white",
+                            bg: 'rgba(255, 255, 255, 0.1)',
+                            color: 'white',
                           }}
                         >
                           <FiMoreVertical />
@@ -409,8 +403,8 @@ export default function WorkflowPage() {
                               cursor="pointer"
                               color="gray.300"
                               _hover={{
-                                bg: "rgba(99, 102, 241, 0.2)",
-                                color: "white",
+                                bg: 'rgba(99, 102, 241, 0.2)',
+                                color: 'white',
                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -421,12 +415,28 @@ export default function WorkflowPage() {
                             </Menu.Item>
 
                             <Menu.Item
+                              value="clone"
+                              cursor="pointer"
+                              color="gray.300"
+                              _hover={{
+                                bg: 'rgba(99, 102, 241, 0.2)',
+                                color: 'white',
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cloneMutation.mutate(wf.id);
+                              }}
+                            >
+                              <FiCopy /> Clone
+                            </Menu.Item>
+
+                            <Menu.Item
                               value="delete"
                               color="red.400"
                               cursor="pointer"
                               _hover={{
-                                bg: "rgba(239, 68, 68, 0.2)",
-                                color: "red.300",
+                                bg: 'rgba(239, 68, 68, 0.2)',
+                                color: 'red.300',
                               }}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -444,15 +454,11 @@ export default function WorkflowPage() {
 
                 <Card.Body pt={2} pb={3}>
                   <Text fontSize="sm" color="gray.500" lineClamp={2}>
-                    {wf.description ?? "No description"}
+                    {wf.description ?? 'No description'}
                   </Text>
                 </Card.Body>
 
-                <Card.Footer
-                  borderTop="1px solid"
-                  borderColor="rgba(255, 255, 255, 0.06)"
-                  pt={3}
-                >
+                <Card.Footer borderTop="1px solid" borderColor="rgba(255, 255, 255, 0.06)" pt={3}>
                   <Flex justify="space-between" w="full">
                     <Text fontSize="xs" color="gray.600">
                       Created: {new Date(wf.created_at).toLocaleDateString()}
@@ -473,8 +479,8 @@ export default function WorkflowPage() {
               color="gray.400"
               bg="rgba(255, 255, 255, 0.05)"
               _hover={{
-                bg: "rgba(99, 102, 241, 0.2)",
-                color: "white",
+                bg: 'rgba(99, 102, 241, 0.2)',
+                color: 'white',
               }}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
@@ -483,12 +489,7 @@ export default function WorkflowPage() {
               Prev
             </Button>
 
-            <HStack
-              px={4}
-              py={2}
-              bg="rgba(255, 255, 255, 0.05)"
-              borderRadius="lg"
-            >
+            <HStack px={4} py={2} bg="rgba(255, 255, 255, 0.05)" borderRadius="lg">
               <Text color="white" fontWeight="medium">
                 {page}
               </Text>
@@ -507,8 +508,8 @@ export default function WorkflowPage() {
               color="gray.400"
               bg="rgba(255, 255, 255, 0.05)"
               _hover={{
-                bg: "rgba(99, 102, 241, 0.2)",
-                color: "white",
+                bg: 'rgba(99, 102, 241, 0.2)',
+                color: 'white',
               }}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
@@ -522,10 +523,7 @@ export default function WorkflowPage() {
 
       {/* Dialog Edit */}
       <Portal>
-        <Dialog.Root
-          open={!!editingWorkflow}
-          onOpenChange={() => handleCloseEdit()}
-        >
+        <Dialog.Root open={!!editingWorkflow} onOpenChange={() => handleCloseEdit()}>
           <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" zIndex={1400} />
           <Dialog.Positioner zIndex={1400}>
             <Dialog.Content
@@ -547,7 +545,10 @@ export default function WorkflowPage() {
                 <VStack gap={5} align="stretch">
                   <Field.Root invalid={!!editErrors.name}>
                     <Field.Label color="gray.300" fontSize="sm" fontWeight="medium" mb={2}>
-                      Workflow Name <Text as="span" color="red.400">*</Text>
+                      Workflow Name{' '}
+                      <Text as="span" color="red.400">
+                        *
+                      </Text>
                     </Field.Label>
                     <StyledInput
                       icon={LuType}
@@ -567,7 +568,10 @@ export default function WorkflowPage() {
 
                   <Field.Root invalid={!!editErrors.description}>
                     <Field.Label color="gray.300" fontSize="sm" fontWeight="medium" mb={2}>
-                      Description <Text as="span" color="red.400">*</Text>
+                      Description{' '}
+                      <Text as="span" color="red.400">
+                        *
+                      </Text>
                     </Field.Label>
                     <StyledInput
                       icon={LuFileText}
@@ -594,7 +598,7 @@ export default function WorkflowPage() {
                 <Button
                   variant="ghost"
                   color="gray.400"
-                  _hover={{ bg: "rgba(255, 255, 255, 0.1)", color: "white" }}
+                  _hover={{ bg: 'rgba(255, 255, 255, 0.1)', color: 'white' }}
                   onClick={handleCloseEdit}
                 >
                   Cancel
@@ -603,11 +607,11 @@ export default function WorkflowPage() {
                   bg="linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
                   color="white"
                   _hover={{
-                    bg: "linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)",
+                    bg: 'linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)',
                   }}
                   _disabled={{
                     opacity: 0.5,
-                    cursor: "not-allowed",
+                    cursor: 'not-allowed',
                   }}
                   loading={updateMutation.isPending}
                   disabled={!isEditValid || updateMutation.isPending}
@@ -624,10 +628,7 @@ export default function WorkflowPage() {
 
       {/* Dialog Delete */}
       <Portal>
-        <Dialog.Root
-          open={!!deletingWorkflow}
-          onOpenChange={() => setDeletingWorkflow(null)}
-        >
+        <Dialog.Root open={!!deletingWorkflow} onOpenChange={() => setDeletingWorkflow(null)}>
           <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" zIndex={1400} />
           <Dialog.Positioner zIndex={1400}>
             <Dialog.Content
@@ -647,7 +648,7 @@ export default function WorkflowPage() {
 
               <Dialog.Body py={6}>
                 <Text color="gray.300">
-                  Are you sure you want to delete{" "}
+                  Are you sure you want to delete{' '}
                   <Text as="span" color="white" fontWeight="semibold">
                     "{deletingWorkflow?.name}"
                   </Text>
@@ -659,7 +660,7 @@ export default function WorkflowPage() {
                 <Button
                   variant="ghost"
                   color="gray.400"
-                  _hover={{ bg: "rgba(255, 255, 255, 0.1)", color: "white" }}
+                  _hover={{ bg: 'rgba(255, 255, 255, 0.1)', color: 'white' }}
                   onClick={() => setDeletingWorkflow(null)}
                 >
                   Cancel
@@ -667,7 +668,7 @@ export default function WorkflowPage() {
                 <Button
                   bg="red.500"
                   color="white"
-                  _hover={{ bg: "red.600" }}
+                  _hover={{ bg: 'red.600' }}
                   onClick={() => {
                     handleDelete(deletingWorkflow!.id);
                     setDeletingWorkflow(null);
@@ -684,7 +685,12 @@ export default function WorkflowPage() {
 
       {/* Dialog Create */}
       <Portal>
-        <Dialog.Root open={creating} onOpenChange={(details) => { if (!details.open) handleCloseCreate(); }}>
+        <Dialog.Root
+          open={creating}
+          onOpenChange={(details) => {
+            if (!details.open) handleCloseCreate();
+          }}
+        >
           <Dialog.Backdrop bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(4px)" zIndex={1400} />
           <Dialog.Positioner zIndex={1400}>
             <Dialog.Content
@@ -706,7 +712,10 @@ export default function WorkflowPage() {
                 <VStack gap={5} align="stretch">
                   <Field.Root invalid={!!createErrors.name}>
                     <Field.Label color="gray.300" fontSize="sm" fontWeight="medium" mb={2}>
-                      Workflow Name <Text as="span" color="red.400">*</Text>
+                      Workflow Name{' '}
+                      <Text as="span" color="red.400">
+                        *
+                      </Text>
                     </Field.Label>
                     <StyledInput
                       icon={LuType}
@@ -725,7 +734,10 @@ export default function WorkflowPage() {
 
                   <Field.Root invalid={!!createErrors.description}>
                     <Field.Label color="gray.300" fontSize="sm" fontWeight="medium" mb={2}>
-                      Description <Text as="span" color="red.400">*</Text>
+                      Description{' '}
+                      <Text as="span" color="red.400">
+                        *
+                      </Text>
                     </Field.Label>
                     <StyledInput
                       icon={LuFileText}
@@ -751,7 +763,7 @@ export default function WorkflowPage() {
                 <Button
                   variant="ghost"
                   color="gray.400"
-                  _hover={{ bg: "rgba(255, 255, 255, 0.1)", color: "white" }}
+                  _hover={{ bg: 'rgba(255, 255, 255, 0.1)', color: 'white' }}
                   onClick={handleCloseCreate}
                 >
                   Cancel
@@ -760,11 +772,11 @@ export default function WorkflowPage() {
                   bg="linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
                   color="white"
                   _hover={{
-                    bg: "linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)",
+                    bg: 'linear-gradient(135deg, #7c7ff2 0%, #9d6ff7 100%)',
                   }}
                   _disabled={{
                     opacity: 0.5,
-                    cursor: "not-allowed",
+                    cursor: 'not-allowed',
                   }}
                   loading={createMutation.isPending}
                   disabled={!isCreateValid || createMutation.isPending}
