@@ -1,5 +1,8 @@
 import type { Node, Edge } from '@xyflow/react';
-import type { INodeConfig } from '../components/workflows/nodes/baseConfig/nodeConfig';
+import type {
+  INodeConfig,
+  NodeConfigItem,
+} from '../components/workflows/nodes/baseConfig/nodeConfig';
 import type { VariableReference } from '../components/workflows/nodes/baseConfig/variableSystem';
 
 /**
@@ -16,9 +19,9 @@ export const getAvailableVariables = (
   currentNodeId: string,
   nodes: Node[],
   edges: Edge[],
-  nodeConfig: Record<string, any>,
+  nodeConfig: Record<string, NodeConfigItem>,
 ): VariableReference[] => {
-  const visited = new Set<string>();
+  const visited = new Set<string>([currentNodeId]);
   const variables: VariableReference[] = [];
   const queue: string[] = [];
 
